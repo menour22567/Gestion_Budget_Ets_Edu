@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PaieEducation.Application/PaieEducation.Application.csproj" />
+    <Project Path="src/PaieEducation.Bootstrapper/PaieEducation.Bootstrapper.csproj" />
+    <Project Path="src/PaieEducation.Domain/PaieEducation.Domain.csproj" />
+    <Project Path="src/PaieEducation.Infrastructure/PaieEducation.Infrastructure.csproj" />
+    <Project Path="src/PaieEducation.Persistence/PaieEducation.Persistence.csproj" />
+    <Project Path="src/PaieEducation.Presentation/PaieEducation.Presentation.csproj" />
+    <Project Path="src/PaieEducation.Reporting/PaieEducation.Reporting.csproj" />
+    <Project Path="src/PaieEducation.Shared/PaieEducation.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PaieEducation.Tests.Architecture/PaieEducation.Tests.Architecture.csproj" />
+    <Project Path="tests/PaieEducation.Tests.Integration/PaieEducation.Tests.Integration.csproj" />
+    <Project Path="tests/PaieEducation.Tests.Unit/PaieEducation.Tests.Unit.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/PaieEducation.Tools/PaieEducation.Tools.csproj" />
+  </Folder>
+</Solution>

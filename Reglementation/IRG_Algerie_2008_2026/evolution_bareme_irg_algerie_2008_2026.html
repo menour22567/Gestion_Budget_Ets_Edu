@@ -1,0 +1,478 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.wrap{padding:1rem 0}
+.header{margin-bottom:1.5rem}
+.header h2{font-size:18px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.header p{font-size:13px;color:var(--color-text-secondary)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+.tab{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:transparent;color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:transparent;font-weight:500}
+.period{display:none}
+.period.active{display:block}
+.period-header{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:12px}
+.period-header h3{font-size:15px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.period-header p{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:9px;margin-left:8px}
+.badge-blue{background:var(--color-background-info);color:var(--color-text-info)}
+.badge-green{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-amber{background:#FAEEDA;color:#633806}
+@media(prefers-color-scheme:dark){.badge-amber{background:#412402;color:#FAC775}}
+.section-label{font-size:12px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px}
+.bareme-table{width:100%;border-collapse:collapse;font-size:13px}
+.bareme-table th{text-align:left;padding:7px 10px;background:var(--color-background-secondary);color:var(--color-text-secondary);font-weight:500;font-size:12px;border:0.5px solid var(--color-border-tertiary)}
+.bareme-table td{padding:7px 10px;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:top}
+.bareme-table tr:hover td{background:var(--color-background-secondary)}
+.taux-pill{display:inline-block;font-size:12px;font-weight:500;padding:2px 10px;border-radius:10px}
+.t0{background:#EAF3DE;color:#27500A}
+.t20{background:#E6F1FB;color:#0C447C}
+.t23{background:#E6F1FB;color:#0C447C}
+.t27{background:#EEF0FB;color:#3C3489}
+.t30{background:#FAEEDA;color:#633806}
+.t33{background:#FAECE7;color:#712B13}
+.t35{background:#FCEBEB;color:#791F1F}
+@media(prefers-color-scheme:dark){
+.t0{background:#173404;color:#C0DD97}
+.t20{background:#042C53;color:#B5D4F4}
+.t23{background:#042C53;color:#B5D4F4}
+.t27{background:#26215C;color:#CECBF6}
+.t30{background:#412402;color:#FAC775}
+.t33{background:#4A1B0C;color:#F5C4B3}
+.t35{background:#501313;color:#F7C1C1}
+}
+.method-card{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;margin-bottom:8px}
+.method-card h4{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.method-card code{display:block;font-family:var(--font-mono);font-size:12px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:4px;padding:8px 10px;margin-top:6px;color:var(--color-text-primary);line-height:1.6;white-space:pre-wrap}
+.example-box{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-left:2px solid var(--color-border-info);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:10px 14px;margin-top:10px;font-size:12px;color:var(--color-text-secondary);line-height:1.7}
+.example-box strong{color:var(--color-text-primary);font-weight:500}
+.change-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.change-row:last-child{border-bottom:none}
+.change-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.ic-green{background:var(--color-background-success);color:var(--color-text-success)}
+.ic-blue{background:var(--color-background-info);color:var(--color-text-info)}
+.change-text{font-size:13px;color:var(--color-text-primary);line-height:1.5}
+.change-text small{display:block;color:var(--color-text-secondary);font-size:12px;margin-top:2px}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.compare-card{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px}
+.compare-card h5{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:6px}
+.compare-card p{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+.arrow-right{color:var(--color-text-secondary);margin:0 6px}
+</style>
+<div class="wrap">
+<div class="header">
+  <h2>Évolution du barème IRG — Salaires en Algérie (2008–2026)</h2>
+  <p>Impôt sur le Revenu Global · Art. 104 CIDTA · Retenue à la source par l'employeur</p>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="show(0)">Avant 2008</button>
+  <button class="tab" onclick="show(1)">2008–2014</button>
+  <button class="tab" onclick="show(2)">2015–2019</button>
+  <button class="tab" onclick="show(3)">2020–2021</button>
+  <button class="tab" onclick="show(4)">2022–2026 ★</button>
+  <button class="tab" onclick="show(5)">Comparatif</button>
+  <button class="tab" onclick="show(6)">Calculateur</button>
+</div>
+
+<!-- PÉRIODE 0 : AVANT 2008 -->
+<div class="period active" id="p0">
+  <div class="period-header">
+    <h3>Barème historique — avant 2008 <span class="badge badge-amber">Référence</span></h3>
+    <p>Base annuelle. Seuil d'exonération fixé à 60 000 DA/an (5 000 DA/mois). Barème simplifié à 4 tranches. Source : CIDTA avant LF 2008.</p>
+  </div>
+  <div class="section-label">Barème annuel (Base imposable)</div>
+  <table class="bareme-table">
+    <thead><tr><th>Tranche annuelle</th><th>Équiv. mensuel</th><th>Taux</th><th>Calcul de la tranche</th></tr></thead>
+    <tbody>
+      <tr><td>≤ 60 000 DA</td><td>≤ 5 000 DA</td><td><span class="taux-pill t0">0 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">Exonéré — revenu non imposable</td></tr>
+      <tr><td>60 001 – 180 000 DA</td><td>5 001 – 15 000 DA</td><td><span class="taux-pill t20">15 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Revenu − 60 000) × 15 %</td></tr>
+      <tr><td>180 001 – 720 000 DA</td><td>15 001 – 60 000 DA</td><td><span class="taux-pill t27">25 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Revenu − 180 000) × 25 % + 18 000</td></tr>
+      <tr><td>&gt; 720 000 DA</td><td>&gt; 60 000 DA</td><td><span class="taux-pill t35">35 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Revenu − 720 000) × 35 % + 153 000</td></tr>
+    </tbody>
+  </table>
+  <div class="section-label">Abattements applicables</div>
+  <div class="method-card">
+    <h4>Abattement proportionnel</h4>
+    <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-top:4px">Après application du barème, abattement de <strong>40 %</strong> sur l'IRG calculé.<br>Plancher : 1 000 DA/mois · Plafond : 1 500 DA/mois (12 000 – 18 000 DA/an)</p>
+  </div>
+</div>
+
+<!-- PÉRIODE 1 : 2008–2014 -->
+<div class="period" id="p1">
+  <div class="period-header">
+    <h3>Loi de Finances 2008 — en vigueur 2008–2014 <span class="badge badge-blue">LF 2008 · Art. 104 CIDTA</span></h3>
+    <p>Le seuil d'exonération passe de 60 000 à 120 000 DA/an (10 000 DA/mois). Simplification à 4 paliers. Barème resté stable jusqu'en 2015.</p>
+  </div>
+  <div class="section-label">Barème annuel officiel (Art. 104 CIDTA)</div>
+  <table class="bareme-table">
+    <thead><tr><th>#</th><th>Tranche annuelle</th><th>Équiv. mensuel</th><th>Taux</th><th>IRG sur la tranche</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>≤ 120 000 DA</td><td>≤ 10 000 DA</td><td><span class="taux-pill t0">0 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">0 DA</td></tr>
+      <tr><td>2</td><td>120 001 – 360 000 DA</td><td>10 001 – 30 000 DA</td><td><span class="taux-pill t20">20 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Revenu − 120 000) × 20 %<br>Max sur tranche : 48 000 DA</td></tr>
+      <tr><td>3</td><td>360 001 – 1 440 000 DA</td><td>30 001 – 120 000 DA</td><td><span class="taux-pill t30">30 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Revenu − 360 000) × 30 % + 48 000<br>Max sur tranche : 372 000 DA</td></tr>
+      <tr><td>4</td><td>&gt; 1 440 000 DA</td><td>&gt; 120 000 DA</td><td><span class="taux-pill t35">35 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Revenu − 1 440 000) × 35 % + 420 000</td></tr>
+    </tbody>
+  </table>
+  <div class="section-label">Méthode de calcul mensuelle (Barème mensualisé)</div>
+  <div class="method-card">
+    <h4>Étapes du calcul IRG mensuel</h4>
+    <code>1. Salaire brut imposable (SI) = Salaire brut − cotisations CNAS (9 %)
+2. Application du barème mensuel par tranche :
+   • SI ≤ 10 000 DA       → IRG brut = 0 DA
+   • SI 10 001 – 30 000   → IRG brut = (SI − 10 000) × 20 %
+   • SI 30 001 – 120 000  → IRG brut = (SI − 30 000) × 30 % + 4 000 DA
+   • SI > 120 000 DA      → IRG brut = (SI − 120 000) × 35 % + 31 000 DA
+3. Abattement 40 % : IRG net = IRG brut × 60 %
+   (Plancher 1 000 DA/mois · Plafond 1 500 DA/mois)
+4. IRG final = max(IRG net, plancher applicable)</code>
+    <div class="example-box">
+      <strong>Exemple — Salaire brut 50 000 DA :</strong><br>
+      1. Après CNAS (9 %) : SI = 50 000 − 4 500 = <strong>45 500 DA</strong><br>
+      2. Tranche 3 : (45 500 − 30 000) × 30 % + 4 000 = 4 650 + 4 000 = <strong>8 650 DA brut</strong><br>
+      3. Abattement 40 % → 8 650 × 60 % = <strong>5 190 DA</strong> (plafonné à 1 500 → <strong>7 150 DA</strong> net)<br>
+      4. IRG retenu ≈ <strong>7 150 DA/mois</strong>
+    </div>
+  </div>
+</div>
+
+<!-- PÉRIODE 2 : 2015–2019 -->
+<div class="period" id="p2">
+  <div class="period-header">
+    <h3>Loi de Finances 2015 — Ajustements 2015–2019 <span class="badge badge-green">LF 2015</span></h3>
+    <p>Le barème à 4 tranches reste inchangé. Mesure sociale : introduction d'un abattement supplémentaire pour les bas salaires entre 10 000 et 30 000 DA/mois.</p>
+  </div>
+  <div class="section-label">Barème annuel (identique à 2008)</div>
+  <table class="bareme-table">
+    <thead><tr><th>Tranche annuelle</th><th>Équiv. mensuel</th><th>Taux</th></tr></thead>
+    <tbody>
+      <tr><td>≤ 120 000 DA</td><td>≤ 10 000 DA</td><td><span class="taux-pill t0">0 %</span></td></tr>
+      <tr><td>120 001 – 360 000 DA</td><td>10 001 – 30 000 DA</td><td><span class="taux-pill t20">20 %</span></td></tr>
+      <tr><td>360 001 – 1 440 000 DA</td><td>30 001 – 120 000 DA</td><td><span class="taux-pill t30">30 %</span></td></tr>
+      <tr><td>&gt; 1 440 000 DA</td><td>&gt; 120 000 DA</td><td><span class="taux-pill t35">35 %</span></td></tr>
+    </tbody>
+  </table>
+  <div class="section-label">Nouveauté 2015 — Abattement supplémentaire bas salaires</div>
+  <div class="method-card">
+    <h4>Mesures d'allègement fiscal introduites</h4>
+    <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-top:4px">Introduction d'un <strong>abattement supplémentaire dégressif</strong> pour les salaires situés entre 10 001 et 30 000 DA/mois, afin de réduire l'impact de l'IRG sur les faibles revenus.</p>
+    <code>Abattement supplémentaire (en plus du 40 %) :
+ • SI entre 10 001 – 15 000 DA : réduction dégressive
+ • SI entre 15 001 – 25 000 DA : réduction proportionnelle
+ • SI entre 25 001 – 30 000 DA : réduction minimale dégressive
+
+Abattement 40 % maintenu (plancher 1 000 / plafond 1 500 DA/mois)</code>
+    <div class="example-box"><strong>Contexte :</strong> Le SNMG passe à 18 000 DA/mois en 2012 puis reste stable jusqu'en 2020. L'abattement supplémentaire vise à alléger la charge des fonctionnaires et employés à faible revenu.</div>
+  </div>
+</div>
+
+<!-- PÉRIODE 3 : 2020–2021 -->
+<div class="period" id="p3">
+  <div class="period-header">
+    <h3>Décret 2020 — Exonération ≤ 30 000 DA <span class="badge badge-green">Juin 2020</span></h3>
+    <p>Décision présidentielle : exonération totale d'IRG pour tout revenu mensuel ≤ 30 000 DA. Le SNMG augmente simultanément de 18 000 à 20 000 DA. Barème à 4 tranches maintenu au-delà.</p>
+  </div>
+  <div class="section-label">Barème — applicable à partir de juin 2020</div>
+  <table class="bareme-table">
+    <thead><tr><th>Tranche annuelle</th><th>Équiv. mensuel</th><th>Taux</th><th>Modification</th></tr></thead>
+    <tbody>
+      <tr><td>≤ 120 000 DA</td><td>≤ 10 000 DA</td><td><span class="taux-pill t0">0 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">Inchangé</td></tr>
+      <tr><td>120 001 – 360 000 DA</td><td>10 001 – 30 000 DA</td><td><span class="taux-pill t20">20 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">Inchangé, mais <strong>exonération totale</strong> si SI ≤ 30 000 DA</td></tr>
+      <tr><td>360 001 – 1 440 000 DA</td><td>30 001 – 120 000 DA</td><td><span class="taux-pill t30">30 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">Inchangé</td></tr>
+      <tr><td>&gt; 1 440 000 DA</td><td>&gt; 120 000 DA</td><td><span class="taux-pill t35">35 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">Inchangé</td></tr>
+    </tbody>
+  </table>
+  <div class="section-label">Règle d'exonération 2020</div>
+  <div class="method-card">
+    <h4>Exonération totale — salaires ≤ 30 000 DA brut/mois</h4>
+    <code>Si salaire brut mensuel ≤ 30 000 DA :
+   → IRG = 0 DA (exonération totale, quelle que soit la tranche)
+   → Seule la cotisation CNAS (9 %) reste prélevée
+
+Si salaire brut mensuel > 30 000 DA :
+   → Application normale du barème à 4 tranches (2008)
+   → + Abattement 40 % (1 000 – 1 500 DA/mois)
+   → + Abattement spécial 30 001 – 35 000 DA (tranche de transition)</code>
+    <div class="example-box">
+      <strong>Impact concret :</strong> Un salarié à 28 000 DA brut/mois ne paie plus d'IRG, soit un gain net d'environ 1 000 à 2 000 DA/mois selon sa situation. Le SNMG (20 000 DA) est totalement exonéré.
+    </div>
+  </div>
+</div>
+
+<!-- PÉRIODE 4 : 2022–2026 -->
+<div class="period" id="p4">
+  <div class="period-header">
+    <h3>Loi de Finances 2022 — Refonte totale <span class="badge badge-green">LF 2022 · Art. 31 → Art. 104 CIDTA</span></h3>
+    <p>Réforme majeure : passage de 4 à 6 tranches, nouvelle progressivité (23 % – 27 % – 30 % – 33 % – 35 %), seuil d'exonération annuel relevé à 240 000 DA (20 000 DA/mois). Exonération totale maintenue pour SI ≤ 30 000 DA/mois. Barème toujours en vigueur en 2026.</p>
+  </div>
+  <div class="section-label">Barème annuel 2022–2026 (Art. 104 CIDTA révisé)</div>
+  <table class="bareme-table">
+    <thead><tr><th>#</th><th>Tranche annuelle</th><th>Équiv. mensuel</th><th>Taux</th><th>IRG cumulé max tranche</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>≤ 240 000 DA</td><td>≤ 20 000 DA</td><td><span class="taux-pill t0">0 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">0 DA</td></tr>
+      <tr><td>2</td><td>240 001 – 480 000 DA</td><td>20 001 – 40 000 DA</td><td><span class="taux-pill t23">23 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Rev − 240 000) × 23 % → max 55 200 DA</td></tr>
+      <tr><td>3</td><td>480 001 – 960 000 DA</td><td>40 001 – 80 000 DA</td><td><span class="taux-pill t27">27 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Rev − 480 000) × 27 % + 55 200 → max 184 800 DA</td></tr>
+      <tr><td>4</td><td>960 001 – 1 920 000 DA</td><td>80 001 – 160 000 DA</td><td><span class="taux-pill t30">30 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Rev − 960 000) × 30 % + 184 800 → max 472 800 DA</td></tr>
+      <tr><td>5</td><td>1 920 001 – 3 840 000 DA</td><td>160 001 – 320 000 DA</td><td><span class="taux-pill t33">33 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Rev − 1 920 000) × 33 % + 472 800 → max 1 106 400 DA</td></tr>
+      <tr><td>6</td><td>&gt; 3 840 000 DA</td><td>&gt; 320 000 DA</td><td><span class="taux-pill t35">35 %</span></td><td style="font-size:12px;color:var(--color-text-secondary)">(Rev − 3 840 000) × 35 % + 1 106 400</td></tr>
+    </tbody>
+  </table>
+  <div class="section-label">Méthode de calcul complète 2022–2026</div>
+  <div class="method-card">
+    <h4>Étapes détaillées — calcul mensuel IRG salarié</h4>
+    <code>ÉTAPE 1 — Base imposable mensuelle
+  a) Salaire brut − Cotisations CNAS (9 %) = Salaire net CNAS
+  b) Abattement frais pro (40 % × Salaire net CNAS)
+     → Plancher : 1 000 DA/mois · Plafond : 1 500 DA/mois
+  c) Base imposable = Salaire net CNAS − Abattement
+
+ÉTAPE 2 — Vérification exonération
+  Si salaire brut ≤ 30 000 DA → IRG = 0 (exonéré)
+  Si salaire brut > 30 000 DA → passer à l'étape 3
+
+ÉTAPE 3 — Application du barème mensuel par tranche
+  • Base ≤ 20 000 DA     → 0 %
+  • 20 001 – 40 000 DA   → (Base − 20 000) × 23 %
+  • 40 001 – 80 000 DA   → (Base − 40 000) × 27 % + 4 600
+  • 80 001 – 160 000 DA  → (Base − 80 000) × 30 % + 15 400
+  • 160 001 – 320 000 DA → (Base − 160 000) × 33 % + 39 400
+  • > 320 000 DA          → (Base − 320 000) × 35 % + 92 200
+
+ÉTAPE 4 — Abattement spécial tranche 30 001 – 35 000 DA
+  Si 30 001 ≤ salaire brut ≤ 35 000 DA :
+  IRG_net = IRG × (93/61) − (81 213/41)  [formule Art. 104-3]</code>
+    <div class="example-box">
+      <strong>Exemple — Salaire brut 80 000 DA :</strong><br>
+      1. CNAS 9 % → 80 000 − 7 200 = 72 800 DA net<br>
+      2. Abattement 40 % → 72 800 × 40 % = 29 120 DA → plafonné à 1 500 DA/mois → Base = 72 800 − 18 000 = <strong>54 800 DA</strong><br>
+      3. Tranche 3 : (54 800 − 40 000) × 27 % + 4 600 = 3 996 + 4 600 = <strong>8 596 DA/mois</strong><br>
+      Gain vs 2008 : économie d'environ 3 500 DA/mois
+    </div>
+  </div>
+  <div class="section-label">Abattements spéciaux — catégories particulières</div>
+  <div class="method-card">
+    <h4>Travailleurs handicapés & retraités (Art. 104-3)</h4>
+    <code>Pour revenus entre 30 001 et 42 500 DA/mois :
+IRG_applicable = IRG × (93/61) − (81 213/41)
+(Abattement non cumulable avec l'abattement tranche 30 001–35 000)</code>
+  </div>
+</div>
+
+<!-- PÉRIODE 5 : COMPARATIF -->
+<div class="period" id="p5">
+  <div class="period-header">
+    <h3>Tableau comparatif synthétique — Toutes périodes</h3>
+    <p>Vue d'ensemble de l'évolution structurelle du barème IRG de 2008 à 2026.</p>
+  </div>
+  <table class="bareme-table" style="font-size:12px">
+    <thead>
+      <tr>
+        <th>Paramètre</th>
+        <th>Avant 2008</th>
+        <th>2008–2019</th>
+        <th>2020–2021</th>
+        <th>2022–2026</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="font-weight:500">Nombre de tranches</td>
+        <td>4</td>
+        <td>4</td>
+        <td>4</td>
+        <td><strong style="color:var(--color-text-success)">6</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Seuil exonération (annuel)</td>
+        <td>60 000 DA</td>
+        <td>120 000 DA</td>
+        <td>120 000 DA</td>
+        <td><strong style="color:var(--color-text-success)">240 000 DA</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Seuil exonération (mensuel)</td>
+        <td>5 000 DA</td>
+        <td>10 000 DA</td>
+        <td>10 000 DA</td>
+        <td>20 000 DA</td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Exon. sociale ≤ 30 000 DA/mois</td>
+        <td>Non</td>
+        <td>Non</td>
+        <td><strong style="color:var(--color-text-success)">Oui (juin 2020)</strong></td>
+        <td><strong style="color:var(--color-text-success)">Oui (maintenu)</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Taux minimum (1re tranche imposable)</td>
+        <td>15 %</td>
+        <td>20 %</td>
+        <td>20 %</td>
+        <td><strong style="color:var(--color-text-success)">23 %</strong> (tranche plus haute)</td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Taux maximum</td>
+        <td>35 %</td>
+        <td>35 %</td>
+        <td>35 %</td>
+        <td>35 %</td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Taux intermédiaires</td>
+        <td>15 %, 25 %</td>
+        <td>20 %, 30 %</td>
+        <td>20 %, 30 %</td>
+        <td><strong>23 %, 27 %, 30 %, 33 %</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Abattement proportionnel</td>
+        <td>40 %</td>
+        <td>40 %</td>
+        <td>40 %</td>
+        <td>40 %</td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Plancher abattement (mensuel)</td>
+        <td>1 000 DA</td>
+        <td>1 000 DA</td>
+        <td>1 000 DA</td>
+        <td>1 000 DA</td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Plafond abattement (mensuel)</td>
+        <td>1 500 DA</td>
+        <td>1 500 DA</td>
+        <td>1 500 DA</td>
+        <td>1 500 DA</td>
+      </tr>
+      <tr>
+        <td style="font-weight:500">Référence légale</td>
+        <td>CIDTA</td>
+        <td>LF 2008 · Art. 104</td>
+        <td>Décret 2020</td>
+        <td>LF 2022 · Art. 31/104</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="section-label">Changements clés par période</div>
+  <div class="method-card" style="padding:12px 14px">
+    <div class="change-row">
+      <div class="change-icon ic-blue">+</div>
+      <div class="change-text"><strong>LF 2008</strong> : seuil exonération doublé (60 000 → 120 000 DA/an). Simplification du barème. Hausse du SNMG à 12 000 DA/mois.
+        <small>Impact : soulagement fiscal pour les salaires entre 5 000 et 10 000 DA/mois.</small></div>
+    </div>
+    <div class="change-row">
+      <div class="change-icon ic-blue">+</div>
+      <div class="change-text"><strong>LF 2015</strong> : introduction d'abattements supplémentaires pour bas salaires (10 001 – 30 000 DA). Barème inchangé.
+        <small>Impact : allègement progressif des petits salaires sans modifier les tranches officielles.</small></div>
+    </div>
+    <div class="change-row">
+      <div class="change-icon ic-green">★</div>
+      <div class="change-text"><strong>Juin 2020</strong> : exonération totale d'IRG pour tout SI ≤ 30 000 DA/mois. SNMG hausse à 20 000 DA.
+        <small>Impact : environ 3 millions de salariés exonérés. Gain moyen 1 000 – 2 500 DA/mois.</small></div>
+    </div>
+    <div class="change-row">
+      <div class="change-icon ic-green">★</div>
+      <div class="change-text"><strong>LF 2022</strong> : refonte totale. 6 tranches, seuil annuel → 240 000 DA, nouvelle progressivité (23–35 %). Réduction significative pour revenus moyens et hauts.
+        <small>Impact : économie de 2 400 DA/mois pour un salaire de 40 000 DA ; 3 300 DA/mois pour 60 000 DA.</small></div>
+    </div>
+  </div>
+</div>
+
+<!-- PÉRIODE 6 : CALCULATEUR -->
+<div class="period" id="p6">
+  <div class="period-header">
+    <h3>Simulateur IRG — Barème 2022–2026 <span class="badge badge-green">En vigueur</span></h3>
+    <p>Calcul de la retenue IRG mensuelle sur salaire. Saisir le salaire brut mensuel.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <div>
+      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:6px">Salaire brut mensuel (DA)</label>
+      <input type="number" id="sal-input" value="60000" min="0" step="1000" oninput="calcIRG()" style="width:100%;padding:8px 10px;font-size:14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)">
+    </div>
+    <div>
+      <label style="font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:6px">Nombre d'enfants à charge</label>
+      <input type="number" id="enfants" value="0" min="0" max="4" step="1" oninput="calcIRG()" style="width:100%;padding:8px 10px;font-size:14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)">
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+    <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">CNAS (9 %)</div>
+      <div style="font-size:20px;font-weight:500;color:var(--color-text-primary)" id="r-cnas">—</div>
+    </div>
+    <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">IRG retenu</div>
+      <div style="font-size:20px;font-weight:500;color:var(--color-text-primary)" id="r-irg">—</div>
+    </div>
+    <div style="background:var(--color-background-info);border-radius:var(--border-radius-md);padding:12px;text-align:center">
+      <div style="font-size:11px;color:var(--color-text-info);margin-bottom:4px">Salaire net</div>
+      <div style="font-size:20px;font-weight:500;color:var(--color-text-info)" id="r-net">—</div>
+    </div>
+  </div>
+  <div class="method-card">
+    <h4>Détail du calcul</h4>
+    <code id="r-detail" style="min-height:60px"></code>
+  </div>
+</div>
+
+</div>
+
+<script>
+function show(i){
+  document.querySelectorAll('.period').forEach((p,j)=>p.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  if(i===6) calcIRG();
+}
+
+function fmt(n){return Math.round(n).toLocaleString('fr-DZ')+' DA';}
+
+function calcIRG(){
+  var brut=parseFloat(document.getElementById('sal-input').value)||0;
+  var enf=Math.min(4,parseInt(document.getElementById('enfants').value)||0);
+  var cnas=brut*0.09;
+  var netCnas=brut-cnas;
+
+  document.getElementById('r-cnas').textContent=fmt(cnas);
+
+  if(brut<=30000){
+    document.getElementById('r-irg').textContent='0 DA (exonéré)';
+    document.getElementById('r-net').textContent=fmt(netCnas);
+    document.getElementById('r-detail').textContent=
+      'Salaire brut ≤ 30 000 DA/mois → Exonération totale d\'IRG\n'
+      +'CNAS : '+fmt(cnas)+'\nSalaire net : '+fmt(netCnas);
+    return;
+  }
+
+  var abb=netCnas*0.40;
+  if(abb<1000)abb=1000;
+  if(abb>1500)abb=1500;
+  var base=netCnas-abb;
+  var dedEnf=enf*1000;
+  base=Math.max(0,base-dedEnf);
+
+  var irg=0,detail='';
+  if(base<=20000){irg=0;}
+  else if(base<=40000){irg=(base-20000)*0.23;}
+  else if(base<=80000){irg=(base-40000)*0.27+4600;}
+  else if(base<=160000){irg=(base-80000)*0.30+15400;}
+  else if(base<=320000){irg=(base-160000)*0.33+39400;}
+  else{irg=(base-320000)*0.35+92200;}
+
+  var irg2=Math.max(0,irg);
+  var net=brut-cnas-irg2;
+
+  document.getElementById('r-irg').textContent=fmt(irg2);
+  document.getElementById('r-net').textContent=fmt(net);
+  document.getElementById('r-detail').textContent=
+    'Salaire brut           : '+fmt(brut)+'\n'
+    +'CNAS (9 %)             : − '+fmt(cnas)+'\n'
+    +'Salaire net CNAS       : '+fmt(netCnas)+'\n'
+    +'Abattement 40 % (plafonné): − '+fmt(abb)+'\n'
+    +(enf>0?'Déduction enfants ('+enf+') : − '+fmt(dedEnf)+'\n':'')
+    +'Base imposable         : '+fmt(base)+'\n'
+    +'IRG brut (barème 2022) : '+fmt(irg2)+'\n'
+    +'──────────────────────────────\n'
+    +'Salaire net perçu      : '+fmt(net)+'\n'
+    +'Taux effectif IRG      : '+(brut>0?(irg2/brut*100).toFixed(1):0)+' %';
+}
+calcIRG();
+</script>

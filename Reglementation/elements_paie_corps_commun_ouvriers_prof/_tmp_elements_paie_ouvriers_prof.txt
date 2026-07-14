@@ -1,0 +1,139 @@
+﻿ÉLÉMENTS CONSTITUTIFS DU TRAITEMENT SALARIAL
+Secteur de l'Éducation Nationale et Fonction Publique -- République Algérienne Démocratique et Populaire
+Tableau historique avec dates d'effet -- Référence pour logiciel de gestion de paie et base de données Access
+Textes consolidés : Décrets | 10-135 | 13-189 | 10-136 | 13-190
+Note importante : 
+Traitement de base = 
+Indice minimal du grade × 45 DA
+ (Valeur du point indiciaire).
+Traitement = 
+(Indice minimal du grade + Indice d'échelon) × 45 DA
+1
+. OUVRIERS PROFESSIONNELS, CONDUCTEURS D'AUTOMOBILES ET APPARITEURS
+* Décret exécutif n° 10-135 du 13/05/2010 (effet 01/01/2008) -- texte fondateur
+* Décret exécutif n° 13-189 du 09/05/2013 (effet 01/01/2012) -- création indemnité de soutien aux activités de l'administration
+. 
+Fond blanc/bleu = période en vigueur    
+[] 
+Fond jaune = version antérieure (historique)    
+* 
+Valeur en rouge = valeur modifiée par rapport à la version précédente    
+-- Fond gris = indemnité non encore créée
+Élément salarial
+Période d'application
+Bénéficiaires
+Base de calcul
+Taux / Montant
+Texte de référence
+Statut
+Prime de rendement
+Prime de rendement
+01/01/2008 → en vigueur
+Ouvriers prof., conducteurs d'automobiles, appariteurs
+Traitement
+0 % à 30 %
+Art. 3 - Décret 10-135 (13/05/2010)
+OK En vigueur
+Indemnité de nuisance
+Ind. nuisance
+01/01/2008 → en vigueur
+Ouvriers professionnels uniquement
+Traitement
+25 % du traitement
+Art. 4 - Décret 10-135
+OK En vigueur
+Indemnité forfaitaire de service
+Ind. forfaitaire service
+01/01/2008 → en vigueur
+Conducteurs d'automobiles et appariteurs
+Traitement
+25 % du traitement
+Art. 5 - Décret 10-135
+OK En vigueur
+Indemnité de soutien aux activités de l'administration
+Ind. soutien activités admin.
+Avant 01/01/2012
+-
+-
+-
+-
+X N'existait pas
+Ind. soutien activités admin.
+01/01/2012 → en vigueur
+Ouvriers prof., conducteurs, appariteurs
+Traitement
+10 % du traitement
+Art. 5 bis - Décret 13-189 (09/05/2013) Effet : 01/01/2012
+OK En vigueur
+2
+. AGENTS CONTRACTUELS
+* Décret exécutif n° 10-136 du 13/05/2010 (effet 01/01/2008) -- texte fondateur
+* Décret exécutif n° 13-190 du 09/05/2013 (effet 01/01/2012) -- création indemnité de soutien aux activités de l'administration
+. 
+Fond blanc/bleu = période en vigueur    
+[] 
+Fond jaune = version antérieure (historique)    
+* 
+Valeur en rouge = valeur modifiée par rapport à la version précédente    
+-- Fond gris = indemnité non encore créée
+Élément salarial
+Période d'application
+Bénéficiaires
+Base de calcul
+Taux / Montant
+Texte de référence
+Statut
+Prime de rendement
+Prime de rendement
+01/01/2008 → en vigueur
+Agents contractuels : ouvrier prof., agent de service, conducteur, chef de parc, gardien, agent de prévention
+Traitement de l'emploi occupé
+0 % à 30 %
+Art. 3 - Décret 10-136 (13/05/2010)
+OK En vigueur
+Indemnité de nuisance
+Ind. nuisance
+01/01/2008 → en vigueur
+Agents contractuels occupant emploi d'ouvrier professionnel
+Traitement de l'emploi occupé
+25 % du traitement
+Art. 4 - Décret 10-136
+OK En vigueur
+Indemnité forfaitaire de service
+Ind. forfaitaire service
+01/01/2008 → en vigueur
+Agents de service, conducteurs, chefs de parc, gardiens
+Traitement de l'emploi occupé
+25 % du traitement
+Art. 5 - Décret 10-136
+OK En vigueur
+Indemnité de risque et d'astreinte
+Ind. risque & astreinte
+01/01/2008 → en vigueur
+Agents de prévention niveau 1 et niveau 2
+Traitement de l'emploi occupé
+25 % du traitement
+Art. 6 - Décret 10-136
+OK En vigueur
+Indemnité de soutien aux activités de l'administration
+Ind. soutien activités admin.
+Avant 01/01/2012
+-
+-
+-
+-
+X N'existait pas
+Ind. soutien activités admin.
+01/01/2012 → en vigueur
+Agents contractuels (art. 19 de l'ordonnance 06-03)
+Traitement du poste occupé
+10 % du traitement
+Art. 6 bis - Décret 13-190 (09/05/2013) Effet : 01/01/2012
+OK En vigueur
+3
+. NOTES POUR L'IMPLÉMENTATION DU MOTEUR DE CALCUL
+Logique de résolution par date :
+Pour calculer la paie d'un mois M donné, le moteur doit charger la version de chaque indemnité dont la période d'application encadre M.
+Algorithme recommandé : SELECT * FROM IndemniteHistorique WHERE date_debut <= M AND (date_fin IS NULL OR date_fin >= M) AND code_corps = [corps_agent]
+Champs clés recommandés pour la table d'historique :
+Table [IndemniteHistorique] : ID_Indemnite, Code_Indemnite (ex: SOUTIEN_SCOL), Lib_Indemnite, Date_Debut, Date_Fin (NULL = en vigueur), Code_Corps, Code_Specialite (nullable), Base_Calcul (TRAITEMENT / TBASE_ECHELON / FORFAIT), Taux (%), Montant_Forfait (DA), Periodicity (MENSUEL / TRIMESTRIEL), Ref_Decret, Date_Publication_Decret

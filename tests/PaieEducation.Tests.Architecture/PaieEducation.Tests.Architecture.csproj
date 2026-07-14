@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- net10.0-windows : ce projet reference TOUS les projets (dont Presentation/Bootstrapper en WPF)
+       pour verifier les regles de dependance de la Clean Architecture. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PaieEducation.Domain\PaieEducation.Domain.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Application\PaieEducation.Application.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Infrastructure\PaieEducation.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Persistence\PaieEducation.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Reporting\PaieEducation.Reporting.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Shared\PaieEducation.Shared.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Presentation\PaieEducation.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Bootstrapper\PaieEducation.Bootstrapper.csproj" />
+  </ItemGroup>
+
+</Project>

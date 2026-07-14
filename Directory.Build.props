@@ -1,0 +1,27 @@
+<Project>
+
+  <!-- Réglages MSBuild communs à TOUS les projets de la solution PaieEducation ERP.
+       Voir docs/CONVENTIONS.md. -->
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- ADR-0003 : audit NuGet restreint aux dependances DIRECTES.
+         Une vulnerabilite transitive (SQLitePCLRaw.lib.e_sqlite3, tiree par Microsoft.Data.Sqlite)
+         ne doit pas casser le build tant que Microsoft n'a pas publie de correctif amont.
+         Surveillance via `dotnet list package` (option vulnerable + include-transitive). A reevaluer en Phase 5. -->
+    <NuGetAuditMode>direct</NuGetAuditMode>
+    <Deterministic>true</Deterministic>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <Company>Éducation Nationale — République Algérienne</Company>
+    <Product>PaieEducation ERP</Product>
+    <Version>0.1.0</Version>
+    <NeutralLanguage>fr</NeutralLanguage>
+  </PropertyGroup>
+
+</Project>

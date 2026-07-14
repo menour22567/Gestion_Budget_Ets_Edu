@@ -1,0 +1,383 @@
+Excellente décision. À partir de maintenant, nous allons documenter les **sous-systèmes techniques** de l'ERP avec le même niveau de détail que les ERP industriels (SAP, Oracle, Microsoft Dynamics, Sage X3). Le prochain volume est fondamental, car il définit la couche qui garantit la cohérence et les performances des données.
+
+---
+
+# Documentation de Référence du Projet
+
+# **PaieEducation ERP**
+
+## **Version 3.0**
+
+**Tome K — Couche Persistence**
+
+# **Volume 26**
+
+# **Architecture de la Couche Persistence (SQLite, Repositories, Transactions et Optimisation des Données)**
+
+**Version :** 3.0
+**Statut :** Référentiel officiel de la couche **Persistence**
+
+---
+
+# 1. Objet
+
+La couche **Persistence** est responsable de la gestion des données persistantes de **PaieEducation ERP**.
+
+Elle assure :
+
+* l'accès à la base SQLite ;
+* la persistance des entités métier ;
+* la gestion des transactions ;
+* l'intégrité référentielle ;
+* les migrations du schéma ;
+* les optimisations SQL ;
+* la maintenance de la base.
+
+Elle constitue l'unique couche autorisée à manipuler directement SQLite.
+
+---
+
+# 2. Principes d'architecture
+
+Les objectifs principaux sont :
+
+* séparation entre logique métier et accès aux données ;
+* indépendance vis-à-vis du moteur SQLite ;
+* performances élevées ;
+* intégrité des données ;
+* facilité de migration vers un autre SGBD si nécessaire.
+
+---
+
+# 3. Position dans l'architecture
+
+```text
+Presentation
+      │
+Application
+      │
+Domain
+      │
+Infrastructure
+      │
+Persistence
+      │
+SQLite
+```
+
+La couche **Persistence** implémente les contrats définis par le **Domain**.
+
+---
+
+# 4. Organisation du projet
+
+```text
+PaieEducation.Persistence
+
+│
+├── Database
+├── Repositories
+├── Transactions
+├── Migrations
+├── Mapping
+├── Queries
+├── Commands
+├── Configuration
+├── Seed
+├── Maintenance
+├── Diagnostics
+└── DependencyInjection
+```
+
+Chaque composant possède une responsabilité unique.
+
+---
+
+# 5. Base de données SQLite
+
+Le moteur retenu est **SQLite**.
+
+Objectifs :
+
+* fonctionnement 100 % hors ligne ;
+* déploiement simplifié ;
+* aucune dépendance serveur ;
+* excellente fiabilité ;
+* sauvegarde facilitée par un simple fichier.
+
+Le fichier de base est stocké dans un emplacement configurable.
+
+---
+
+# 6. Organisation du schéma
+
+Les tables sont regroupées par domaine fonctionnel.
+
+| Domaine             | Exemples de tables                  |
+| ------------------- | ----------------------------------- |
+| Ressources humaines | Agents, Contrats, Affectations      |
+| Référentiels        | Corps, Grades, Catégories           |
+| Paie                | Bulletins, Rubriques, Variables     |
+| Paramètres          | Paramètres réglementaires, Barèmes  |
+| Reporting           | Modèles, Historique des impressions |
+| Administration      | Journaux, Configuration             |
+
+Cette organisation facilite les évolutions et les audits.
+
+---
+
+# 7. Repositories
+
+Chaque agrégat possède un repository dédié.
+
+Exemples :
+
+| Interface              | Implémentation              |
+| ---------------------- | --------------------------- |
+| `IAgentRepository`     | `SQLiteAgentRepository`     |
+| `IBulletinRepository`  | `SQLiteBulletinRepository`  |
+| `IRubriqueRepository`  | `SQLiteRubriqueRepository`  |
+| `IParameterRepository` | `SQLiteParameterRepository` |
+
+Les repositories exposent uniquement des méthodes métier.
+
+---
+
+# 8. Transactions
+
+Les opérations critiques sont exécutées dans des transactions SQLite.
+
+Exemples :
+
+* calcul d'une paie ;
+* validation d'un bulletin ;
+* clôture d'une période ;
+* import réglementaire.
+
+En cas d'erreur, la transaction est annulée.
+
+---
+
+# 9. Unité de travail (Unit of Work)
+
+Une abstraction `IUnitOfWork` coordonne les transactions.
+
+Responsabilités :
+
+* ouverture ;
+* validation (`Commit`) ;
+* annulation (`Rollback`) ;
+* libération des ressources.
+
+Les services applicatifs ne manipulent pas directement les connexions SQLite.
+
+---
+
+# 10. Mapping
+
+Le mapping entre les entités métier et les tables est centralisé.
+
+Exemple :
+
+```text
+Agent
+      │
+      ▼
+AgentMapper
+      │
+      ▼
+Table Agents
+```
+
+Le mapping est explicite afin de conserver un contrôle total sur le schéma.
+
+---
+
+# 11. Requêtes
+
+Les requêtes SQL sont :
+
+* paramétrées ;
+* lisibles ;
+* optimisées ;
+* regroupées par domaine.
+
+Toute concaténation de chaînes pour construire des requêtes est interdite.
+
+---
+
+# 12. Optimisation des index
+
+Les index sont définis selon les usages métier.
+
+Exemples :
+
+| Table      | Colonnes indexées        |
+| ---------- | ------------------------ |
+| Agents     | Matricule                |
+| Bulletins  | AgentId, Période         |
+| Rubriques  | CodeRubrique             |
+| Paramètres | CodeParametre, DateEffet |
+
+Chaque index est justifié par un scénario d'utilisation.
+
+---
+
+# 13. Contraintes d'intégrité
+
+Les contraintes suivantes sont appliquées :
+
+* clés primaires ;
+* clés étrangères ;
+* unicité des codes métier ;
+* contraintes de non-nullité ;
+* vérifications (`CHECK`) lorsque pertinentes.
+
+L'intégrité est garantie à la fois par le domaine et par la base.
+
+---
+
+# 14. Migrations
+
+Le schéma évolue via des migrations versionnées.
+
+Principes :
+
+* migrations idempotentes ;
+* conservation des données ;
+* possibilité de retour arrière contrôlé ;
+* journalisation des versions appliquées.
+
+Chaque migration est documentée.
+
+---
+
+# 15. Données de référence (Seed)
+
+Les données indispensables au fonctionnement sont initialisées automatiquement :
+
+* types de contrat ;
+* types d'employés ;
+* catégories ;
+* structures administratives ;
+* paramètres système.
+
+Les données réglementaires restent gérées par le référentiel décrit au Volume 23.
+
+---
+
+# 16. Maintenance de la base
+
+Des opérations de maintenance sont prévues :
+
+* vérification d'intégrité (`PRAGMA integrity_check`) ;
+* optimisation (`VACUUM`) ;
+* mise à jour des statistiques (`ANALYZE`) ;
+* sauvegarde.
+
+Ces opérations peuvent être déclenchées depuis un module d'administration.
+
+---
+
+# 17. Performances
+
+Objectifs :
+
+| Opération                 | Temps cible |
+| ------------------------- | ----------: |
+| Ouverture de la base      |    < 100 ms |
+| Recherche d'un agent      |     < 50 ms |
+| Lecture d'un bulletin     |    < 100 ms |
+| Insertion d'un bulletin   |    < 150 ms |
+| Chargement des paramètres |     < 50 ms |
+
+Les requêtes lentes doivent être identifiées et optimisées.
+
+---
+
+# 18. Sécurité des données
+
+Les mesures suivantes sont recommandées :
+
+* utilisation exclusive de requêtes paramétrées ;
+* contrôle des chemins de la base de données ;
+* sauvegardes régulières ;
+* vérification de l'intégrité avant restauration.
+
+La couche Persistence ne gère pas les autorisations fonctionnelles.
+
+---
+
+# 19. Diagnostic
+
+Des outils de diagnostic permettent de contrôler :
+
+* la taille de la base ;
+* le nombre d'enregistrements ;
+* l'état des index ;
+* la version du schéma ;
+* les migrations appliquées ;
+* les performances des requêtes.
+
+Ces informations sont accessibles depuis le module d'administration.
+
+---
+
+# 20. Critères d'acceptation
+
+La couche **Persistence** est conforme lorsque :
+
+* toutes les opérations sur SQLite passent par des repositories ;
+* les transactions sont gérées via `IUnitOfWork` ;
+* les requêtes sont paramétrées ;
+* les index sont documentés ;
+* les migrations sont versionnées ;
+* les opérations de maintenance sont disponibles.
+
+---
+
+# 21. Recommandations spécifiques pour SQLite
+
+Pour une application ERP de paie locale, les paramètres suivants sont recommandés :
+
+| Paramètre SQLite | Valeur recommandée                    | Justification                               |
+| ---------------- | ------------------------------------- | ------------------------------------------- |
+| `journal_mode`   | `WAL`                                 | Améliore les performances et la résilience  |
+| `foreign_keys`   | `ON`                                  | Garantit l'intégrité référentielle          |
+| `busy_timeout`   | `5000 ms`                             | Réduit les erreurs de verrouillage          |
+| `synchronous`    | `NORMAL`                              | Bon compromis entre performance et sécurité |
+| `temp_store`     | `MEMORY`                              | Optimise les traitements temporaires        |
+| `cache_size`     | À ajuster selon la mémoire disponible | Améliore les lectures répétitives           |
+
+Ces réglages devront être appliqués au démarrage de l'application et documentés dans le module de configuration.
+
+---
+
+# 22. Stratégie d'évolution
+
+La conception retenue permet :
+
+* l'évolution du schéma sans perte de données ;
+* le remplacement futur de SQLite par un autre SGBD si les besoins évoluent ;
+* l'ajout de nouveaux modules sans remise en cause de la couche Persistence ;
+* une montée en charge progressive tout en conservant le découplage avec le domaine.
+
+---
+
+# Conclusion
+
+Le **Volume 26** définit la couche **Persistence** comme un composant autonome, robuste et optimisé, garantissant la fiabilité des données de **PaieEducation ERP**. En combinant des repositories, une unité de travail, des migrations versionnées et une configuration adaptée à SQLite, cette architecture offre une base solide pour un ERP de paie local, performant et durable.
+
+## Orientation pour le Volume 27
+
+Le **Volume 27** sera consacré à l'**Architecture du Reporting**. Il décrira en détail :
+
+* la conception des documents avec **QuestPDF** ;
+* l'architecture des modèles de rapports ;
+* la génération des bulletins de paie ;
+* les attestations administratives ;
+* les états récapitulatifs et statistiques ;
+* les exports Excel avec **ClosedXML** ;
+* les principes de mise en page, d'identité visuelle et de performance.
+
+Ce volume constituera le **manuel du sous-système de reporting** de **PaieEducation ERP**, garantissant des documents professionnels, homogènes et conformes aux exigences réglementaires.

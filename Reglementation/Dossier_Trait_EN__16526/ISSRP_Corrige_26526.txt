@@ -1,0 +1,33 @@
+RÉFÉRENCE RÉGLEMENTAIRE — ÉLÉMENTS DE SALAIRE COTISABLE
+Corps spécifiques de l'Éducation Nationale algérienne  |  Décrets : 10-78, 11-373, 12-403, 15-271, 25-55, 08-70, 15-176
+Projet : PaieEducation  |  Version : 2.0  |  Date : 17/04/2026  |  Usage : Document de référence exploitable par agent de codage autonome
+SECTION 1 — TABLEAU DES ÉLÉMENTS SALARIAUX (HISTORIQUE COMPLET)
+Légende :
+[HIST] — Version initiale remplacée rétroactivement	[CUR] — En vigueur 2008–2024 (D.ex. 10-78 consolidé)	[2025] — En vigueur depuis 01/01/2025 (D.ex. 25-55)	N/A — Élément inexistant pour la période
+9. ISSRP — Indemnité de soutien scolaire et remédiation pédagogique
+ISSRP	[HIST]	Tous : Art.3 + Art.4 + Art.5 (taux unique)	Mensuelle	Traitement	15 % (taux unique)
+ISSRP	[2025]	Enseignants, éducation (corps ens.), direction, insp. disciplines & administration	Mensuelle	Traitement	45 %
+ISSRP	[2025]	Éducation (hors corps ens.), orientation, alimentation, insp. alimentation & orientation/guidance	Mensuelle	Traitement	30 %
+ISSRP	[2025]	Intendance, laboratoire, inspecteurs gestion financière & matérielle	Mensuelle	Traitement	15 %
+
+La rubrique à 45 % ne doit pas être comprise comme “enseignants uniquement”. Elle doit couvrir un groupe élargi à origine pédagogique / responsabilité pédagogique, incluant :
+•	les personnels enseignants ; 
+•	tous les directeurs d’établissement ; 
+•	tous les inspecteurs ; 
+•	les censeurs ; 
+•	les conseillers d’éducation issus du corps enseignant ; 
+•	plus généralement les grades de promotion dont l’origine statutaire est le corps enseignant. 
+Donc le nom ISRM_ENS_2025 est trompeur s’il est interprété strictement comme “enseignants”. Il doit être traité comme ISSRP_45_2025 / groupe 45 %, même si le code technique reste ISRM_ENS_2025.
+
+Indemnité de soutien scolaire et de remédiation pédagogique
+Ind. soutien scolaire & remédiation (ISSRP)	Avant 26/10/2011	-	-	-	-	X N'existait pas
+Ind. soutien scolaire & remédiation (ISSRP)	01/01/2008 → 31/12/2024 (effet rétroactif 01/01/2008)	Tous les corps EN :
+Éducation, orientation/guidance, alimentation scolaire, direction, inspection,  Intendance, Laboratoire 	Traitement	15 % pour TOUS les corps (taux unique)	Art. 9 bis - Décret 11-373 (26/10/2011) Effet rétroactif : 01/01/2008	~ Historique
+Ind. soutien scolaire & remédiation pédagogique (ISSRP)	01/01/2025 → en vigueur	Différencié par corps *	Traitement	* 45 % * : enseignants, éducateurs issus corps enseignants, direction, inspection spéc. 'disciplines' et 'administration des établissements'
+* 30 % * : éducateurs non issus corps enseignants, orientation/guidance, alimentation scolaire, inspecteurs EP alimentation, inspecteurs orientation/guidance collèges & lycées
+* 15 % (inchangé) : intendance, laboratoire, inspecteurs gestion financière collèges & lycées	Art. 10 - Décret 25-55 (21/01/2025)	OK En vigueur
+
+
+
+
+

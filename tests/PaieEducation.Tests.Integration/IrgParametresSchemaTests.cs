@@ -138,32 +138,39 @@ public class IrgParametresSchemaTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void Cas_metier_3_regles_de_periode_2020_2021_2022_plus_avec_exoneration_et_abattement()
+    public void Cas_metier_4_regles_de_periode_avec_fractions_exactes_et_exoneration()
     {
         using var scope = SchemaTestSupport.CreateMigrated();
         InsertBareme(scope.Conn, "IRG-2008", "IRG-2008", "Barème 2008", "2007-01-01");
 
-        // Période 2020 : exonération 30 000, abattement 40 % [1000;1500], pas de lissage.
-        InsertReglePeriode(scope.Conn, "PER-2020", "Période 2020", "2020-01-01", "2020-12-31",
-            baremeId: "IRG-2008",
-            exon: 30000, abattTaux: 0.40, abattMin: 1000, abattMax: 1500,
-            coefGen: 1.0, constGen: 0, coefSpe: 1.0, constSpe: 0, plafondSpe: 0);
+        // Période 1 : avant 2020-06-01 — barème 2008 seul (pas d'exo, pas de lissage).
+        InsertReglePeriode(scope.Conn, "PER-AV-2020-06", "Période avant 2020-06",
+            "1000-01-01", "2020-05-31", "IRG-2008",
+            exon: 0, abattTaux: 0.40, abattMin: 1000, abattMax: 1500,
+            coefGen: "1", constGen: "0", coefSpe: "1", constSpe: "0", plafondSpe: 0);
 
-        // Période 2021 : mêmes valeurs que 2020.
-        InsertReglePeriode(scope.Conn, "PER-2021", "Période 2021", "2021-01-01", "2021-12-31",
-            baremeId: "IRG-2008",
+        // Période 2 : 2020-06 → 2020-12 — lissage 8/3 (plafond spé 40 000).
+        InsertReglePeriode(scope.Conn, "PER-2020-06", "Période 2020-06..12",
+            "2020-06-01", "2020-12-31", "IRG-2008",
             exon: 30000, abattTaux: 0.40, abattMin: 1000, abattMax: 1500,
-            coefGen: 1.0, constGen: 0, coefSpe: 1.0, constSpe: 0, plafondSpe: 0);
+            coefGen: "8/3", constGen: "20000/3",
+            coefSpe: "5/3", constSpe: "12500/3", plafondSpe: 40000);
 
-        // Période 2022+ : lissage par coefficients (à calibrer contre les bulletins réels).
-        // On pose un exemple conservateur : coefGeneral = 0.80, constGeneral = 0.
-        // Les valeurs définitives viendront de la validation réglementaire (Phase 8).
-        InsertReglePeriode(scope.Conn, "PER-2022+", "Période 2022+", "2022-01-01", null,
-            baremeId: "IRG-2008",
+        // Période 3 : 2021 — lissage 8/3 (plafond spé 42 500).
+        InsertReglePeriode(scope.Conn, "PER-2021", "Période 2021",
+            "2021-01-01", "2021-12-31", "IRG-2008",
             exon: 30000, abattTaux: 0.40, abattMin: 1000, abattMax: 1500,
-            coefGen: 0.80, constGen: 0, coefSpe: 0.80, constSpe: 0, plafondSpe: 15000);
+            coefGen: "8/3", constGen: "20000/3",
+            coefSpe: "5/3", constSpe: "12500/3", plafondSpe: 42500);
 
-        // Vérifie l'exonération et l'abattement : on s'attend à 30 000 et 40 % pour toutes.
+        // Période 4 : 2022+ — lissage 137/51 (plafond spé 42 500).
+        InsertReglePeriode(scope.Conn, "PER-2022+", "Période 2022+",
+            "2022-01-01", null, "IRG-2008",
+            exon: 30000, abattTaux: 0.40, abattMin: 1000, abattMax: 1500,
+            coefGen: "137/51", constGen: "27925/8",
+            coefSpe: "93/61", constSpe: "81213/41", plafondSpe: 42500);
+
+        // Vérification des valeurs clés de la période 2022+ (cas sensible).
         var exon = SchemaTestSupport.Scalar<int>(scope.Conn,
             "SELECT ExonerationSeuil FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
         var abattTaux = SchemaTestSupport.Scalar<double>(scope.Conn,
@@ -172,33 +179,73 @@ public class IrgParametresSchemaTests
             "SELECT AbattementMin FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
         var abattMax = SchemaTestSupport.Scalar<int>(scope.Conn,
             "SELECT AbattementMax FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
-        var coefG = SchemaTestSupport.Scalar<double>(scope.Conn,
-            "SELECT CoefGeneral FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
         Assert.Equal(30000, exon);
         Assert.Equal(0.40, abattTaux);
         Assert.Equal(1000, abattMin);
         Assert.Equal(1500, abattMax);
-        Assert.Equal(0.80, coefG);
+
+        // Vérification des fractions EXACTES (TEXT, pas REAL).
+        var coefGen = SchemaTestSupport.Scalar<string>(scope.Conn,
+            "SELECT CoefGeneral FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
+        Assert.Equal("137/51", coefGen);
+
+        var constGen = SchemaTestSupport.Scalar<string>(scope.Conn,
+            "SELECT ConstGeneral FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
+        Assert.Equal("27925/8", constGen);
+
+        var coefSpe = SchemaTestSupport.Scalar<string>(scope.Conn,
+            "SELECT CoefSpecial FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
+        Assert.Equal("93/61", coefSpe);
+
+        var constSpe = SchemaTestSupport.Scalar<string>(scope.Conn,
+            "SELECT ConstSpecial FROM IRGReglesPeriode WHERE Code = 'PER-2022+';");
+        Assert.Equal("81213/41", constSpe);
     }
 
     [Fact]
-    public void Resolution_IRGReglesPeriode_a_une_date_retourne_la_bonne_regle()
+    public void Resolution_IRGReglesPeriode_a_une_date_couvre_4_periodes()
     {
         using var scope = SchemaTestSupport.CreateMigrated();
         InsertBareme(scope.Conn, "IRG-2008", "IRG-2008", "Barème 2008", "2007-01-01");
-        InsertReglePeriode(scope.Conn, "PER-2020", "Période 2020", "2020-01-01", "2020-12-31", "IRG-2008",
-            30000, 0.40, 1000, 1500, 1.0, 0, 1.0, 0, 0);
-        InsertReglePeriode(scope.Conn, "PER-2021", "Période 2021", "2021-01-01", "2021-12-31", "IRG-2008",
-            30000, 0.40, 1000, 1500, 1.0, 0, 1.0, 0, 0);
-        InsertReglePeriode(scope.Conn, "PER-2022+", "Période 2022+", "2022-01-01", null, "IRG-2008",
-            30000, 0.40, 1000, 1500, 0.80, 0, 0.80, 0, 15000);
+        InsertReglePeriode(scope.Conn, "PER-AV-2020-06", "Av 2020-06", "1000-01-01", "2020-05-31", "IRG-2008",
+            0, 0.40, 1000, 1500, "1", "0", "1", "0", 0);
+        InsertReglePeriode(scope.Conn, "PER-2020-06", "2020-06..12", "2020-06-01", "2020-12-31", "IRG-2008",
+            30000, 0.40, 1000, 1500, "8/3", "20000/3", "5/3", "12500/3", 40000);
+        InsertReglePeriode(scope.Conn, "PER-2021", "2021", "2021-01-01", "2021-12-31", "IRG-2008",
+            30000, 0.40, 1000, 1500, "8/3", "20000/3", "5/3", "12500/3", 42500);
+        InsertReglePeriode(scope.Conn, "PER-2022+", "2022+", "2022-01-01", null, "IRG-2008",
+            30000, 0.40, 1000, 1500, "137/51", "27925/8", "93/61", "81213/41", 42500);
 
-        Assert.Equal("PER-2020",  ResolveReglePeriode(scope.Conn, "2020-06-15"));
-        Assert.Equal("PER-2020",  ResolveReglePeriode(scope.Conn, "2020-12-31"));
-        Assert.Equal("PER-2021",  ResolveReglePeriode(scope.Conn, "2021-01-01"));
-        Assert.Equal("PER-2021",  ResolveReglePeriode(scope.Conn, "2021-12-31"));
+        // Période 1 (avant 2020-06) : sentinelle 1000-01-01.
+        Assert.Equal("PER-AV-2020-06", ResolveReglePeriode(scope.Conn, "1000-01-01"));
+        Assert.Equal("PER-AV-2020-06", ResolveReglePeriode(scope.Conn, "2007-01-01"));
+        Assert.Equal("PER-AV-2020-06", ResolveReglePeriode(scope.Conn, "2020-05-31"));
+
+        // Période 2 (2020-06..12).
+        Assert.Equal("PER-2020-06", ResolveReglePeriode(scope.Conn, "2020-06-01"));
+        Assert.Equal("PER-2020-06", ResolveReglePeriode(scope.Conn, "2020-12-31"));
+
+        // Période 3 (2021).
+        Assert.Equal("PER-2021", ResolveReglePeriode(scope.Conn, "2021-01-01"));
+        Assert.Equal("PER-2021", ResolveReglePeriode(scope.Conn, "2021-12-31"));
+
+        // Période 4 (2022+, ouverte).
         Assert.Equal("PER-2022+", ResolveReglePeriode(scope.Conn, "2022-01-01"));
-        Assert.Equal("PER-2022+", ResolveReglePeriode(scope.Conn, "2030-01-01"));
+        Assert.Equal("PER-2022+", ResolveReglePeriode(scope.Conn, "2030-12-31"));
+    }
+
+    [Fact]
+    public void CHECK_CoefGeneral_interdit_valeur_0_ou_vide()
+    {
+        // 8/3, 137/51, etc. sont des fractions irréductibles non nulles.
+        // Un Coef=0 ferait diviser par 0 dans la formule. Refusé au niveau SQL.
+        using var scope = SchemaTestSupport.CreateMigrated();
+        InsertBareme(scope.Conn, "IRG-2008", "IRG-2008", "Barème 2008", "2007-01-01");
+        var ex = Assert.Throws<SqliteException>(() => SchemaTestSupport.Exec(scope.Conn,
+            "INSERT INTO IRGReglesPeriode (Id, Code, Libelle, DateDebut, BaremeId, " +
+            " CoefGeneral, ConstGeneral, CoefSpecial, ConstSpecial, Hash, CreatedAt) " +
+            "VALUES ('P', 'P', 'P', '2020-01-01', 'IRG-2008', '0', '0', '1', '0', 'h', '2026-07-14T09:00:00Z');"));
+        Assert.Contains("CHECK", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     // -----------------------------------------------------------------------
@@ -260,7 +307,7 @@ public class IrgParametresSchemaTests
         SqliteConnection c, string id, string libelle,
         string dateDebut, string? dateFin, string baremeId,
         int exon, double abattTaux, int abattMin, int abattMax,
-        double coefGen, int constGen, double coefSpe, int constSpe, int plafondSpe)
+        string coefGen, string constGen, string coefSpe, string constSpe, int plafondSpe)
     {
         SchemaTestSupport.Exec(c,
             "INSERT INTO IRGReglesPeriode (Id, Code, Libelle, DateDebut, DateFin, BaremeId, " +

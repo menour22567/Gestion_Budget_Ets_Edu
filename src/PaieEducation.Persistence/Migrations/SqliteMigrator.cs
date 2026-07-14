@@ -11,10 +11,15 @@ namespace PaieEducation.Persistence.Migrations;
 /// </summary>
 /// <remarks>
 /// <list type="bullet">
-///   <item><c>PRAGMA foreign_keys=ON</c> est activé sur chaque connexion (SQLite perd
-///         ce réglage entre deux ouvertures de connexion).</item>
-///   <item><c>PRAGMA journal_mode=WAL</c> est tenté sur les bases fichier. SQLite
-///         retourne <c>memory</c> et ignore la commande sur les bases <c>:memory:</c>.</item>
+///   <item>À chaque connexion ouverte, PRAGMA recommandés par Tome K (Persistence, §21) :
+///         <list type="bullet">
+///           <item><c>foreign_keys=ON</c> (SQLite perd ce réglage entre deux ouvertures)</item>
+///           <item><c>journal_mode=WAL</c> (bases fichier uniquement ; ignoré sur <c>:memory:</c>)</item>
+///           <item><c>busy_timeout=5000</c> (réduit les erreurs de verrouillage)</item>
+///           <item><c>synchronous=NORMAL</c> (compromis performance/sécurité)</item>
+///           <item><c>temp_store=MEMORY</c> (optimise les traitements temporaires)</item>
+///         </list>
+///   </item>
 ///   <item>La table méta <c>SchemaVersions</c> est garantie par bootstrap idempotent
 ///         (<c>CREATE TABLE IF NOT EXISTS</c>) ; elle n'est pas elle-même versionnée
 ///         car elle précède toute migration.</item>
@@ -54,8 +59,7 @@ public sealed class SqliteMigrator : IMigrator
             using var connection = new SqliteConnection(_options.ConnectionString);
             connection.Open();
 
-            EnableForeignKeys(connection);
-            TryEnableWal(connection);
+            ConfigurePragmas(connection);
             EnsureSchemaVersionsTable(connection);
 
             var current = ReadMaxAppliedVersion(connection);
@@ -81,7 +85,7 @@ public sealed class SqliteMigrator : IMigrator
         {
             using var connection = new SqliteConnection(_options.ConnectionString);
             connection.Open();
-            EnableForeignKeys(connection);
+            ConfigurePragmas(connection);
             EnsureSchemaVersionsTable(connection);
             return Result.Success(ReadMaxAppliedVersion(connection));
         }
@@ -107,20 +111,32 @@ public sealed class SqliteMigrator : IMigrator
         tx.Commit();
     }
 
-    private static void EnableForeignKeys(SqliteConnection connection)
+    private static void ConfigurePragmas(SqliteConnection connection)
     {
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = "PRAGMA foreign_keys=ON;";
-        cmd.ExecuteNonQuery();
+        // PRAGMA foreign_keys : SQLite perd ce réglage à chaque ouverture,
+        // on l'active systématiquement. (V4 Tome K §21.)
+        ExecPragma(connection, "PRAGMA foreign_keys=ON;");
+
+        // PRAGMA journal_mode=WAL : ignoré sur :memory: (renvoie "memory"),
+        // appliqué sur les bases fichier (meilleure concurrence).
+        ExecPragma(connection, "PRAGMA journal_mode=WAL;");
+
+        // PRAGMA busy_timeout=5000 : attend jusqu'à 5s avant de remonter
+        // SQLITE_BUSY en cas de verrou.
+        ExecPragma(connection, "PRAGMA busy_timeout=5000;");
+
+        // PRAGMA synchronous=NORMAL : compromis performance/sécurité.
+        // WAL + NORMAL = recommandé pour la plupart des cas (Tome K §21).
+        ExecPragma(connection, "PRAGMA synchronous=NORMAL;");
+
+        // PRAGMA temp_store=MEMORY : tables temporaires en RAM.
+        ExecPragma(connection, "PRAGMA temp_store=MEMORY;");
     }
 
-    private static void TryEnableWal(SqliteConnection connection)
+    private static void ExecPragma(SqliteConnection connection, string pragma)
     {
-        // WAL ne s'applique pas aux bases en mémoire : SQLite renvoie "memory"
-        // et ignore la commande. On l'exécute quand même pour rester cohérent
-        // sur les bases fichier (meilleure concurrence lecture/écriture).
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "PRAGMA journal_mode=WAL;";
+        cmd.CommandText = pragma;
         cmd.ExecuteNonQuery();
     }
 

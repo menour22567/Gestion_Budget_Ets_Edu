@@ -338,6 +338,12 @@ Composition de l'assiette d'une cotisation : quelles rubriques la composent ?
 
 ## 8. V006 — IRG & paramètres système
 
+> **Patch V007 (J2.a)** : `IRGReglesPeriode` voit ses colonnes `CoefGeneral`, `ConstGeneral`, `CoefSpecial`, `ConstSpecial` passer de `REAL`/`INTEGER` à `TEXT` pour stocker la **fraction réglementaire exacte** (ex. `8/3`, `20000/3`, `137/51`, `27925/8`, `93/61`, `81213/41`). Une fraction comme `8/3` ne se représente pas exactement en `REAL` ; la stocker en `TEXT` garantit la précision du référentiel. CHECK interdit `Coef*='0'` (division par zéro dans la formule).
+>
+> Le seed canonique (4 règles de période + barème 2008) est appliqué par la CLI `tools/PaieEducation.Tools` (`seed irg`) — pas dans une migration.
+
+### 8.1. `BaremeIRG` (en-tête)
+
 ### 8.1. `BaremeIRG` (en-tête)
 En-tête d'un barème. **Une seule instance V1** : le barème 2008 (les « règles de période » 2020/2021/2022+ ne sont pas des barèmes distincts — cf. Q4b).
 
@@ -385,10 +391,10 @@ Une ligne par période (2020, 2021, 2022+). Toutes les colonnes `Default 0`/`1` 
 | `AbattementTaux` | REAL | NOT NULL DEFAULT 0 | ex. 0.40 (40 % sur IRG brut) |
 | `AbattementMin` | INTEGER | NOT NULL DEFAULT 0 | borne basse (ex. 1 000) |
 | `AbattementMax` | INTEGER | NOT NULL DEFAULT 0 | borne haute (ex. 1 500), `CHECK >= AbattementMin` |
-| `CoefGeneral` | REAL | NOT NULL DEFAULT 1 | Lissage « général » (Phase 4) |
-| `ConstGeneral` | INTEGER | NOT NULL DEFAULT 0 | |
-| `CoefSpecial` | REAL | NOT NULL DEFAULT 1 | Profil `HANDICAPE_OU_RETRAITE_RG` |
-| `ConstSpecial` | INTEGER | NOT NULL DEFAULT 0 | |
+| `CoefGeneral` | TEXT | NOT NULL DEFAULT '1' | Fraction canonique (« 8/3 », « 137/51 », « 1 »). Cf. V007. |
+| `ConstGeneral` | TEXT | NOT NULL DEFAULT '0' | Fraction ou entier (« 20000/3 », « 0 »). |
+| `CoefSpecial` | TEXT | NOT NULL DEFAULT '1' | Fraction canonique (« 5/3 », « 93/61 »). Cf. V007. |
+| `ConstSpecial` | TEXT | NOT NULL DEFAULT '0' | Fraction ou entier. |
 | `PlafondSpecial` | INTEGER | NOT NULL DEFAULT 0 | Plafond IRG pour profil spécial |
 | `Source` | TEXT | | |
 

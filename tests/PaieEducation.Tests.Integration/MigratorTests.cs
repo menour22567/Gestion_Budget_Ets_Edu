@@ -26,6 +26,14 @@ public class MigratorTests
         return new SqliteMigrator(new SqliteMigratorOptions(connectionString, appliedBy), migrations);
     }
 
+    /// <summary>Compte le nombre de fichiers V*.sql embarqués pour rendre les tests
+    /// résistants à l'ajout de futures migrations.</summary>
+    private static int ExpectedMigrationCount() =>
+        typeof(SqliteMigrator).Assembly
+            .GetManifestResourceNames()
+            .Count(n => n.StartsWith(ResourcePrefix, StringComparison.Ordinal)
+                     && n.EndsWith(".sql", StringComparison.Ordinal));
+
     [Fact]
     public void Migration_V001_est_embarquee_dans_l_assembly_Persistence()
     {
@@ -41,18 +49,19 @@ public class MigratorTests
         using var connection = new SqliteConnection(db.ConnectionString);
         connection.Open();
 
+        var expectedCount = ExpectedMigrationCount();
         var migrator = CreateMigrator(connection.ConnectionString);
 
         var result = migrator.Apply();
 
         Assert.True(result.IsSuccess, result.Error.Message);
-        Assert.Equal(1, result.Value);
+        Assert.Equal(expectedCount, result.Value);
 
-        // SchemaVersions doit contenir V001.
+        // SchemaVersions doit contenir autant de lignes que de migrations.
         using (var cmd = connection.CreateCommand())
         {
-            cmd.CommandText = "SELECT COUNT(*) FROM SchemaVersions WHERE Version = 1;";
-            Assert.Equal(1L, Convert.ToInt64(cmd.ExecuteScalar(), CultureInfo.InvariantCulture));
+            cmd.CommandText = "SELECT COUNT(*) FROM SchemaVersions;";
+            Assert.Equal((long)expectedCount, Convert.ToInt64(cmd.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture));
         }
 
         // Et la table AuditLog (créée par V001) doit exister.
@@ -70,6 +79,7 @@ public class MigratorTests
         using var connection = new SqliteConnection(db.ConnectionString);
         connection.Open();
 
+        var expectedCount = ExpectedMigrationCount();
         var migrator = CreateMigrator(connection.ConnectionString);
 
         var first = migrator.Apply();
@@ -77,16 +87,16 @@ public class MigratorTests
         var third = migrator.Apply();
 
         Assert.True(first.IsSuccess);
-        Assert.Equal(1, first.Value);
+        Assert.Equal(expectedCount, first.Value);
         Assert.True(second.IsSuccess);
         Assert.Equal(0, second.Value);
         Assert.True(third.IsSuccess);
         Assert.Equal(0, third.Value);
 
-        // Toujours une seule ligne dans SchemaVersions.
+        // Toujours exactement le bon nombre de lignes dans SchemaVersions.
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT COUNT(*) FROM SchemaVersions;";
-        Assert.Equal(1L, Convert.ToInt64(cmd.ExecuteScalar(), CultureInfo.InvariantCulture));
+        Assert.Equal((long)expectedCount, Convert.ToInt64(cmd.ExecuteScalar(), CultureInfo.InvariantCulture));
     }
 
     [Fact]
@@ -94,6 +104,7 @@ public class MigratorTests
     {
         using var db = new TempSqliteDb();
 
+        var expectedMax = ExpectedMigrationCount();
         var migrator = CreateMigrator(db.ConnectionString);
 
         var before = migrator.GetCurrentVersion();
@@ -104,7 +115,7 @@ public class MigratorTests
 
         var after = migrator.GetCurrentVersion();
         Assert.True(after.IsSuccess);
-        Assert.Equal(1, after.Value);
+        Assert.Equal(expectedMax, after.Value);
     }
 
     [Fact]

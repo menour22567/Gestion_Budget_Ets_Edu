@@ -11,6 +11,12 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Scripts de migration versionnés, embarqués dans l'assembly
+         pour rester co-localisés avec le code et déployés d'un bloc. -->
+    <EmbeddedResource Include="Migrations\*.sql" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

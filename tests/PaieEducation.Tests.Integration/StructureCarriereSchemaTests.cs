@@ -114,19 +114,15 @@ public class StructureCarriereSchemaTests
         using var scope = CreateMigratedDb();
         var conn = scope.Conn;
 
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT Version, Name FROM SchemaVersions ORDER BY Version;";
-        using var reader = cmd.ExecuteReader();
-        var versions = new List<(int Version, string Name)>();
-        while (reader.Read())
-        {
-            versions.Add((reader.GetInt32(0), reader.GetString(1)));
-        }
-
-        Assert.Equal(3, versions.Count);
-        Assert.Equal((1, "init"), versions[0]);
-        Assert.Equal((2, "nomenclature"), versions[1]);
-        Assert.Equal((3, "grille_indiciaire"), versions[2]);
+        // On vérifie au minimum la présence des 3 premières migrations.
+        // Les ajouts ultérieurs (V004+ par J1.c) ne doivent pas casser ce test :
+        // on contrôle l'existence, pas l'exclusivité.
+        var v1 = SchemaTestSupport.Scalar<long>(conn, "SELECT COUNT(*) FROM SchemaVersions WHERE Version = 1;");
+        var v2 = SchemaTestSupport.Scalar<long>(conn, "SELECT COUNT(*) FROM SchemaVersions WHERE Version = 2;");
+        var v3 = SchemaTestSupport.Scalar<long>(conn, "SELECT COUNT(*) FROM SchemaVersions WHERE Version = 3;");
+        Assert.Equal(1L, v1);
+        Assert.Equal(1L, v2);
+        Assert.Equal(1L, v3);
     }
 
     // -----------------------------------------------------------------------

@@ -1,0 +1,599 @@
+ID;Corps_Statut;Typ_Personnels;Corps_Grades;Grades;Categorie;"Indice Minimum avant
+01/03/2022";"Indice Minimum
+A partir du 01/03/2022";"Indice Minimum
+A partir du 01/01/2023";"Indice Minimum
+A partir du 01/01/2024"
+1;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Maîtres de l'Ecole Primaire;Instructeur;7;348;398;473;548
+2;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l'’école primaire;11;498;548;623;698
+3;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur Principal de l'’école primaire;12;537;587;662;737
+4;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur Formateur de l'’école primaire;14;621;671;746;821
+5;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Maitre de l'école primaire;10;453;503;578;653
+6;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l’enseignement primaire;12;537;587;662;737
+7;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l’enseignement primaire classe 1;13;578;628;703;778
+8;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l’enseignement primaire classe 2;14;621;671;746;821
+9;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur émérite de l’enseignement primaire;15;666;716;791;866
+10;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Fondamental;Professeur de l’'enseignement fondamental;11;498;548;623;698
+11;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur de l’'enseignement moyen;12;537;587;662;737
+12;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Prof.Coordinateur d'Enseign.Moyen;12;537;587;662;737
+13;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur Principal de l’'enseignement moyen;13;578;628;703;778
+14;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur Formateur de l’'enseignement moyen;15;666;716;791;866
+15;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur de l’enseignement moyen classe 1;13;578;628;703;778
+16;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur de l’enseignement moyen classe 2;15;666;716;791;866
+17;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur émérite de l’enseignement moyen;16;713;763;838;913
+18;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs Techniques de Lycée;Professeur technique de lycée-chef d’'atelier;11;498;548;623;698
+19;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs Techniques de Lycée;Professeur technique de lycée, chef de travaux;12;537;587;662;737
+20;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur de l’'enseignement secondaire;13;578;628;703;778
+21;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Prof.Coordinateur d'Enseign.Secondaire;13;578;628;703;778
+22;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur Principal de l'’enseignement secondaire;14;621;671;746;821
+23;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur Formateur de l'’enseignement secondaire;16;713;763;838;913
+24;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur de l’enseignement secondaire classe 1;14;621;671;746;821
+25;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur de l’enseignement secondaire classe 2;16;713;763;838;913
+26;Corps Spécifiques de l'Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur émérite de l’enseignement secondaire;17;762;812;887;962
+27;Enseignants Contractuels;Personnels Contractuels Enseignants du Primaire;Prof.Contractuel de l’'Enseign. Primaire;Prof.Contractuel de l'’école primaire;12;537;587;662;737
+28;Enseignants Contractuels;Personnels Contractuels Enseignants  du CEM;Prof.Contractuel de l’'Enseign. Moyen;Prof.Contractuel de l’'Enseign. Moyen;12;537;587;662;737
+29;Enseignants Contractuels;Personnels Contractuels Enseignants  du Lycée;Prof.Contractuel de l’'Enseign. Secondaire;Prof.Contractuel de l’'Enseign. Secondaire;13;578;628;703;778
+30;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Adjoints de l'Education;Adjoint de l’'éducation;7;348;398;473;548
+31;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Adjoints de l'Education;Adjoint principal de l’'éducation;8;379;429;504;579
+32;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur de l’'éducation;10;453;503;578;653
+33;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur principal de l’'éducation;11;498;548;623;698
+34;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur de l’éducation en chef;12;537;587;662;737
+35;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur général de l’éducation;13;578;628;703;778
+36;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur spécialisé en soutien éducatif;10;453;503;578;653
+37;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur spécialisé principal en soutien éducatif;11;498;548;623;698
+38;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur spécialisé en chef en soutien éducatif;12;537;587;662;737
+39;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur spécialisé général en soutien éducatif;13;578;628;703;778
+40;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Conseillers de l'Education;Conseiller de l’'éducation;13;578;628;703;778
+41;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Conseillers de l'Education;Conseiller principal de l’'éducation;13;578;628;703;778
+42;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Conseillers de l'Education;Conseiller de l’'éducation en chef;14;621;671;746;821
+43;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Censeurs de lycée;Censeur de lycée;14;621;671;746;821
+44;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Censeurs;Censeur de l’enseignement primaire;14;621;671;746;821
+45;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Censeurs;Censeur de l’enseignement moyen;15;666;716;791;866
+46;Corps Spécifiques de l'Education Nationale;Personnels d'Education;Corps des Censeurs;Censeur de l’enseignement secondaire;16;713;763;838;913
+47;Corps Spécifiques de l'Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation scolaire et professionnelle;Conseiller de l’'orientation scolaire et professionnelle (Cat 10);10;453;503;578;653
+48;Corps Spécifiques de l'Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller de l’orientation et de la guidance scolaire et professionnelle;12;537;587;662;737
+49;Corps Spécifiques de l'Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller principal de l'’orientation et de la guidance scolaire et professionnelle (Cat 13);13;578;628;703;778
+50;Corps Spécifiques de l'Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller analyste de l’orientation et de la guidance scolaire et professionnelle;13;578;628;703;778
+51;Corps Spécifiques de l'Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller principal de l'’orientation et de la guidance scolaire et professionnelle;14;621;671;746;821
+52;Corps Spécifiques de l'Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller en chef de l’orientation et de la guidance scolaire et professionnelle;16;713;763;838;913
+53;Corps Spécifiques de l'Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller en alimentation scolaire (Cat 11);11;498;548;623;698
+54;Corps Spécifiques de l'Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller en alimentation scolaire;12;537;587;662;737
+55;Corps Spécifiques de l'Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller principal en alimentation scolaire;13;578;628;703;778
+56;Corps Spécifiques de l'Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller en chef en alimentation scolaire;14;621;671;746;821
+57;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs des ?coles primaires;Assistant du directeur de l’'école primaire;12;537;587;662;737
+58;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs des ?coles primaires;Directeur de l’'école primaire (Cat 14);14;621;671;746;821
+59;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs de colléges;Directeur de collège (Cat 15);15;666;716;791;866
+60;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs de lycées;Directeur de lycée (Cat 16);16;713;763;838;913
+61;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs des ?coles primaires;Directeur de l’'école primaire;15;666;716;791;866
+62;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs de colléges;Directeur de collège;16;713;763;838;913
+63;Corps Spécifiques de l'Education Nationale;Personnels de Direction des Etabliss.d'Enseign.;Corps des Directeurs de lycées;Directeur de lycée;17;762;812;887;962
+64;Corps Spécifiques de l'Education Nationale;Personnels d'Intendance;Corps des Adjoints des services ?conomiques;Adjoint des services économiques;7;348;398;473;548
+65;Corps Spécifiques de l'Education Nationale;Personnels d'Intendance;Corps des Adjoints des services ?conomiques;Adjoint principal des services économiques;8;379;429;504;579
+66;Corps Spécifiques de l'Education Nationale;Personnels d'Intendance;Corps des Sous-intendants;Sous-intendant;10;453;503;578;653
+67;Corps Spécifiques de l'Education Nationale;Personnels d'Intendance;Corps des Sous-intendants;Sous-intendant gestionnaire;11;498;548;623;698
+68;Corps Spécifiques de l'Education Nationale;Personnels d'Intendance;Corps des Intendants;Intendant;13;578;628;703;778
+69;Corps Spécifiques de l'Education Nationale;Personnels d'Intendance;Corps des Intendants;Intendant principal;14;621;671;746;821
+70;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Aides techniques de laboratoire;Aide technique de laboratoire;4;263;313;388;463
+71;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Agents techniques de laboratoire;Agent technique de laboratoire;5;288;338;413;488
+72;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Adjoints techniques de laboratoire;Adjoint technique de laboratoire;7;348;398;473;548
+73;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Attachés de laboratoire;Attaché de laboratoire;8;379;429;504;579
+74;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Attachés de laboratoire;Attaché principal de laboratoire;10;453;503;578;653
+75;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Attachés de laboratoire;Attaché en chef de laboratoire;11;498;548;623;698
+76;Corps Spécifiques de l'Education Nationale;Personnels de Laboratoire;Corps des Attachés de laboratoire;Attaché superviseur de laboratoire;12;537;587;662;737
+77;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteur de l’enseignement primaire;15;666;716;791;866
+78;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’orientation et de la guidance scolaire et professionnelle;"Inspecteur de l’orientation et de la
+guidance scolaire et professionnelle";15;666;716;791;866
+79;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’enseignement moyen;16;713;763;838;913
+80;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’éducation nationale;Inspecteur de l’éducation nationale (Cat 17);17;762;812;887;962
+81;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteurs de l’enseignement primaire spécialité disciplines;17;762;812;887;962
+82;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteur de l’enseignement primaire spécialité administration des écoles primaires;17;762;812;887;962
+83;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteur de l’enseignement primaire spécialité alimentation scolaire;17;762;812;887;962
+84;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’enseignement moyen spécialité disciplines;17;762;812;887;962
+85;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’enseignement moyen spécialité administration des collèges;17;762;812;887;962
+86;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’orientation et de la guidance scolaire et professionnelle aux collèges;17;762;812;887;962
+87;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de la gestion financière et matérielle des collèges;16;713;763;838;913
+88;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’enseignement secondaire spécialité disciplines;Hors catégorie-subdivision1;0;980;1055;1130
+89;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’enseignement secondaire spécialité administration des lycées;Hors catégorie-subdivision1;0;980;1055;1130
+90;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’orientation et de la guidance scolaire et professionnelle aux lycées;Hors catégorie-subdivision1;0;980;1055;1130
+91;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de la gestion financière et matérielle des lycées;17;762;812;887;962
+92;Corps Spécifiques de l'Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’éducation nationale;Hors catégorie-subdivision2;0;1040;1115;1190
+93;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Administrateurs;Administrateur;12;537;587;662;737
+94;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Administrateurs;Administrateur analyste;13;578;628;703;778
+95;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Administrateurs;Administrateur principal;14;621;671;746;821
+96;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Administrateurs;Administrateur conseiller;16;713;763;838;913
+97;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Assistants administrateurs;Assistant administrateur;11;498;548;623;698
+98;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Attachés d'Administration;Attaché d'administration;9;418;468;543;618
+99;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Attachés d'Administration;Attaché Principal d'administration;10;453;503;578;653
+100;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Agents d'Administration;Agent de bureau;5;288;338;413;488
+101;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Agents d'Administration;Agent d'administration;7;348;398;473;548
+102;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Agents d'Administration;Agent Principal d'administration;8;379;429;504;579
+103;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Agents d'Administration;Agent de saisie;5;288;338;413;488
+104;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Secrétaires;Secretaire;6;315;365;440;515
+105;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Secrétaires;Secretaire de direction;8;379;429;504;579
+106;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Secrétaires;Secretaire Principal de direction;10;453;503;578;653
+107;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Comptables administratifs;Aide-comptable administratif;5;288;338;413;488
+108;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Comptables administratifs;Comptable administratif;8;379;429;504;579
+109;Corps Communs aux Instit.et Adm.Publiques ;"Personnels de la Filiére ""Administration générale""";Corps des Comptables administratifs;Comptable administratif principal;10;453;503;578;653
+110;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Traduction - interprétariat”;Corps des Traducteurs interprètes;Traducteur-interprète;12;537;587;662;737
+111;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Traduction - interprétariat”;Corps des Traducteurs interprètes;Traducteur-interprète spécialisé;13;578;628;703;778
+112;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Traduction - interprétariat”;Corps des Traducteurs interprètes;Traducteur-interprète principal;14;621;671;746;821
+113;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Traduction - interprétariat”;Corps des Traducteurs interprètes;Traducteur-interprète en chef;16;713;763;838;913
+114;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Ingénieurs;Ingénieur d’Etat en Informatique;13;578;628;703;778
+115;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Ingénieurs;Ingénieur principal en Informatique;14;621;671;746;821
+116;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Ingénieurs;Ingénieur en chef en Informatique;16;713;763;838;913
+117;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Assistants ingénieurs;Assistant ingénieur de niveau 1 en Informatique;11;498;548;623;698
+118;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Assistants ingénieurs;Assistant ingénieur de niveau 2 en Informatique;12;537;587;662;737
+119;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Techniciens;Technicien en Informatique;8;379;429;504;579
+120;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Techniciens;Technicien supérieur en Informatique;10;453;503;578;653
+121;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Adjoints techniques;Adjoint technique en Informatique;7;348;398;473;548
+122;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Informatique”;Corps des Agents techniques;Agent technique en Informatique;5;288;338;413;488
+123;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Ingénieurs;Ingénieur d’Etat en Statistiques;13;578;628;703;778
+124;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Ingénieurs;Ingénieur principal en Statistiques;14;621;671;746;821
+125;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Ingénieurs;Ingénieur en chef en Statistiques;16;713;763;838;913
+126;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Assistants ingénieurs;Assistant ingénieur de niveau 1 en Statistiques;11;498;548;623;698
+127;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Assistants ingénieurs;Assistant ingénieur de niveau 2 en Statistiques;12;537;587;662;737
+128;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Techniciens;Technicien en Statistiques;8;379;429;504;579
+129;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Techniciens;Technicien supérieur en Statistiques;10;453;503;578;653
+130;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Adjoints techniques;Adjoint technique en Statistiques;7;348;398;473;548
+131;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Statistiques”;Corps des Agents techniques;Agent technique en Statistiques;5;288;338;413;488
+132;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Documentalistes- archivistes;Documentaliste-archiviste;12;537;587;662;737
+133;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Documentalistes- archivistes;Documentaliste-archiviste analyste;13;578;628;703;778
+134;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Documentalistes- archivistes;Documentaliste-archiviste principal;14;621;671;746;821
+135;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Documentalistes- archivistes;Documentaliste-archiviste en chef;16;713;763;838;913
+136;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Assistants documentalistes-archivistes;Assistant documentaliste-archiviste;10;453;503;578;653
+137;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Assistants documentalistes-archivistes;Assistant documentaliste-archiviste principal;11;498;548;623;698
+138;Corps Communs aux Instit.et Adm.Publiques ;Personnels de la Filière “Documentation et archives”;Corps des Agents techniques en documentation et archives;Agent technique en documentation et archives;7;348;398;473;548
+139;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Ingénieurs;Ingénieur d’Etat-Laboratoire et maintenance-;13;578;628;703;778
+140;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Ingénieurs;Ingénieur principal-Laboratoire et maintenance-;14;621;671;746;821
+141;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Ingénieurs;Ingénieur en chef-Laboratoire et maintenance-;16;713;763;838;913
+142;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Techniciens;Assistant ingénieur de niveau 1-Laboratoire et maintenance-;11;498;548;623;698
+143;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Techniciens;Assistant ingénieur de niveau 2-Laboratoire et maintenance-;12;537;587;662;737
+144;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Techniciens;Technicien-Laboratoire et maintenance-;8;379;429;504;579
+145;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Techniciens;Technicien Superieur-Laboratoire et maintenance-;10;453;503;578;653
+146;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Adjoints techniques;Adjoint technique-Laboratoire et maintenance-;7;348;398;473;548
+147;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Agents techniques;Agent technique-Laboratoire et maintenance-;5;288;338;413;488
+148;Corps Communs aux Instit.et Adm.Publiques ;Personnels de Filière “Laboratoire et maintenance”;Corps des Agents de laboratoire;Agent de Laboratoire-Laboratoire et maintenance-;4;263;313;388;463
+149;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 3;1;200;250;325;400
+150;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 2;3;240;290;365;440
+151;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1;5;288;338;413;488
+152;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef de Parc;5;288;338;413;488
+153;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef d'Atelier;5;288;338;413;488
+154;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef Magasinier;5;288;338;413;488
+155;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef de Cuisine;5;288;338;413;488
+156;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Responsable du Service Interieur;5;288;338;413;488
+157;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie;6;315;365;440;515
+158;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef de Parc;6;315;365;440;515
+159;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef d'Atelier;6;315;365;440;515
+160;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef Magasinier;6;315;365;440;515
+161;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef de Cuisine;6;315;365;440;515
+162;Ouvriers Prof.,Conducteurs automob. Appariteurs;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Responsable du Service Interieur;6;315;365;440;515
+163;Ouvriers Prof.,Conducteurs automob. Appariteurs;Conducteurs d'automobile;Corps des Conducteurs d?automobile;Conducteur d'automobile Cat 2;2;219;269;344;419
+164;Ouvriers Prof.,Conducteurs automob. Appariteurs;Conducteurs d'automobile;Corps des Conducteurs d?automobile;Conducteur d'automobile Cat 2 - Chef de Parc;2;219;269;344;419
+165;Ouvriers Prof.,Conducteurs automob. Appariteurs;Conducteurs d'automobile;Corps des Conducteurs d?automobile;Conducteur d'automobile Cat 1;3;240;290;365;440
+166;Ouvriers Prof.,Conducteurs automob. Appariteurs;Conducteurs d'automobile;Corps des Conducteurs d?automobile;Conducteur d'automobile Cat 1 - Chef de Parc;3;240;290;365;440
+167;Ouvriers Prof.,Conducteurs automob. Appariteurs;Appariteurs;Corps des Appariteurs;Appariteur;1;200;250;325;400
+168;Ouvriers Prof.,Conducteurs automob. Appariteurs;Appariteurs;Corps des Appariteurs;Appariteur Principal;2;219;269;344;419
+169;Agents Contractuels;Ouvriers Professionnels Contractuels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 1;1;200;250;325;400
+170;Agents Contractuels;Ouvriers Professionnels Contractuels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 2;3;240;290;365;440
+171;Agents Contractuels;Ouvriers Professionnels Contractuels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 3;5;288;338;413;488
+172;Agents Contractuels;Ouvriers Professionnels Contractuels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 4;6;315;365;440;515
+173;Agents Contractuels;Agents de service Contractuels;Agents de service Contractuels;Agent de service Niv 1;1;200;250;325;400
+174;Agents Contractuels;Agents de service Contractuels;Agents de service Contractuels;Agent de service Niv 2;3;240;290;365;440
+175;Agents Contractuels;Agents de service Contractuels;Agents de service Contractuels;Agent de service Niv 3;5;288;338;413;488
+176;Agents Contractuels;Conducteurs d'automobile Contractuels;Conducteurs d'automobile Contractuels;Conducteur d'automobile Niveau 1;2;219;269;344;419
+177;Agents Contractuels;Conducteurs d'automobile Contractuels;Conducteurs d'automobile Contractuels;Conducteur d'automobile Niveau 2;3;240;290;365;440
+178;Agents Contractuels;Conducteurs d'automobile Contractuels;Conducteurs d'automobile Contractuels;Conducteur d'automobile Niveau 3 et Chef de Parc;4;263;313;388;463
+179;Agents Contractuels;Gardiens Contractuels;Gardiens Contractuels;Gardien;1;200;250;325;400
+180;Agents Contractuels;Agents de prevention Contractuels;Agents de prevention Contractuels;Agent de prevention Niv 1;5;288;338;413;488
+181;Agents Contractuels;Agents de prevention Contractuels;Agents de prevention Contractuels;Agent de prevention Niv 2;7;348;398;473;548
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;ÇáÃÓÇÊĞÉ_ÇáãÊÚÇŞÏæä;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáÇÈÊÏÇÆí_ÇáãÊÚÇŞÏíä ;;;;;;;
+;ÇáÃÓÇÊĞÉ_ÇáãÊÚÇŞÏæä;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáãÊæÓØ_ÇáãÊÚÇŞÏíä ;;;;;;;
+;ÇáÃÓÇÊĞÉ_ÇáãÊÚÇŞÏæä;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáËÇäæí_ÇáãÊÚÇŞÏíä;;;;;;;
+;ÇáÃÓÇÊĞÉ_ÇáãÊÚÇŞÏæä;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáËÇäæí_ÇáãÊÚÇŞÏíä_ÍÇãáí_ÇáãÇÓÊÑ;;;;;;;
+;ÇáÃÓáÇß_ÇáãÔÊÑßÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÅÏÇÑÉ_ÇáÚÇãÉ;;;;;;;
+;ÇáÃÓáÇß_ÇáãÔÊÑßÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáãÎÈÑ_æÇáÕíÇäÉ;;;;;;;
+;ÇáÃÓáÇß_ÇáãÔÊÑßÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÊÑÌãÉ;;;;;;;
+;ÇáÃÓáÇß_ÇáãÔÊÑßÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÅÚáÇã_ÇáÂáí;;;;;;;
+;ÇáÃÓáÇß_ÇáãÔÊÑßÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÅÍÕÇÁ;;;;;;;
+;ÇáÃÓáÇß_ÇáãÔÊÑßÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÊæËíŞ;;;;;;;
+;ÇáÚãÇá_Çáãåäíæä_æ_ÓÇÆŞí_ÇáÓíÇÑÇÊ_æ_ÇáÍÌÇÈ;ÇáÚãÇá_Çáãåäíæä;;;;;;;
+;ÇáÚãÇá_Çáãåäíæä_æ_ÓÇÆŞí_ÇáÓíÇÑÇÊ_æ_ÇáÍÌÇÈ;ÓÇÆŞí_ÇáÓíÇÑÇÊ;;;;;;;
+;ÇáÚãÇá_Çáãåäíæä_æ_ÓÇÆŞí_ÇáÓíÇÑÇÊ_æ_ÇáÍÌÇÈ;ÇáÍÌÇÈ;;;;;;;
+;ÇáÃÚæÇä_ÇáãÊÚÇŞÏæä;ÇáÚãÇá_Çáãåäíæä_ÇáãÊÚÇŞÏæä;;;;;;;
+;ÇáÃÚæÇä_ÇáãÊÚÇŞÏæä;ÃÚæÇä_ÇáÎÏãÉ_ÇáãÊÚÇŞÏæä;;;;;;;
+;ÇáÃÚæÇä_ÇáãÊÚÇŞÏæä;ÓÇÆŞí_ÇáÓíÇÑÉ_ÇáãÊÚÇŞÏæä;;;;;;;
+;ÇáÃÚæÇä_ÇáãÊÚÇŞÏæä;ÇáÍÑÇÓ_ÇáãÊÚÇŞÏæä;;;;;;;
+;ÇáÃÚæÇä_ÇáãÊÚÇŞÏæä;ÃÚæÇä_ÇáæŞÇíÉ_ÇáãÊÚÇŞÏæä;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;ãÓÊÎÏãí_ÇáÊÚáíã;ãÓÊÎÏãí_ÇáÊÑÈíÉ;ãÓÊÎÏãí_ÇáÊæÌíå_æÇáÇÑÔÇÏ;ãÓÊÎÏãí_ÇáãÎÈÑ;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáËÇäæí_ÇáãÊÚÇŞÏíä;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáÇÈÊÏÇÆí_ÇáãÊÚÇŞÏíä ;ãÓÊÎÏãí_ÇáÊÚáíã_ÇáãÊæÓØ_ÇáãÊÚÇŞÏíä ;;
+;ãÚáã ãÓÇÚÏ;ãÓÇÚÏ ÇáÊÑÈíÉ ;ãÓÊÔÇÑæ ÇáÊæÌíå  ÇáãÏÑÓí æ Çáãåäí;ãÓÇÚÏ ÊŞäí ááãÎÇÈÑ ;ÃÓÊÇĞ ãÊÚÇŞÏ ááÊÚáíã ÇáËÇäæí;ÃÓÊÇĞ ãÊÚÇŞÏ ááÊÚáíã ÇáÇÈÊÏÇÆí;ÃÓÊÇĞ ãÊÚÇŞÏ ááÊÚáíã ÇáãÊæÓØ;;
+;ÃÓÊÇĞ ÇáãÏÑÓÉ ÇáÅÈÊÏÇÆíÉ ;ãÓÇÚÏ ÑÆíÓí ááÊÑÈíÉ ;ãÓÊÔÇÑ ÇáÊæÌíå æ ÇáÅÑÔÇÏ ÇáãÏÑÓí æ Çáãåäí;Úæä ÊŞäí ááãÎÇÈÑ;ÃÓÊÇĞ ãÊÚÇŞÏ ááÊÚáíã ÇáËÇäæí-ÍÇÆÒ Úáì ÇáãÇÓÊÑ-;;;;
+;ÃÓÊÇĞ ÑÆíÓí ááãÏÑÓÉ ÇáÅÈÊÏÇÆíÉ;ãÔÑİ ÇáÊÑÈíÉ ;ãÓÊÔÇÑ ÑÆíÓí ááÊæÌíå æ ÇáÅÑÔÇÏ ÇáãÏÑÓí æ Çáãåäí;ãÚÇæä ÊŞäí ááãÎÇÈÑ;;;;;
+;ÃÓÊÇĞ ãßæä İí ÇáãÏÑÓÉ ÇáÅÈÊÏÇÆíÉ;ãÔÑİ ÑÆíÓí ááÊÑÈíÉ;;ãáÍŞ ÈÇáãÎÇÈÑ;;;;;
+;ãÚáã ÇáãÏÑÓÉ ÇáÇÈÊÏÇÆíÉ;ãÔÑİ ÑÆíÓ ááÊÑÈíÉ;;ãáÍŞ ÑÆíÓí ááãÎÇÈÑ;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáÇÈÊÏÇÆí;ãÔÑİ ÚÇã ááÊÑÈíÉ;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáÇÈÊÏÇÆí ŞÓã Ãæá;ãÑÈí ãÊÎÕÕ İí ÇáÏÚã ÇáÊÑÈæí;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáÇÈÊÏÇÆí ŞÓã ËÇä;ãÑÈí ãÊÎÕÕ ÑÆíÓí İí ÇáÏÚã ÇáÊÑÈæí;;;;;;;
+;ÃÓÊÇĞ ããíÒ İí ÇáÊÚáíã ÇáÇÈÊÏÇÆí;ãÑÈí ãÊÎÕÕ ÑÆíÓ İí ÇáÏÚã ÇáÊÑÈæí;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáÃÓÇÓí;ãÑÈí ãÊÎÕÕ ÚÇã İí ÇáÏÚã ÇáÊÑÈæí;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáãÊæÓØ;ãÓÊÔÇÑ  ÇáÊÑÈíÉ;;;;;;;
+;ÃÓÊÇĞ ãäÓŞ ááÊÚáíã ÇáãÊæÓØ;ãÓÊÔÇÑ ÑÆíÓí ááÊÑÈíÉ;;;;;;;
+;ÃÓÊÇĞ ÑÆíÓí ááÊÚáíã ÇáãÊæÓØ;ãÓÊÔÇÑ ÑÆíÓ ááÊÑÈíÉ ;;;;;;;
+;ÃÓÊÇĞ ãßæä İí ÇáÊÚáíã ÇáãÊæÓØ;äÇÙÑ ËÇäæíÉ;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáãÊæÓØ ŞÓã Ãæá;äÇÙÑ İí ÇáÊÚáíã ÇáÇÈÊÏÇÆí;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáãÊæÓØ ŞÓã ËÇä;äÇÙÑ İí ÇáÊÚáíã ÇáãÊæÓØ;;;;;;;
+;ÃÓÊÇĞ ããíÒ İí ÇáÊÚáíã ÇáãÊæÓØ;äÇÙÑ İí ÇáÊÚáíã ÇáËÇäæí;;;;;;;
+;ÃÓÊÇĞ ÊŞäí İí ÇáËÇäæíÉ ÑÆíÓ æÑÔÉ ;;;;;;;;
+;ÃÓÊÇĞ ÊŞäí İí ÇáËÇäæíÉ ÑÆíÓ ÃÔÛÇá ;;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáËÇäæí ;;;;;;;;
+;ÃÓÊÇĞ ãäÓŞ ááÊÚáíã ÇáËÇäæí;;;;;;;;
+;ÃÓÊÇĞ ÑÆíÓí ááÊÚáíã ÇáËÇäæí;;;;;;;;
+;ÃÓÊÇĞ ãßæä İí ÇáÊÚáíã ÇáËÇäæí;;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáËÇäæí ŞÓã Ãæá;;;;;;;;
+;ÃÓÊÇĞ ÇáÊÚáíã ÇáËÇäæí ŞÓã ËÇä;;;;;;;;
+;ÃÓÊÇĞ ããíÒ İí ÇáÊÚáíã ÇáËÇäæí;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÅÏÇÑÉ_ÇáÚÇãÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáãÎÈÑ_æÇáÕíÇäÉ;ãÓÊÎÏãí_ÔÚÈÉ_ÇáÊÑÌãÉ;;;;;;
+;ãÊÕÑİ;ãåäÏÓ ÏæáÉ İí ÇáãÎÈÑ æÇáÕíÇäÉ;ÇáãÊÑÌã - ÇáÊÑÌãÇä;;;;;;
+;ãÊÕÑİ ãÍáá;ãåäÏÓ ÑÆíÓí İí ÇáãÎÈÑ æÇáÕíÇäÉ;ÇáãÊÑÌã-ÇáÊÑÌãÇä ÇáãÊÎÕÕ;;;;;;
+;ãÊÕÑİ ÑÆíÓí;ÑÆíÓ ÇáãåäÏÓíä İí ÇáãÎÈÑ æÇáÕíÇäÉ;ÇáãÊÑÌã-ÇáÊÑÌãÇä ÇáÑÆíÓí;;;;;;
+;ãÊÕÑİ ãÓÊÔÇÑ;ãÓÇÚÏ ãåäÏÓ ãÓÊæì 1 İí ÇáãÎÈÑ æÇáÕíÇäÉ;ÑÆíÓ ÇáãÊÑÌãíä -ÇáÊÑÇÌãÉ;;;;;;
+;ãÓÇÚÏ ãÊÕÑİ;ãÓÇÚÏ ãåäÏÓ ãÓÊæì 2 İí ÇáãÎÈÑ æÇáÕíÇäÉ;;;;;;;
+;ãáÍŞ ÅÏÇÑÉ;ÊŞäí ãÎÈÑ;;;;;;;
+;ãáÍŞ ÑÆíÓí ááÅÏÇÑÉ;ÊŞäí ÓÇã ááãÎÈÑ;;;;;;;
+;Úæä ãßÊÈ;ãÚÇæä ÊŞäí ááãÎÈÑ;;;;;;;
+;Úæä ÅÏÇÑÉ;Úæä ÊŞäí ááãÎÈÑ;;;;;;;
+;Úæä  ÅÏÇÑÉ ÑÆíÓí;Úæä ãÎÈÑ;;;;;;;
+;Úæä ÍİÙ ÇáÈíÇäÇÊ;;;;;;;;
+;ßÇÊÈ;;;;;;;;
+;ßÇÊÈ ãÏíÑíÉ;;;;;;;;
+;ßÇÊÈ ãÏíÑíÉ ÑÆíÓí;;;;;;;;
+;ãÓÜÇÚÏ ãÍÇÓÈ ÅÏÇÑí;;;;;;;;
+;ãÍÇÓÈ ÅÏÇÑí;;;;;;;;
+;ãÍÇÓÈ ÅÏÇÑí ÑÆíÓí;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;ÇáÚãÇá_Çáãåäíæä;ÓÇÆŞí_ÇáÓíÇÑÇÊ;ÇáÍÌÇÈ;ÇáÍÑÇÓ_ÇáãÊÚÇŞÏæä;ÃÚæÇä_ÇáæŞÇíÉ_ÇáãÊÚÇŞÏæä;;;;
+;ÚÇãá ãåäí ãä ÇáÕäİ ÇáËÇáË;ÓÇÆŞ ÇáÓíÇÑÉ ãä ÇáÕäİ ÇáËÇäí;ÍÇÌÈ;ÍÇÑÓ;Úæä ÇáæŞÇíÉ ãä ÇáãÓÊæì ÇáÃæá;;;;
+;ÚÇãá ãåäí ãä ÇáÕäİ ÇáËÇäí;ÓÇÆŞ ÇáÓíÇÑÉ ãä ÇáÕäİ ÇáËÇäí-ÑÆíÓ ÍÙíÑÉ;ÍÇÌÈ ÑÆíÓí;;Úæä ÇáæŞÇíÉ ãä ÇáãÓÊæì ÇáËÇäí;;;;
+;ÚÇãá ãåäí ãä ÇáÕäİ ÇáÃæá;ÓÇÆŞ ÇáÓíÇÑÉ ãä ÇáÕäİ ÇáÃæá;;;;;;;
+;ÚÇãá ãåäí Õ1-ÑÆíÓ ÍÙíÑÉ;ÓÇÆŞ ÇáÓíÇÑÉ ãä ÇáÕäİ ÇáÃæá-ÑÆíÓ ÍÙíÑÉ;;;;;;;
+;ÚÇãá ãåäí Õ1-ÑÆíÓ æÑÔÉ;;;;;;;;
+;ÚÇãá ãåäí Õ1-ÑÆíÓ ãÎÒä;;;;;;;;
+;ÚÇãá ãåäí Õ1-ÑÆíÓ ãØÈÎ;;;;;;;;
+;ÚÇãá ãåäí Õ1-ãÓÄæá ãÕáÍÉ ÏÇÎáíÉ;;;;;;;;
+;ÚÇãá ãåäí ÎÇÑÌ ÇáÕäİ;;;;;;;;
+;ÚÇãá ãåäí ÎÇÑÌ ÇáÕäİ-ÑÆíÓ ÍÙíÑÉ;;;;;;;;
+;ÚÇãá ãåäí ÎÇÑÌ ÇáÕäİ-ÑÆíÓ æÑÔÉ;;;;;;;;
+;ÚÇãá ãåäí ÎÇÑÌ ÇáÕäİ-ÑÆíÓ ãÎÒä;;;;;;;;
+;ÚÇãá ãåäí ÎÇÑÌ ÇáÕäİ-ÑÆíÓ ãØÈÎ;;;;;;;;
+;ÚÇãá ãåäí ÎÇÑÌ ÇáÕäİ-ãÓÄæá ãÕáÍÉ ÏÇÎáíÉ;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;
+;;;;;;;;;

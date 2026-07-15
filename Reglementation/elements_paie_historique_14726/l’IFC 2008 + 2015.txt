@@ -1,0 +1,24 @@
+l’IFC 2008 + 2015
+
+Voici un tableau structuré et historisé de l’IFC prêt à exploiter dans votre base.
+D’après le décret de 2008, l’IFC est une indemnité forfaitaire compensatrice mensuelle servie aux fonctionnaires et agents contractuels classés dans les grilles indiciaires visées, avec effet au 1er janvier 2008. Le barème initial est par groupes de catégories : 1 à 6 = 3200 DA, 7 et 8 = 2500 DA, 9 et 10 = 2000 DA, 11 à 17 = 1500 DA. 
+Le décret modificatif de 2015 remplace ce tableau à compter du 1er janvier 2015 par des montants catégorie par catégorie : 1=7700, 2=7400, 3=6900, 4=6400, 5=5700, 6=5000, 7=3800, 8=3800, 9=3100, 10=3100, et précise que “le reste sans changement”, ce qui signifie que les catégories 11 à 17 conservent le montant antérieur de 1500 DA
+Tableau métier historisé
+
+Date_Debut	Date_Fin	Categorie_Debut	Categorie_Fin	Montant_IFC	Base_Reglementaire
+2008-01-01	2014-12-31	1	6	3200	Décret exécutif n° 08-70
+2008-01-01	2014-12-31	7	8	2500	Décret exécutif n° 08-70
+2008-01-01	2014-12-31	9	10	2000	Décret exécutif n° 08-70
+2008-01-01	2014-12-31	11	17	1500	Décret exécutif n° 08-70
+2015-01-01	Null	1	1	7700	Décret exécutif n° 15-176
+2015-01-01	Null	2	2	7400	Décret exécutif n° 15-176
+2015-01-01	Null	3	3	6900	Décret exécutif n° 15-176
+2015-01-01	Null	4	4	6400	Décret exécutif n° 15-176
+2015-01-01	Null	5	5	5700	Décret exécutif n° 15-176
+2015-01-01	Null	6	6	5000	Décret exécutif n° 15-176
+2015-01-01	Null	7	7	3800	Décret exécutif n° 15-176
+2015-01-01	Null	8	8	3800	Décret exécutif n° 15-176
+2015-01-01	Null	9	9	3100	Décret exécutif n° 15-176
+2015-01-01	Null	10	10	3100	Décret exécutif n° 15-176
+2015-01-01	Null	11	17	1500	Décret 15-176 : “le reste sans changement”
+

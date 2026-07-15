@@ -55,23 +55,14 @@ public class EligibiliteCotisationsSchemaTests
     // -----------------------------------------------------------------------
 
     [Fact]
-    public void CHECK_ReglesEligibilite_Critere_rejette_valeur_inconnue()
-    {
-        using var scope = SchemaTestSupport.CreateMigrated();
-        InsertRubrique(scope.Conn, "IEP", "IEP");
-        var ex = Assert.Throws<SqliteException>(() => SchemaTestSupport.Exec(scope.Conn,
-            "INSERT INTO ReglesEligibilite (Id, RubriqueId, Critere, Operateur, Valeur, DateEffet, CreatedAt, Hash) " +
-            "VALUES ('RE-1', 'IEP', 'N_IMPORTE_QUOI', '=', 'X', '2007-01-01', '2026-01-01T00:00:00Z', 'h');"));
-        Assert.Contains("CHECK", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
     public void CHECK_ReglesEligibilite_Operateur_rejette_valeur_inconnue()
     {
         using var scope = SchemaTestSupport.CreateMigrated();
         InsertRubrique(scope.Conn, "IEP", "IEP");
+        // R3 (V009) : Critere TEXT+CHECK supprimé, remplacé par CritereId FK.
+        // La validation de la valeur du critère est portée par la FK vers CriteresEligibilite.
         var ex = Assert.Throws<SqliteException>(() => SchemaTestSupport.Exec(scope.Conn,
-            "INSERT INTO ReglesEligibilite (Id, RubriqueId, Critere, Operateur, Valeur, DateEffet, CreatedAt, Hash) " +
+            "INSERT INTO ReglesEligibilite (Id, RubriqueId, CritereId, Operateur, Valeur, DateEffet, CreatedAt, Hash) " +
             "VALUES ('RE-1', 'IEP', 'CORPS', '~', 'X', '2007-01-01', '2026-01-01T00:00:00Z', 'h');"));
         Assert.Contains("CHECK", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -190,22 +181,21 @@ public class EligibiliteCotisationsSchemaTests
         InsertRegleEligibilite(scope.Conn, "RE-ISSRP-30", "ISSRP_30", "CORPS", "=", "PELP", "2007-01-01");
         InsertRegleEligibilite(scope.Conn, "RE-ISSRP-15", "ISSRP_15", "CORPS", "=", "AT", "2007-01-01");
 
-        // Le moteur de paie demandera, pour un agent en corps PEM, la rubrique
-        // ISSRP éligible. On vérifie ici la requête brute :
-        //   WHERE RubriqueId = ... AND Critere = 'CORPS' AND Operateur = '=' AND Valeur = 'PEM'
+        // R3 (V009) : Critere TEXT remplacé par CritereId FK. La requête utilise
+        // désormais CritereId au lieu de Critere — source unique de vérité.
         var eligiblePourPem = SchemaTestSupport.Scalar<string>(scope.Conn,
             "SELECT RubriqueId FROM ReglesEligibilite " +
-            "WHERE Critere = 'CORPS' AND Operateur = '=' AND Valeur = 'PEM';");
+            "WHERE CritereId = 'CORPS' AND Operateur = '=' AND Valeur = 'PEM';");
         Assert.Equal("ISSRP_45", eligiblePourPem);
 
         var eligiblePourPelp = SchemaTestSupport.Scalar<string>(scope.Conn,
             "SELECT RubriqueId FROM ReglesEligibilite " +
-            "WHERE Critere = 'CORPS' AND Operateur = '=' AND Valeur = 'PELP';");
+            "WHERE CritereId = 'CORPS' AND Operateur = '=' AND Valeur = 'PELP';");
         Assert.Equal("ISSRP_30", eligiblePourPelp);
 
         var eligiblePourAt = SchemaTestSupport.Scalar<string>(scope.Conn,
             "SELECT RubriqueId FROM ReglesEligibilite " +
-            "WHERE Critere = 'CORPS' AND Operateur = '=' AND Valeur = 'AT';");
+            "WHERE CritereId = 'CORPS' AND Operateur = '=' AND Valeur = 'AT';");
         Assert.Equal("ISSRP_15", eligiblePourAt);
     }
 
@@ -218,18 +208,19 @@ public class EligibiliteCotisationsSchemaTests
         InsertRegleEligibilite(scope.Conn, "RE-ISSRP-45", "ISSRP_45", "CORPS", "IN",
             "PEM,PES,INSPECTION,DIRECTEUR,CENSEUR", "2007-01-01");
 
-        // La requête « la valeur contient PEM » fonctionne avec LIKE + délimiteurs virgule.
-        // C'est la base de la résolution multi-valeurs que le moteur utilisera.
+        // R3 (V009) : CritereId FK remplace Critere TEXT. La requête LIKE multi-valeurs
+        // (',' || Valeur || ',') LIKE ('%,' || $v || ',%') reste inchangée — c'est la
+        // base de la résolution IN multi-valeurs que le moteur utilisera.
         var match = SchemaTestSupport.Scalar<int>(scope.Conn,
             "SELECT COUNT(*) FROM ReglesEligibilite " +
-            "WHERE Critere = 'CORPS' AND Operateur = 'IN' " +
+            "WHERE CritereId = 'CORPS' AND Operateur = 'IN' " +
             "  AND (',' || Valeur || ',') LIKE ('%,' || $v || ',%');",
             ("$v", "PEM"));
         Assert.Equal(1, match);
 
         var noMatch = SchemaTestSupport.Scalar<int>(scope.Conn,
             "SELECT COUNT(*) FROM ReglesEligibilite " +
-            "WHERE Critere = 'CORPS' AND Operateur = 'IN' " +
+            "WHERE CritereId = 'CORPS' AND Operateur = 'IN' " +
             "  AND (',' || Valeur || ',') LIKE ('%,' || $v || ',%');",
             ("$v", "PEMX"));
         Assert.Equal(0, noMatch);
@@ -270,13 +261,16 @@ public class EligibiliteCotisationsSchemaTests
     }
 
     private static void InsertRegleEligibilite(
-        SqliteConnection c, string id, string rubriqueId, string critere, string operateur,
+        SqliteConnection c, string id, string rubriqueId, string critereId, string operateur,
         string valeur, string dateEffet)
     {
+        // R3 (V009) : CritereId FK remplace Critere TEXT. L'INSERT utilise désormais
+        // CritereId (FK vers CriteresEligibilite.Id) — la sémantique de la colonne
+        // helper reste "critère d'éligibilité" mais la valeur est un code catalogue.
         SchemaTestSupport.Exec(c,
-            "INSERT INTO ReglesEligibilite (Id, RubriqueId, Critere, Operateur, Valeur, DateEffet, CreatedAt, Hash) " +
+            "INSERT INTO ReglesEligibilite (Id, RubriqueId, CritereId, Operateur, Valeur, DateEffet, CreatedAt, Hash) " +
             "VALUES ($id, $r, $cr, $op, $v, $de, $ts, $h);",
-            ("$id", id), ("$r", rubriqueId), ("$cr", critere), ("$op", operateur),
+            ("$id", id), ("$r", rubriqueId), ("$cr", critereId), ("$op", operateur),
             ("$v", valeur), ("$de", dateEffet), ("$ts", "2026-01-01T00:00:00Z"),
             ("$h", $"h-{id}"));
     }

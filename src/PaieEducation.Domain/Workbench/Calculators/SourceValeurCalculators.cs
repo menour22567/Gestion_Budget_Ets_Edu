@@ -42,14 +42,18 @@ public sealed class AnciennetePriveeCalculator : ISourceValeurCalculator
         => Result.Success<object>(0);
 }
 
-/// <summary>Source : <c>INDICE_ECHELON</c>. Stub V1 — l'indice réel vient de la grille indiciaire (V003).</summary>
+/// <summary>Source : <c>INDICE_ECHELON</c>. Non câblée en V1 — la résolution
+/// depuis la grille indiciaire (V003) est branchée en Phase 4.</summary>
 public sealed class IndiceEchelonCalculator : ISourceValeurCalculator
 {
     public string CodeSource => "INDICE_ECHELON";
     public Result<object> Calculer(AgentContext agent, string datePaie)
-        => agent.Echelon is null
-            ? Result.Failure<object>(Error.NotFound("Échelon absent du snapshot agent."))
-            : Result.Success<object>(agent.Echelon.Value);
+        // Renvoyer agent.Echelon (n° 1-12) serait plausible mais FAUX : l'indice
+        // de grille (ex. 578) en diffère d'un ordre de grandeur, et IEP_FONC =
+        // IE × VPI produirait des montants faux sans aucune erreur visible.
+        // Échec explicite tant que la lecture de la grille n'est pas branchée.
+        => Result.Failure<object>(Error.Failure(
+            "INDICE_ECHELON non résolu en V1 — la lecture de la grille indiciaire (V003) est branchée en Phase 4."));
 }
 
 /// <summary>Source : <c>POINT_INDICIAIRE</c>. Renvoie la valeur du point portée par le snapshot.</summary>
@@ -74,13 +78,16 @@ public sealed class BaseAssietteCalculator : ISourceValeurCalculator
     }
 }
 
-/// <summary>Source : <c>CONSTANTE_REGLEMENTAIRE</c>. Stub V1 — la résolution effective viendra de <c>RubriqueParametres</c>.</summary>
+/// <summary>Source : <c>CONSTANTE_REGLEMENTAIRE</c>. Non câblée en V1 — la
+/// résolution depuis <c>RubriqueParametres</c> est branchée en Phase 4 (J3K § 4.2).</summary>
 public sealed class ConstanteReglementaireCalculator : ISourceValeurCalculator
 {
     public string CodeSource => "CONSTANTE_REGLEMENTAIRE";
     public Result<object> Calculer(AgentContext agent, string datePaie)
-        // V1 : pas de paramètre unitaire — le moteur lira RubriqueParametres via le
-        // resolver dédié en Phase 4 (J3K § 4.2). Pour l'instant, 0 par défaut.
-        => Result.Success<object>(0m);
+        // Un « 0 par défaut » serait une valeur plausible mais fausse (taux,
+        // plafond ou borne réglementaire). Échec explicite tant que la lecture
+        // de RubriqueParametres n'est pas branchée.
+        => Result.Failure<object>(Error.Failure(
+            "CONSTANTE_REGLEMENTAIRE non résolue en V1 — la lecture de RubriqueParametres est branchée en Phase 4 (J3K § 4.2)."));
 }
 

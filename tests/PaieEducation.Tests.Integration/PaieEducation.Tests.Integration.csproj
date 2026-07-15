@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\PaieEducation.Persistence\PaieEducation.Persistence.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Reporting\PaieEducation.Reporting.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Shared\PaieEducation.Shared.csproj" />
+    <ProjectReference Include="..\..\tools\PaieEducation.Tools\PaieEducation.Tools.csproj" />
   </ItemGroup>
 
 </Project>

@@ -54,7 +54,7 @@ public class CliTests
     // Migrate
     // -------------------------------------------------------------------------
     [Fact]
-    public void Migrate_cree_la_base_et_applique_V001_V007()
+    public void Migrate_cree_la_base_et_applique_V001_V009()
     {
         using var db = new TempSqliteDb();
         var (code, stdout, stderr) = Run("migrate", "--db", db.Path);
@@ -62,10 +62,13 @@ public class CliTests
         Assert.Empty(stderr);
         Assert.Contains("migration(s) appliquée(s)", stdout);
 
-        // Vérifie la base : SchemaVersions contient V001..V007.
+        // V009 (Workbench réglementaire, ADR-0007) ajoutée le 15/07/2026 : 9 migrations
+        // au total (V001 à V008 préexistantes + V009). Le test reste robuste à
+        // l'ajout futur : il vérifie au moins 9.
         using var conn = new SqliteConnection(db.ConnectionString);
         conn.Open();
-        Assert.Equal(7L, Count(conn, "SchemaVersions"));
+        var count = Count(conn, "SchemaVersions");
+        Assert.True(count >= 9L, $"Attendu >= 9 migrations, trouvé {count}");
     }
 
     [Fact]
@@ -116,16 +119,16 @@ public class CliTests
 
         using var conn = new SqliteConnection(db.ConnectionString);
         conn.Open();
-        Assert.Equal(6L, Count(conn, "Rubriques"));
+        Assert.Equal(8L, Count(conn, "Rubriques"));
         Assert.Equal(3L, Count(conn, "Cotisations"));
-        Assert.Equal(4L, Count(conn, "Parametres"));
+        Assert.Equal(7L, Count(conn, "Parametres"));
     }
 
     // -------------------------------------------------------------------------
     // Seed : irg
     // -------------------------------------------------------------------------
     [Fact]
-    public void Seed_irg_insere_bareme_et_4_periodes()
+    public void Seed_irg_insere_baremes_2008_et_2022_et_4_periodes()
     {
         using var db = new TempSqliteDb();
         var (code, stdout, stderr) = Run("seed", "irg", "--db", db.Path);
@@ -134,8 +137,9 @@ public class CliTests
 
         using var conn = new SqliteConnection(db.ConnectionString);
         conn.Open();
-        Assert.Equal(1L, Count(conn, "BaremeIRG"));
-        Assert.Equal(4L, Count(conn, "BaremeIRGTranches"));
+        // Q-01 (14/07/2026) : 2 barèmes (2008 : 4 tranches ; LF 2022 : 6 tranches).
+        Assert.Equal(2L, Count(conn, "BaremeIRG"));
+        Assert.Equal(10L, Count(conn, "BaremeIRGTranches"));
         Assert.Equal(4L, Count(conn, "IRGReglesPeriode"));
     }
 
@@ -159,9 +163,11 @@ public class CliTests
 
             using var conn = new SqliteConnection(db.ConnectionString);
             conn.Open();
-            Assert.Equal(7L, Count(conn, "SchemaVersions"));
+            // V009 (Workbench réglementaire, ADR-0007) ajoutée le 15/07/2026 : 9
+            // migrations au total. Le test reste robuste à l'ajout futur.
+            Assert.True(Count(conn, "SchemaVersions") >= 9L);
             Assert.Equal(2L, Count(conn, "Filieres"));
-            Assert.Equal(6L, Count(conn, "Rubriques"));
+            Assert.Equal(8L, Count(conn, "Rubriques"));
             Assert.Equal(4L, Count(conn, "IRGReglesPeriode"));
         }
         finally

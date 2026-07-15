@@ -92,49 +92,71 @@ public sealed class ReglementaireSeeder
     }
 
     // -------------------------------------------------------------------------
-    // Rubriques (6 au total : IEP, PAPP, ISSRP_45, ISSRP_30, ISSRP_15, IRG)
+    // Rubriques (8 au total : IEP_FONC, IEP_CONT, EXP_PEDAG, PAPP,
+    //            ISSRP_45, ISSRP_30, ISSRP_15, IRG)
     // -------------------------------------------------------------------------
     private static async Task InsertRubriquesAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
     {
         var rubriques = new (string Id, string Libelle, string Nature, string BaseCalcul,
-            string Periodicite, int OrdreCalcul, int EstImposable, int EstCotisable,
-            string Description)[]
+            string Periodicite, string? PeriodiciteVersement, int OrdreCalcul,
+            int EstImposable, int EstCotisable, string Description)[]
         {
-            // IEP — Indemnité d'Expérience Professionnelle (Q2).
-            // Calcul : 4% × (n° échelon) × traitement de base.
-            ("IEP", "Indemnité d'expérience professionnelle (IEP)",
-             "GAIN", "TBASE_ECHELON", "MENSUELLE", 200, 1, 1,
-             "4 % × n° échelon × traitement de base (Décret 07-308)"),
+            // IEP_FONC — Indemnité d'expérience professionnelle des fonctionnaires
+            // (Q2-rev, 14/07/2026). Calcul : IE × VPI (indice d'échelon × valeur du
+            // point) — composante échelon du traitement : TRT = TBASE + IEP_FONC.
+            ("IEP_FONC", "Indemnité d'expérience professionnelle (fonctionnaires)",
+             "GAIN", "INDICE_ECHELON", "MENSUELLE", null, 200, 1, 1,
+             "IE × VPI — composante échelon du traitement (Art. 5 Décret 07-304)"),
 
-            // PAPP — Prime d'Ajustement et de Péréquation des Pensions (Q2).
-            // Taux : 0 à 40 % du traitement.
-            ("PAPP", "Prime d'ajustement et de péréquation des pensions (PAPP)",
-             "GAIN", "TRAITEMENT", "MENSUELLE", 210, 1, 0,
-             "0–40 % du traitement (Décret 07-308)"),
+            // IEP_CONT — Indemnité d'expérience professionnelle des contractuels
+            // (Q2-rev). Prime d'ancienneté composite : TBASE × min(ANC_PUB × 1,4 %
+            // + ANC_PRIV × 0,7 % ; 60 %). Le plafond 60 % porte sur le TAUX
+            // composite, jamais sur les années. Paramètres : IEP_TAUX_PUBLIC_PCT,
+            // IEP_TAUX_PRIVE_PCT, IEP_PLAFOND_PCT (table Parametres).
+            ("IEP_CONT", "Indemnité d'expérience professionnelle (contractuels)",
+             "GAIN", "TBASE", "MENSUELLE", null, 201, 1, 1,
+             "TBASE × min(ANC_PUB × 1,4 % + ANC_PRIV × 0,7 % ; 60 %) (Art. 16 Décret 07-304)"),
+
+            // EXP_PEDAG — Indemnité d'expérience pédagogique (Q2-rev). Distincte
+            // de l'IEP : corps EN hors Intendance et Laboratoire. 4 % × TBASE ×
+            // n° échelon. Bénéficiaires versionnés (direction/inspection au
+            // 29/05/2012 via ReglesEligibilite).
+            ("EXP_PEDAG", "Indemnité d'expérience pédagogique",
+             "GAIN", "TBASE_ECHELON", "MENSUELLE", null, 210, 1, 1,
+             "4 % × TBASE × n° échelon — corps EN hors Intendance/Laboratoire " +
+             "(Art. 9 Décret 10-78 ; Art. 3 Décret 12-403 ; Art. 9 Décret 25-55)"),
+
+            // PAPP — Prime d'amélioration des performances pédagogiques (INC-02,
+            // Q-02 du 14/07/2026). 0–40 % du traitement selon notation ; calculée
+            // mensuellement, servie trimestriellement ; imposable ET cotisable.
+            ("PAPP", "Prime d'amélioration des performances pédagogiques (PAPP)",
+             "GAIN", "TRAITEMENT", "MENSUELLE", "TRIMESTRIELLE", 220, 1, 1,
+             "0–40 % du traitement selon notation (Art. 3 Décret 10-78 ; " +
+             "Art. 3 Décret 12-403 ; Art. 3 Décret 25-55)"),
 
             // ISSRP_45 — Soutien scolaire 45 % (2025+).
             ("ISSRP_45", "Soutien scolaire et remédiation pédagogique 45 % (2025+)",
-             "GAIN", "TRAITEMENT", "MENSUELLE", 220, 1, 1,
+             "GAIN", "TRAITEMENT", "MENSUELLE", null, 230, 1, 1,
              "Taux 45 % pour enseignants, direction, inspection, censeurs (Décret 25-55)"),
 
             // ISSRP_30 — Soutien scolaire 30 % (2025+).
             ("ISSRP_30", "Soutien scolaire et remédiation pédagogique 30 % (2025+)",
-             "GAIN", "TRAITEMENT", "MENSUELLE", 221, 1, 1,
+             "GAIN", "TRAITEMENT", "MENSUELLE", null, 231, 1, 1,
              "Taux 30 % pour éducateurs non-enseignants, orientation, alimentation (Décret 25-55)"),
 
             // ISSRP_15 — Soutien scolaire 15 %.
             // 2008-2024 : taux unique 15 % pour tous les corps EN.
             // 2025+ : taux 15 % pour intendance / laboratoire / gestion financière.
             ("ISSRP_15", "Soutien scolaire et remédiation pédagogique 15 %",
-             "GAIN", "TRAITEMENT", "MENSUELLE", 222, 1, 1,
+             "GAIN", "TRAITEMENT", "MENSUELLE", null, 232, 1, 1,
              "Taux 15 % (historique 2008-2024 ou intendance 2025+) (Décrets 11-373, 25-55)"),
 
-            // IRG — Impôt sur le Revenu Global (calculé via BaremeIRG + 4 règles
-            // de période, V006-V007).
+            // IRG — Impôt sur le Revenu Global (calculé via BaremeIRG 2008 + 2022
+            // et 4 règles de période, V006-V007, décision Q-01).
             ("IRG", "Impôt sur le revenu global (IRG)",
-             "IMPOT", "ASSIETTE_IMPOSABLE", "MENSUELLE", 600, 0, 0,
-             "Barème 2008 + 4 règles de période (2020-06, 2021, 2022+)"),
+             "IMPOT", "ASSIETTE_IMPOSABLE", "MENSUELLE", null, 600, 0, 0,
+             "Barèmes 2008 & 2022 + 4 règles de période (avant 2020-06, 2020-06, 2021, 2022+)"),
         };
 
         var inserted = 0;
@@ -144,18 +166,19 @@ public sealed class ReglementaireSeeder
             ct.ThrowIfCancellationRequested();
             var sql = """
                 INSERT INTO Rubriques
-                    (Id, Libelle, Nature, BaseCalcul, Periodicite, OrdreCalcul,
-                     EstImposable, EstCotisable, Description, Actif,
+                    (Id, Libelle, Nature, BaseCalcul, Periodicite, PeriodiciteVersement,
+                     OrdreCalcul, EstImposable, EstCotisable, Description, Actif,
                      CreatedAt, Source, Hash)
                 VALUES
-                    ($id, $l, $n, $b, $p, $o, $ei, $ec, $d, 1,
-                     $at, 'J2.c — seed réglementaire', $h)
+                    ($id, $l, $n, $b, $p, $pv, $o, $ei, $ec, $d, 1,
+                     $at, 'J2.c/J3 — seed réglementaire', $h)
                 ON CONFLICT(Id) DO NOTHING;
                 """;
             var n = await c.ExecuteAsync(sql, new
             {
                 id = rub.Id, l = rub.Libelle, n = rub.Nature, b = rub.BaseCalcul,
-                p = rub.Periodicite, o = rub.OrdreCalcul, ei = rub.EstImposable,
+                p = rub.Periodicite, pv = rub.PeriodiciteVersement ?? (object)DBNull.Value,
+                o = rub.OrdreCalcul, ei = rub.EstImposable,
                 ec = rub.EstCotisable, d = rub.Description,
                 at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
                 h = $"h-rubrique-{rub.Id}"
@@ -175,13 +198,18 @@ public sealed class ReglementaireSeeder
         var inserted = 0;
         using var tx = c.BeginTransaction();
 
+        // R3 (V009) : `Critere` (TEXT) remplacé par `CritereId` (FK vers CriteresEligibilite).
+        // Le critère 'CORPS' est désormais porté par le code catalogue CriteresEligibilite
+        // (seed V009) — la valeur du critère reste 'CORPS' mais elle désigne un Id de
+        // dictionnaire, pas une valeur littérale d'un CHECK.
+
         // ISSRP_45 : éligible pour les corps du groupe 45 %.
         foreach (var corpsCode in Issrp45CorpsCodes)
         {
             ct.ThrowIfCancellationRequested();
             var n = await c.ExecuteAsync("""
                 INSERT INTO ReglesEligibilite
-                    (Id, RubriqueId, Critere, Operateur, Valeur, DateEffet, Source, Hash, CreatedAt)
+                    (Id, RubriqueId, CritereId, Operateur, Valeur, DateEffet, Source, Hash, CreatedAt)
                 VALUES
                     ($id, $r, 'CORPS', '=', $v, $de, 'J2.c — ISSRP 45 %', $h, $at)
                 ON CONFLICT(Id) DO NOTHING;
@@ -203,7 +231,7 @@ public sealed class ReglementaireSeeder
             ct.ThrowIfCancellationRequested();
             var n = await c.ExecuteAsync("""
                 INSERT INTO ReglesEligibilite
-                    (Id, RubriqueId, Critere, Operateur, Valeur, DateEffet, Source, Hash, CreatedAt)
+                    (Id, RubriqueId, CritereId, Operateur, Valeur, DateEffet, Source, Hash, CreatedAt)
                 VALUES
                     ($id, $r, 'CORPS', '=', $v, $de, 'J2.c — ISSRP 30 %', $h, $at)
                 ON CONFLICT(Id) DO NOTHING;
@@ -225,7 +253,7 @@ public sealed class ReglementaireSeeder
             ct.ThrowIfCancellationRequested();
             var n = await c.ExecuteAsync("""
                 INSERT INTO ReglesEligibilite
-                    (Id, RubriqueId, Critere, Operateur, Valeur, DateEffet, Source, Hash, CreatedAt)
+                    (Id, RubriqueId, CritereId, Operateur, Valeur, DateEffet, Source, Hash, CreatedAt)
                 VALUES
                     ($id, $r, 'CORPS', '=', $v, $de, 'J2.c — ISSRP 15 %', $h, $at)
                 ON CONFLICT(Id) DO NOTHING;
@@ -319,6 +347,18 @@ public sealed class ReglementaireSeeder
              "2007-01-01"),
             ("P-SEUIL-EXO-IRG", "SEUIL_EXONERATION_IRG_DEFAUT", "30000", "INT",
              "Seuil d'exonération IRG par défaut (DA) — avant seed de IRGReglesPeriode",
+             "2007-01-01"),
+            // IEP_CONT (Q2-rev, 14/07/2026) : taux composite d'ancienneté des
+            // contractuels. Le plafond porte sur le TAUX (60 % du TB max),
+            // jamais sur les années de service.
+            ("P-IEP-TAUX-PUBLIC", "IEP_TAUX_PUBLIC_PCT", "1.4", "REAL",
+             "IEP_CONT — % par année d'ancienneté de service public (Art. 16 Décret 07-304)",
+             "2007-01-01"),
+            ("P-IEP-TAUX-PRIVE", "IEP_TAUX_PRIVE_PCT", "0.7", "REAL",
+             "IEP_CONT — % par année d'ancienneté de service privé (Art. 16 Décret 07-304)",
+             "2007-01-01"),
+            ("P-IEP-PLAFOND", "IEP_PLAFOND_PCT", "60", "REAL",
+             "IEP_CONT — plafond du taux composite (% du traitement de base)",
              "2007-01-01"),
         };
 

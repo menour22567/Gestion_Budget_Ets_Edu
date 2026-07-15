@@ -1,10 +1,10 @@
 # Dictionnaire de Données — PaieEducation ERP
 
 > **Source de vérité** : les scripts `V*.sql` de `src/PaieEducation.Persistence.Migrations/`.
-> **Version courante** : V001 → V006 — 6 migrations, **22 tables** (2 système + 20 métier), **0 valeur réglementaire en dur**.
-> **Principe cardinal** : aucune règle ou valeur n'est codée en dur. Tout vit en base, versionné par date d'effet, éditable par l'utilisateur.
+> **Version courante :** V001 → V008 (déjà en place) + **V009 (Workbench réglementaire, ADR-0007 / J3I)** — 7 migrations de données (V001-V008) + 1 migration de référentiel (V009), **~30 tables** (2 système + ~28 métier), **0 valeur réglementaire en dur**.
+> **Principe cardinal** : aucune règle ou valeur n'est codée en dur. Tout vit en base, versionné par date d'effet, éditable par l'utilisateur via le Workbench réglementaire (D7).
 
-Ce document est **vivant** : il est régénéré/mis à jour à chaque ajout de migration en Phase 1 et chaque évolution de schéma en Phase 5 (Persistence & Infrastructure).
+Ce document est **vivant** : il est régénéré/mis à jour à chaque ajout de migration en Phase 1, Phase 3bis (V009) et chaque évolution de schéma en Phase 5 (Persistence & Infrastructure).
 
 ---
 
@@ -18,7 +18,9 @@ Ce document est **vivant** : il est régénéré/mis à jour à chaque ajout de 
 | Rubriques (éléments de paie) | 4 | V004 |
 | Éligibilité + cotisations | 3 | V005 |
 | IRG + paramètres système | 4 | V006 |
-| **Total** | **22** | |
+| Workbench — barèmes indexés (J3E L1) + `PeriodiciteVersement` (J3E L3) | 1 (+2 colonnes) | V008 |
+| **Workbench réglementaire (ADR-0007, J3I)** : sources de valeur, groupes d'éligibilité (DNF), dictionnaire de critères, messages, amorces gestion | 5 nouvelles + 2 amendées | **V009** |
+| **Total** | **~30** (2 système + ~28 métier) | |
 
 **Moteur de résolution par date** : toutes les tables « réglementaires » (V003, V004 sauf `Rubriques`, V005 sauf `Cotisations`, V006 sauf `BaremeIRG`/`Parametres`) partagent la même requête de résolution : on cherche la ligne dont la `DateEffet` est la plus récente **≤ date_demandée**, et dont la `DateFin` est **≥ date_demandée** (ou `NULL` pour « toujours en vigueur »).
 
@@ -430,6 +432,232 @@ Paramètres système transverses (arrondi, défauts, seuils globaux). `Valeur` e
 
 ---
 
+## 8bis. V008 — Workbench socle : barèmes indexés & périodicité de versement (J3E)
+
+> Introduit par `docs/analysis/J3E_MODELE_PARAMETRAGE.md`. Étend V004 pour supporter
+> les patterns P4 (forfait par catégorie), P5 (forfait par type d'établissement),
+> P6 (% par grade) et P12 (IFC — barème catégorie par catégorie), ainsi que P13
+> (périodicité de versement ≠ de calcul).
+
+### 8bis.1. `RubriqueBaremes` (versionnée)
+
+Une même rubrique peut prendre une **valeur différente selon une dimension** (catégorie,
+grade, échelon, ancienneté, type d'établissement, corps). Le FormulaEngine expose
+`bareme(RUBRIQUE, dimension)` qui résout la bonne ligne à la date de paie.
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `Id` | TEXT | PK | ex. `RB-IFC-2015-CAT7`, `RB-DOC-CAT-10-2008` |
+| `RubriqueId` | TEXT | FK → `Rubriques(Id)` | Index `IX_RubriqueBaremes_RubriqueId` |
+| `Dimension` | TEXT | NOT NULL `CHECK IN ('CATEGORIE','ECHELON','ANCIENNETE','TYPE_ETABLISSEMENT','CORPS','GRADE')` | Axe d'indexation |
+| `BorneInf` | TEXT | NOT NULL | `"7"` (cat), `"PRIMAIRE"` (type etab), `"PROFECOLPRIM"` (corps) |
+| `BorneSup` | TEXT | | `NULL` = +infini ; sinon, valeur_textuelle (discrète) |
+| `TypeValeur` | TEXT | NOT NULL `CHECK IN ('TAUX','MONTANT')` | Nature de la valeur (fraction ou DA) |
+| `Valeur` | TEXT | NOT NULL | Fraction canonique ou entier DA, parsé par le moteur |
+| `DateEffet` | TEXT | NOT NULL | `UNIQUE(RubriqueId, Dimension, BorneInf, DateEffet)` |
+| `DateFin` | TEXT | | `NULL` = « toujours en vigueur » |
+| `Source` | TEXT | | ex. `"Décret 08-70 art. 1"`, `"D.ex. 10-78 art. 8"` |
+| `Hash` | TEXT | NOT NULL | SHA-256 du payload utile |
+| `CreatedAt` | TEXT | NOT NULL | ISO 8601 UTC |
+| `CreatedBy` | TEXT | NOT NULL | Acteur |
+| `UpdatedAt` | TEXT | | Dernière MAJ (cf. V009 §9bis.6 pour les colonnes ajoutées) |
+| `UpdatedBy` | TEXT | | Acteur de la dernière MAJ |
+
+**Cas d'usage (issu de `Reglementation/`) :**
+- `IFC` (P12) — dimension `CATEGORIE`, 4 lignes (cat. 1-6 / 7-8 / 9-10 / 11-17) en 2008, 11 lignes (cat. 1 à 10 + 11-17) en 2015
+- `DOC_PEDAG` (P4) — dimension `CATEGORIE`, 3 lignes (≤10 / 11-12 / ≥13), 3 versions (2008, 2011, 2025)
+- `DIR_ETAB` (P5) — dimension `TYPE_ETABLISSEMENT`, 3 lignes (PRIMAIRE / CEM / LYCEE)
+- `QUALIF` (P6) — dimension `CATEGORIE`, 2 lignes (≤12 / ≥13)
+- `SERV_ADM`, `SERV_TECH_CC` (P6) — dimension `GRADE`, 2 lignes (25 % / 40 %)
+
+### 8bis.2. `Rubriques.PeriodiciteVersement` (colonne ajoutée)
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `PeriodiciteVersement` | TEXT | `CHECK IN ('MENSUELLE','TRIMESTRIELLE','ANNUELLE','PONCTUELLE')` | Périodicité de **versement** (≠ `Periodicite` qui est la périodicité de **calcul**) |
+
+`NULL` = identique à `Periodicite` (calcul). Pour PAPP/PAPG/rendement (P13) :
+`Periodicite = 'MENSUELLE'` (calcul mensuel), `PeriodiciteVersement = 'TRIMESTRIELLE'`
+(versement trimestriel — le moteur provisionne).
+
+---
+
+## 8ter. V009 — Workbench réglementaire (ADR-0007, J3I, J3J v1.0)
+
+> Migration unique qui regroupe tout le bloc Workbench (D10) : sources de valeur,
+> groupes d'éligibilité (DNF), dictionnaire de critères, messages, audit barème.
+>
+> **Version finale (15/07/2026)** — refactorée selon R1-R5 du
+> `J3J_REFACTORING_AVANT_V009.md` (validé utilisateur 15/07/2026). Distinction
+> explicite **audit technique** (catalogues) vs **traçabilité réglementaire**
+> (règles, valeurs, textes). Aucune table de gestion agent n'est créée en V009 —
+> design preview documenté en J3J § 8.3-8.5 pour la Phase 5.
+
+### 8ter.1. `SourcesValeur` (catalogue technique — R2 + R4 révisé)
+
+Catalogue extensible des **sources de valeur** — d'où une rubrique tire sa « matière
+première ». Remplace les calculateurs typés VB pour le pattern P3 (% indexé sur
+une source externe). D6. **Nature : catalogue technique — audit minimal.**
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `Id` | TEXT | PK (R2) | ex. `NOTATION_AGENT`, `ANCIENNETE_PUBLIQUE`, `ANCIENNETE_PRIVEE`, `INDICE_ECHELON`, `POINT_INDICIAIRE`, `BASE_ASSIETTE`, `CONSTANTE_REGLEMENTAIRE` |
+| `Libelle` | TEXT | NOT NULL | Nom humain |
+| `Description` | TEXT | | Sémantique de la source |
+| `Actif` | INTEGER | NOT NULL `CHECK IN (0,1)` DEFAULT 1 | |
+| `CreatedAt` | TEXT | NOT NULL | |
+| `CreatedBy` | TEXT | NOT NULL | |
+
+**Seed V1** : 7 codes (cf. tableau ci-dessus), tous actifs. Une nouvelle source =
+`INSERT` + un `SourceValeurCalculator` enregistré en DI (pattern Open/Closed) —
+**pas de migration**.
+
+### 8ter.2. `Rubriques.SourceValeurId` (colonne ajoutée — R2)
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `SourceValeurId` | TEXT | FK → `SourcesValeur(Id)` (R2) | `NULL` = la formule `RubriqueFormules.Expression` est self-contained (P1, P2, P4-P7) ; non `NULL` = la valeur est tirée d'une source paramétrable (P3) |
+
+Le FormulaEngine expose `valeurSource(RUBRIQUE)` qui résout `SourceValeurId` puis
+délègue au `SourceValeurCalculator` enregistré. Pour PAPP, `SourceValeurId =
+'NOTATION_AGENT'` ; le moteur résout le taux via le calculateur de notation
+(l'implémentation concrète est un adapter de `DALNotation`).
+
+### 8ter.3. `CriteresEligibilite` (catalogue technique — R2 + R3 + R4 révisé)
+
+Dictionnaire des critères d'éligibilité. **Remplace** (R3) le `CHECK IN (...)` en dur
+de `ReglesEligibilite.Critere` — un nouveau critère = une ligne dans cette table,
+pas une migration. **Nature : catalogue technique — audit minimal.**
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `Id` | TEXT | PK (R2) | ex. `FILIERE`, `CORPS`, `GRADE`, `CATEGORIE`, `FONCTION`, `TYPE_CONTRAT`, `ECHELON`, `ANCIENNETE`, `TYPE_ETABLISSEMENT`, `ORIGINE_STATUTAIRE` (D3) |
+| `Libelle` | TEXT | NOT NULL | |
+| `TypeValeur` | TEXT | NOT NULL `CHECK IN ('TEXT','INT','DATE','ENUM')` | Sémantique de la valeur |
+| `SourceResolution` | TEXT | NOT NULL `CHECK IN ('ATTRIBUT_AGENT','ATTRIBUT_GRADE','CARRIERE','CALCULE')` | Comment l'évaluateur résout la valeur (cf. J3H D3) |
+| `Actif` | INTEGER | NOT NULL `CHECK IN (0,1)` DEFAULT 1 | |
+| `CreatedAt` | TEXT | NOT NULL | |
+| `CreatedBy` | TEXT | NOT NULL | |
+
+### 8ter.4. `MessagesRegles` (texte réglementaire — R2 + R4 révisé)
+
+Messages paramétrables (multilingues) pour les règles d'éligibilité et les
+avertissements. Sépare la **logique** (groupe, sévérité) de la **présentation**
+(message affiché à l'utilisateur). **Nature : texte réglementaire — audit complet
+préservé** (R4 révisé, validation utilisateur 15/07/2026).
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `Id` | TEXT | PK (R2) | ex. `MSG-ISSRP-45-INCONNU-ORIGINE` |
+| `Categorie` | TEXT | NOT NULL `CHECK IN ('ELIGIBILITE','AVERTISSEMENT','SUGGESTION')` | |
+| `TexteFr` | TEXT | NOT NULL | Message en français (V1) |
+| `TexteAr` | TEXT | | Message en arabe (post-V1) |
+| `Source` | TEXT | NOT NULL | Référence réglementaire (décret/arrêté) — R4 révisé |
+| `DateEffet` | TEXT | NOT NULL | R4 révisé — versioning du wording |
+| `DateFin` | TEXT | | R4 révisé |
+| `Actif` | INTEGER | NOT NULL `CHECK IN (0,1)` DEFAULT 1 | |
+| `CreatedAt` | TEXT | NOT NULL | |
+| `CreatedBy` | TEXT | NOT NULL | |
+
+### 8ter.5. `GroupesEligibilite` (règle réglementaire — D5)
+
+D5 — abandon de la limite V1 « pas de conditions composées ». DNF : conditions d'un
+groupe ETées, groupes OUés. Repris de J3H §2. **Nature : règle réglementaire —
+audit complet.**
+
+| Colonne | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `Id` | TEXT | PK | ex. `GE-ISSRP45-ORIGINE` |
+| `RubriqueId` | TEXT | FK → `Rubriques(Id)` | |
+| `Severite` | TEXT | NOT NULL DEFAULT `'INFO'` `CHECK IN ('INFO','RECOMMANDEE','OBLIGATOIRE_REGLEMENTAIRE')` | D2 |
+| `MessageId` | TEXT | FK → `MessagesRegles(Id)` (R2) | |
+| `Priorite` | INTEGER | NOT NULL DEFAULT 100 | Ordre d'affichage des suggestions (≠ ordre d'application) |
+| `DateEffet` | TEXT | NOT NULL | |
+| `DateFin` | TEXT | | |
+| `Source` | TEXT | | |
+| `Hash` | TEXT | NOT NULL | |
+| `CreatedAt` | TEXT | NOT NULL | |
+| `CreatedBy` | TEXT | NOT NULL | |
+
+### 8ter.6. `ReglesEligibilite` — amendements (R3 + L-M2)
+
+`ReglesEligibilite` est amendée en V009 par :
+
+- **R3** : suppression du `CHECK IN (...)` sur `Critere` ; nouvelle colonne `CritereId`
+  (FK vers `CriteresEligibilite.Id`).
+- **L-M2** : nouvelle colonne `GroupeId` (FK vers `GroupesEligibilite.Id`, NULL = condition commune).
+
+| Colonne ajoutée | Type | Contrainte | Description |
+|---------|------|-----------|-------------|
+| `CritereId` | TEXT | FK → `CriteresEligibilite(Id)` | **Remplace** `Critere` (TEXT avec CHECK) — source unique de vérité (R3) |
+| `GroupeId` | TEXT | FK → `GroupesEligibilite(Id)` | `NULL` = condition **commune** à la rubrique (ET plat V008 inchangé) ; non `NULL` = condition **membre** du groupe (ET dans le groupe, OU entre groupes) |
+
+**Migration de données (R3)** : pour chaque règle V008 existante, on résout le code
+métier du critère (`FILIERE`, `CORPS`, `GRADE`, …) et on remplit `CritereId` par
+jointure sur `CriteresEligibilite.Id`. La colonne `Critere` (TEXT) est **supprimée**
+— la sémantique est portée par `CritereId` + le dictionnaire. `GroupeId` est laissé
+`NULL` pour toutes les règles V008 (les conditions communes restent communes ; les
+groupes sont un concept V009+).
+
+### 8ter.7. `RubriqueBaremes` — colonnes d'audit (L-M3)
+
+Ajoutées en V009 (alignement `AuditLog` V001) :
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `CreatedBy` | TEXT | Acteur de la création (déjà en V008) |
+| `UpdatedAt` | TEXT | ISO 8601 UTC, NULL si jamais modifiée |
+| `UpdatedBy` | TEXT | Acteur de la dernière modification |
+
+**Trigger applicatif** : toute modification d'une ligne de `RubriqueBaremes` écrit
+dans `AuditLog` (qui, quand, valeur avant/après, source). C'est le **Pattern Editor**
+du Workbench (§5.2 J3I) qui en est l'auteur.
+
+### 8ter.8. Tables NON créées en V009 (R1 — reportées à Phase 5)
+
+Conformément à R1 (validé utilisateur, J3J § 6) : ces tables de gestion dépendent
+directement du modèle `Agents` et ne sont **pas créées en avance**. Leur conception
+intentionnelle est documentée dans `J3J_REFACTORING_AVANT_V009.md` § 8.3-8.5 pour
+préserver la cohérence avec les phases suivantes.
+
+- ~~`AgentAttributs`~~ — design preview J3J § 8.3
+- ~~`AgentRubriques`~~ — design preview J3J § 8.4
+- ~~`AvertissementsHistorique`~~ — design preview J3J § 8.5
+
+> **Cohérence J3I / J3H** : J3H § 1 dit déjà « les tables de gestion sont créées
+> avec `Agents` en Phase 5 ». J3I § 9 v1.0 (initial) divergeait par erreur. La
+> version refactorée **rétablit la cohérence** : J3H § 1 est la référence, J3I
+> § 9 / DICTIONNAIRE § 8ter ne créent plus de tables vides en avance.
+
+### 8ter.9. Test d'upgrade V008 → V009
+
+Référencé par `PLAN_ACTION.md` Phase 3bis :
+
+1. Appliquer V008 sur une base vide, seeder les barèmes IFC/DOC (P4/P12).
+2. Appliquer V009 — vérification :
+   - `SourcesValeur` (7 lignes seed, R2 = PK `Id`)
+   - `CriteresEligibilite` (10 codes seed, R2 = PK `Id`)
+   - `MessagesRegles` (vide, R2 = PK `Id`, audit complet R4 révisé)
+   - `GroupesEligibilite` (vide)
+   - `Rubriques.SourceValeurId` (NULL partout par défaut)
+   - `ReglesEligibilite.CritereId` (rempli par jointure sur le seed `CriteresEligibilite`)
+   - `ReglesEligibilite.GroupeId` (NULL partout — V008 préservé)
+   - `ReglesEligibilite.Critere` (TEXT avec CHECK) **supprimé**
+   - `RubriqueBaremes.UpdatedAt`/`UpdatedBy` (NULL partout)
+3. Suite de tests existante (117 tests) reste verte.
+4. Test DNF : créer un groupe `GE-TEST-A` avec 2 conditions (l'une ETée, l'autre
+   ETée dans un 2e groupe), vérifier l'évaluation OU/ET conformément au pseudo-code
+   J3H §2.
+5. Test source de valeur : créer une rubrique bidon avec `SourceValeurId =
+   'CONSTANTE_REGLEMENTAIRE'`, vérifier que `valeurSource(RUB)` retourne la valeur
+   du `Calculateur` enregistré.
+6. Test audit allégé (R4 révisé) : insérer une nouvelle source dans `SourcesValeur`
+   (technique) et un nouveau message dans `MessagesRegles` (réglementaire) ; vérifier
+   que la première a un audit minimal (CreatedAt/By) et le second un audit complet
+   (Source, DateEffet/Fin).
+
+---
+
 ## 9. Requêtes de résolution — les plus utilisées
 
 ### 9.1. Valeur du point à une date
@@ -487,24 +715,54 @@ WHERE RubriqueId = $r AND Cle = $cle
 ORDER BY DateEffet DESC LIMIT 1;
 ```
 
+### 9.8. Barème indexé (V008, J3E L1) — `bareme(RUBRIQUE, DIMENSION, clé, date)`
+```sql
+SELECT TypeValeur, Valeur FROM RubriqueBaremes
+WHERE RubriqueId = $r AND Dimension = $dim AND BorneInf = $cle
+  AND DateEffet <= $d AND (DateFin IS NULL OR DateFin >= $d)
+ORDER BY DateEffet DESC LIMIT 1;
+```
+
+### 9.9. Éligibilité DNF (V009, J3H §2) — groupe satisfait si toutes ses conditions le sont
+```sql
+-- 1. Récupérer les groupes actifs de la rubrique
+SELECT g.* FROM GroupesEligibilite g
+WHERE g.RubriqueId = $r
+  AND g.DateEffet <= $d AND (g.DateFin IS NULL OR g.DateFin >= $d);
+
+-- 2. Pour chaque groupe, évaluer ses conditions (les `ReglesEligibilite` dont
+--    `GroupeId = g.Id` doivent toutes être satisfaites). Si oui, le groupe est
+--    satisfait. Si au moins un groupe est satisfait, la rubrique est éligible.
+--    (Logique portée par le `RegleEligibiliteEvaluator` du domaine, ADR-0005.)
+```
+
+### 9.10. Source de valeur d'une rubrique (V009 refactoré, D6, R2)
+```sql
+SELECT sv.Id, sv.Libelle
+FROM Rubriques r
+JOIN SourcesValeur sv ON sv.Id = r.SourceValeurId
+WHERE r.Id = $r;
+-- Le calculateur typé est résolu côté DI (pas en SQL).
+```
+
 ---
 
 ## 10. Reconstruction depuis zéro
 
 1. **Créer une base vide** : `Data Source=paie.db` (fichier) — le `SqliteMigrator` crée le fichier.
-2. **Appliquer les migrations** : `var migrator = new SqliteMigrator(options, MigrationLoader.LoadFromAssembly(...)); migrator.Apply();`
-3. **Seeder** : Phase 2 — lecture des fichiers `Reglementation/` et `Documentation de Référence du Projet/`, insertion idempotente. Un **rapport d'import** (lignes lues/insérées/rejetées) est produit.
-4. **Vérifier** : `SELECT COUNT(*) FROM SchemaVersions` doit retourner 6.
-5. **Auditer** : la colonne `Hash` permet de rejouer le seed et de détecter les dérives (comparaison SHA-256).
+2. **Appliquer les migrations** : `var migrator = new SqliteMigrator(options, MigrationLoader.LoadFromAssembly(...)); migrator.Apply();` — applique **V001 → V009** (V009 = Workbench réglementaire, ADR-0007).
+3. **Seeder** : Phase 2 — lecture des fichiers `Reglementation/` et `Documentation de Référence du Projet/`, insertion idempotente. Un **rapport d'import** (lignes lues/insérées/rejetées) est produit. Seed complémentaire V009 : `SourcesValeur` (7 codes), `CriteresEligibilite` (≥10 codes).
+4. **Vérifier** : `SELECT COUNT(*) FROM SchemaVersions` doit retourner **8** (V001-V008) après application complète des migrations jusqu'à V008, ou **9** si V009 est appliqué. La CI enforce la cohérence.
+5. **Auditer** : la colonne `Hash` permet de rejouer le seed et de détecter les dérives (comparaison SHA-256). Pour les modifications en cours d'exploitation, `AuditLog` (V001) + colonnes `RubriqueBaremes.UpdatedAt`/`UpdatedBy` (V009) tracent l'auteur et la date.
 
 ---
 
 ## 11. Hors périmètre (rappel)
 
 - **Calcul de paie** : la logique métier (assemblage des rubriques, calcul IRG détaillé, ...) est dans la couche `Application` / `Domain`, **pas** dans la base. Aucune procédure stockée, aucun trigger. La base stocke les règles, le moteur les interprète.
-- **Bulletins** : pas dans cette phase (V007+, J5+).
-- **Agents** : pas dans cette phase (V007+).
-- **Historique des valeurs** : chaque changement = nouvelle version (ligne avec nouvelle `DateEffet`). Pas de table d'audit des modifications (`AuditLog` en V1 trace les actions, pas les valeurs).
+- **Bulletins** : pas dans cette phase (V010+, J5+).
+- **Agents** : tables `AgentAttributs` / `AgentRubriques` / `AvertissementsHistorique` **non créées** en V009 (R1, J3J § 6 et 8.3-8.5) — leur création effective attend la Phase 5, avec `Agents` et le Workbench UI.
+- **Historique des valeurs** : chaque changement = nouvelle version (ligne avec nouvelle `DateEffet`). `AuditLog` (V001) trace les actions ; les colonnes `UpdatedAt`/`UpdatedBy` ajoutées en V009 sur `RubriqueBaremes` complètent l'audit au niveau des barèmes.
 - **Triggers** : aucune contrainte `RAISE` / trigger. Tout le contrôle est dans l'app.
 
 ---
@@ -524,9 +782,11 @@ Voir `CONVENTIONS.md` §4. En résumé :
 ## 13. Évolution du schéma
 
 Toute nouvelle table ou colonne suit la procédure :
-1. Créer une nouvelle migration `V007__xxx.sql` (jamais modifier une migration déjà appliquée).
+1. Créer une nouvelle migration `V010__xxx.sql` (jamais modifier une migration déjà appliquée, y compris V009).
 2. Compléter ce dictionnaire dans le même commit.
-3. Tester l'upgrade depuis la version N-1 (le `SqliteMigrator` est conçu pour).
+3. Tester l'upgrade depuis la version N-1 (le `SqliteMigrator` est conçu pour) — le test d'upgrade V008→V009 est documenté en §8ter.9 et sert de référence pour les futures migrations.
 4. **Aucun hotfix en prod** : la mise à jour passe toujours par une migration versionnée.
 
 **Règle d'or** : si une valeur est dans le code, c'est un bug.
+
+**Règle d'or n°2 (post-V009, ADR-0007)** : toute nouvelle rubrique, tout nouveau paramètre, toute nouvelle règle d'éligibilité **passe par le Workbench** (UI Phase 6 + use cases Phase 5), pas par une migration. La migration est réservée aux **changements de structure** (nouvelles tables, nouvelles colonnes). Les valeurs vivent en base, saisies par l'utilisateur, historisées.

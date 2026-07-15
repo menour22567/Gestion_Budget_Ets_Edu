@@ -209,6 +209,51 @@ public class WorkbenchIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Repo_liste_les_sources_valeur_actives_seedees_par_V009()
+    {
+        var (conn, _) = CreateMigrated();
+        await using (conn)
+        {
+            var repo = new WorkbenchReadRepository(conn);
+            var sources = await repo.ListerSourcesValeurAsync();
+
+            Assert.Equal(7, sources.Count);
+            Assert.Contains(sources, s => s.Id == "NOTATION_AGENT");
+            Assert.Contains(sources, s => s.Id == "CONSTANTE_REGLEMENTAIRE");
+
+            // Garde-fou encodage : le libellé seedé doit être lisible (pas de mojibake).
+            var anciennete = sources.Single(s => s.Id == "ANCIENNETE_PUBLIQUE");
+            Assert.Equal("Ancienneté publique (années)", anciennete.Libelle);
+        }
+    }
+
+    [Fact]
+    public async Task Repo_liste_les_messages_regles_filtres_par_date_et_actif()
+    {
+        var (conn, _) = CreateMigrated();
+        await using (conn)
+        {
+            Exec(conn, """
+                INSERT INTO MessagesRegles
+                    (Id, Categorie, TexteFr, TexteAr, Source, DateEffet, DateFin, Actif, CreatedAt, CreatedBy)
+                VALUES
+                    ('M-ACTIF',   'ELIGIBILITE',   'Réservé aux corps pédagogiques', NULL, 'D.ex. 25-55', '2025-01-01', NULL,         1, '2026-01-01T00:00:00Z', 'system'),
+                    ('M-EXPIRE',  'AVERTISSEMENT', 'Ancien wording',                 NULL, 'D.ex. 10-78', '2020-01-01', '2024-12-31', 1, '2026-01-01T00:00:00Z', 'system'),
+                    ('M-INACTIF', 'SUGGESTION',    'Désactivé',                      NULL, 'D.ex. 12-403','2025-01-01', NULL,         0, '2026-01-01T00:00:00Z', 'system');
+                """);
+
+            var repo = new WorkbenchReadRepository(conn);
+            var messages = await repo.ListerMessagesReglesActifsAsync("2025-06-15");
+
+            var m = Assert.Single(messages);
+            Assert.Equal("M-ACTIF", m.Id);
+            Assert.Equal(MessageCategorie.Eligibilite, m.Categorie);
+            Assert.Equal("Réservé aux corps pédagogiques", m.TexteFr);
+            Assert.Equal("D.ex. 25-55", m.Source);
+        }
+    }
+
     private static void Exec(SqliteConnection c, string sql)
     {
         using var cmd = c.CreateCommand();

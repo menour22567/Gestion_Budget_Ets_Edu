@@ -61,7 +61,7 @@ public sealed class WorkbenchReadRepository
             WHERE Actif = 1
               AND DateEffet <= @date
               AND (DateFin IS NULL OR DateFin >= @date)
-            ORDER BY Priorite DESC, Id;
+            ORDER BY Id;
             """;
         var rows = await _connection.QueryAsync<MessageRow>(new CommandDefinition(
             sql, new { date = datePaie }, cancellationToken: ct));

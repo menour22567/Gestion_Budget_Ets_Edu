@@ -128,6 +128,63 @@ public class SimulerEvolutionReglementaireTests
     }
 
     [Fact]
+    public void Simuler_compte_correctement_avec_conditions_groupees_DNF()
+    {
+        // Régression : avant le correctif de l'évaluateur, les conditions
+        // groupées (DNF) étaient ignorées par le simulateur (qui ne fournit pas
+        // les en-têtes de groupes) → les 3 agents étaient comptés éligibles.
+        // Règle ISSRP_45 : (CORPS = PEM) OU (CORPS = CENSEUR ET ORIGINE = ENSEIGNANT).
+        var useCase = new SimulerEvolutionReglementaire();
+        var periode = PeriodeReglementaire.Creer("2025-01-01", null);
+        var conditions = new[]
+        {
+            ConditionEligibilite.Creer("C-A1", "ISSRP_45", "CORPS",
+                Operateur.Egal, "PEM", "GA", periode),
+            ConditionEligibilite.Creer("C-B1", "ISSRP_45", "CORPS",
+                Operateur.Egal, "CENSEUR", "GB", periode),
+            ConditionEligibilite.Creer("C-B2", "ISSRP_45", "ORIGINE_STATUTAIRE",
+                Operateur.Egal, "ENSEIGNANT", "GB", periode),
+        };
+        var criteres = new Dictionary<string, CritereEligibilite>
+        {
+            ["CORPS"] = CritereEligibilite.Creer("CORPS", "Corps",
+                TypeValeurCritere.Enum, SourceResolution.Carriere),
+            ["ORIGINE_STATUTAIRE"] = CritereEligibilite.Creer("ORIGINE_STATUTAIRE",
+                "Origine statutaire", TypeValeurCritere.Enum, SourceResolution.AttributAgent),
+        };
+        var agents = new List<AgentContext>
+        {
+            // PEM → éligible (groupe A)
+            new(Filiere: "ENSEIGNANT", Corps: "PEM", Grade: null, Categorie: 7, Echelon: 5,
+                AncienneteAnnees: 10, Fonction: null, TypeContrat: "STATUTAIRE",
+                TypeEtablissement: null, OrigineStatutaire: "INCONNU",
+                Note: 0.35m, ValeurPointIndiciaire: 45m, AssietteCotisable: null, AssietteImposable: null),
+            // CENSEUR + ENSEIGNANT → éligible (groupe B)
+            new(Filiere: "ENSEIGNANT", Corps: "CENSEUR", Grade: null, Categorie: 7, Echelon: 5,
+                AncienneteAnnees: 10, Fonction: null, TypeContrat: "STATUTAIRE",
+                TypeEtablissement: null, OrigineStatutaire: "ENSEIGNANT",
+                Note: 0.35m, ValeurPointIndiciaire: 45m, AssietteCotisable: null, AssietteImposable: null),
+            // CENSEUR + AUTRE → non éligible (aucun groupe satisfait)
+            new(Filiere: "ENSEIGNANT", Corps: "CENSEUR", Grade: null, Categorie: 7, Echelon: 5,
+                AncienneteAnnees: 10, Fonction: null, TypeContrat: "STATUTAIRE",
+                TypeEtablissement: null, OrigineStatutaire: "AUTRE",
+                Note: 0.35m, ValeurPointIndiciaire: 45m, AssietteCotisable: null, AssietteImposable: null),
+        };
+        var demande = new SimulerEvolutionReglementaire.Demande(
+            RubriqueId: "ISSRP_45",
+            Description: "Révision DNF",
+            NouvellePeriode: periode,
+            PeriodesExistantes: Array.Empty<PeriodeReglementaire>(),
+            AgentsCandidats: agents,
+            ConditionsApres: conditions,
+            Criteres: criteres);
+
+        var r = useCase.Executer(demande);
+        Assert.True(r.IsSuccess);
+        Assert.Equal(2, r.Value.NbAgents);   // et non 3 : le 3e ne satisfait aucun groupe
+    }
+
+    [Fact]
     public void Simuler_retourne_NbAgents_0_si_donnees_manquantes()
     {
         // Sans AgentsCandidats / ConditionsApres / Criteres, NbAgents = 0

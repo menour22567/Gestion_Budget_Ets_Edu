@@ -20,10 +20,6 @@ public class RegleEligibiliteEvaluatorTests
         => ConditionEligibilite.Creer(id, rub, critereId, op, valeur, groupeId,
             PeriodeReglementaire.Creer(eff, fin));
 
-    private static GroupeEligibilite Groupe(string id, string rub, Severite sev = Severite.ObligatoireReglementaire)
-        => GroupeEligibilite.Creer(id, rub, sev, messageId: null, priorite: 100,
-            PeriodeReglementaire.Creer("2025-01-01", null), source: null);
-
     private static AgentContext Agent(string corps = "PEM", string? grade = null,
                                        string? origine = "ENSEIGNANT")
         => new(Filiere: "ENSEIGNANT", Corps: corps, Grade: grade, Categorie: 7,
@@ -74,9 +70,22 @@ public class RegleEligibiliteEvaluatorTests
         var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
         var r = eval.Evaluer("ISSRP_45", Agent("PEM"), "2025-06-15",
             conditions: new[] { Cond("C1", "ISSRP_45", "CORPS", Operateur.Egal, "PEM", groupeId: "G1") },
-            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") },
-            groupes: new[] { Groupe("G1", "ISSRP_45") });
+            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
         Assert.True(r.EstEligible);
+    }
+
+    [Fact]
+    public void DNF_conditions_groupees_jamais_ignorees()
+    {
+        // Régression : avant correctif, les conditions groupées étaient ignorées
+        // quand les en-têtes de groupes n'étaient pas fournis à l'évaluateur —
+        // l'agent était déclaré éligible à tort (surcomptage du simulateur D8).
+        // La DNF est désormais déduite du GroupeId porté par les conditions.
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var r = eval.Evaluer("ISSRP_45", Agent("PELP"), "2025-06-15",
+            conditions: new[] { Cond("C1", "ISSRP_45", "CORPS", Operateur.Egal, "PEM", groupeId: "G1") },
+            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
+        Assert.False(r.EstEligible);
     }
 
     [Fact]
@@ -97,21 +106,19 @@ public class RegleEligibiliteEvaluatorTests
             ["CORPS"] = C("CORPS"),
             ["ORIGINE_STATUTAIRE"] = C("ORIGINE_STATUTAIRE", SourceResolution.AttributAgent),
         };
-        var groupes = new[] { Groupe("GA", "ISSRP_45"), Groupe("GB", "ISSRP_45") };
-
         // Cas 1 : agent en PEM, origine INCONNU → éligible (groupe A satisfait)
         var r1 = eval.Evaluer("ISSRP_45", Agent("PEM", origine: "INCONNU"), "2025-06-15",
-            conditions, criteres, groupes);
+            conditions, criteres);
         Assert.True(r1.EstEligible);
 
         // Cas 2 : agent en CENSEUR, origine ENSEIGNANT → éligible (groupe B satisfait)
         var r2 = eval.Evaluer("ISSRP_45", Agent("CENSEUR", origine: "ENSEIGNANT"), "2025-06-15",
-            conditions, criteres, groupes);
+            conditions, criteres);
         Assert.True(r2.EstEligible);
 
         // Cas 3 : agent en CENSEUR, origine AUTRE → non éligible (aucun groupe satisfait)
         var r3 = eval.Evaluer("ISSRP_45", Agent("CENSEUR", origine: "AUTRE"), "2025-06-15",
-            conditions, criteres, groupes);
+            conditions, criteres);
         Assert.False(r3.EstEligible);
     }
 
@@ -132,8 +139,7 @@ public class RegleEligibiliteEvaluatorTests
             {
                 ["CORPS"] = C("CORPS"),
                 ["ORIGINE_STATUTAIRE"] = C("ORIGINE_STATUTAIRE", SourceResolution.AttributAgent),
-            },
-            groupes: new[] { Groupe("G", "ISSRP_45") });
+            });
         Assert.False(r.EstEligible);
         Assert.Equal(2, r.Diagnostics.Count);   // les 2 conditions du groupe non satisfaites
     }
@@ -151,8 +157,7 @@ public class RegleEligibiliteEvaluatorTests
                 // Groupe G2 : corps B (OUI) — un seul membre suffit
                 Cond("C2", "R", "CORPS", Operateur.Egal, "B", groupeId: "G2"),
             },
-            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") },
-            groupes: new[] { Groupe("G1", "R"), Groupe("G2", "R") });
+            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
         Assert.True(r.EstEligible);
     }
 }

@@ -112,17 +112,17 @@ public class WorkbenchIntegrationTests
             var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
 
             // Cas 1 : agent en PEM → G-PEDAGO satisfait
-            var r1 = eval.Evaluer("ISSRP_45", Agent("PEM"), "2025-06-15", conditions, criteres, groupes);
+            var r1 = eval.Evaluer("ISSRP_45", Agent("PEM"), "2025-06-15", conditions, criteres);
             Assert.True(r1.EstEligible);
 
             // Cas 2 : agent en CENSEUR + ENSEIGNANT → G-PROMO satisfait
             var r2 = eval.Evaluer("ISSRP_45", Agent("CENSEUR", "ENSEIGNANT"), "2025-06-15",
-                conditions, criteres, groupes);
+                conditions, criteres);
             Assert.True(r2.EstEligible);
 
             // Cas 3 : agent en CENSEUR + AUTRE → aucun groupe satisfait
             var r3 = eval.Evaluer("ISSRP_45", Agent("CENSEUR", "AUTRE"), "2025-06-15",
-                conditions, criteres, groupes);
+                conditions, criteres);
             Assert.False(r3.EstEligible);
         }
     }

@@ -39,17 +39,19 @@ public sealed class RegleEligibiliteEvaluator
     /// <param name="datePaie">Date de paie (pour la résolution temporelle).</param>
     /// <param name="conditions">Toutes les conditions de la rubrique, versionnées.</param>
     /// <param name="criteres">Dictionnaire des critères (pour la résolution de valeur).</param>
-    /// <param name="groupes">
-    /// Groupes d'éligibilité de la rubrique. Si absent, l'évaluation retombe
-    /// sur l'ET plat V008.
-    /// </param>
+    /// <remarks>
+    /// La structure DNF est déduite du <c>GroupeId</c> porté par chaque condition —
+    /// les en-têtes <c>GroupesEligibilite</c> (sévérité, message, priorité) ne
+    /// participent pas à l'évaluation booléenne, ils servent au diagnostic UI.
+    /// Ce choix garantit qu'un appelant qui ne charge pas les en-têtes (ex. le
+    /// simulateur D8) évalue exactement la même règle que le moteur.
+    /// </remarks>
     public ResultatEligibilite Evaluer(
         string rubriqueId,
         AgentContext agent,
         string datePaie,
         IReadOnlyList<ConditionEligibilite> conditions,
-        IReadOnlyDictionary<string, CritereEligibilite> criteres,
-        IReadOnlyList<GroupeEligibilite>? groupes = null)
+        IReadOnlyDictionary<string, CritereEligibilite> criteres)
     {
         ArgumentNullException.ThrowIfNull(rubriqueId);
         ArgumentNullException.ThrowIfNull(agent);
@@ -98,8 +100,9 @@ public sealed class RegleEligibiliteEvaluator
             return ResultatEligibilite.Ineligible(diagnostics);
         }
 
-        // 4. S'il n'y a aucun groupe, l'éligibilité est acquise (ET plat uniquement).
-        if (groupees.Count == 0 || groupes is null || groupes.Count == 0)
+        // 4. S'il n'y a aucune condition groupée, l'éligibilité est acquise
+        //    (ET plat V008 uniquement).
+        if (groupees.Count == 0)
         {
             return ResultatEligibilite.Eligible();
         }

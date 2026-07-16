@@ -1,4 +1,6 @@
+using PaieEducation.Domain.Calcul.Audit;
 using PaieEducation.Domain.Calcul.Cotisations;
+using PaieEducation.Domain.Calcul.Explicabilite;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Workbench.Services;
@@ -54,16 +56,19 @@ public sealed record PayrollInput(
     ProfilFiscal Profil,
     IrgReglePeriode? RegleIrg);
 
-/// <summary>Ligne d'un bulletin — un montant calculé, tracé par son détail.</summary>
+/// <summary>Ligne d'un bulletin — un montant calculé, tracé par son explication (RM-105).</summary>
 public sealed record BulletinLigne(
     string RubriqueId,
     NatureRubrique Nature,
     decimal Montant,
     bool Imposable,
     bool Cotisable,
-    string Detail);
+    ExplicationLigne Explication);
 
-/// <summary>Bulletin de paie calculé (gains, assiettes, retenues, IRG, net).</summary>
+/// <summary>
+/// Bulletin de paie calculé (gains, assiettes, retenues, IRG, net) + journal
+/// d'exécution (<see cref="Audit"/>, RM-105 / V4 Tome C vol. 9 §17).
+/// </summary>
 public sealed record Bulletin(
     IReadOnlyList<BulletinLigne> Lignes,
     decimal TotalGains,
@@ -71,4 +76,5 @@ public sealed record Bulletin(
     decimal AssietteImposable,
     decimal TotalRetenues,
     decimal Irg,
-    decimal Net);
+    decimal Net,
+    JournalAudit Audit);

@@ -268,6 +268,178 @@ Effort relatif : S < M < L < XL.
 
 ## Phase 5 — Application & Persistence
 **Objectif.** Orchestrer les cas d'usage et brancher la persistance réelle, y compris les use cases du Workbench réglementaire (D5-D11).
+
+**Jalon D — Fondations Agent/Carrière/Période : ✅ FAIT (16/07/2026).** Migration
+`V011__agents_carriere.sql` (`Agents`, `Carrieres` versionnée point-in-time, `Periodes`
+avec cycle de vie ADR-0008, `AgentAttributs`/`AgentRubriques`/`AgentRubriqueParametres`/
+`AvertissementsHistorique` — DDL portée depuis J3H §4/7/8) + `AgentCarriereRepository`
+(Infrastructure) qui résout un `AgentContext` réel depuis la base (remplace la
+construction à la main utilisée en Phase 4). 328 tests verts (301 + 27 nouveaux).
+Conception discutée avec Tome B vol. 8 §4-§12, 4 écarts validés STOP&ASK (Agent =
+identité pure, Carrière unique poste+affectation, Contrat différé, 4 tables J3H
+incluses dès V011). **Reste explicitement hors périmètre** de ce jalon : le
+`VariableEngine` (résolution `INDICE_MIN`/`TRT`/... depuis la grille réelle) et les
+use cases d'écriture (`CréerAgent`, Workbench D5-D11 ci-dessous) — tâches 1-6
+restent donc entières.
+
+**VariableEngine : ✅ FAIT (16/07/2026).** `VariableRepository` (Infrastructure,
+`Repositories/Payroll/`) résout `INDICE_MIN`/`INDICE_ECH`/`VPI`/`TBASE`/`TRT`/`ECH`/
+`CAT` depuis `GrilleIndiciaire`/`IndicesEchelon`/`ValeurPoint` à une date de paie,
+point-in-time (même schéma que `AgentCarriereRepository`), à partir des seuls
+`Categorie`/`Echelon` (int) déjà portés par `AgentContext` — pas besoin d'exposer
+les ID texte `CategorieId`/`EchelonId` (résolus via `Categories.Niveau`/
+`Echelons.Numero`, uniques). `BulletinEndToEndTests.Bulletin_enseignant_depuis_un_agent_reel_seede_en_base`
+n'a plus aucune valeur fournie à la main : agent, carrière et variables de base
+sont tous résolus depuis SQLite. Tâches 1-6 (use cases, DI, Workbench D5-D11)
+restent entières.
+
+**`CalculerBulletin` (1er use case pilote, tâche 4) : ✅ FAIT (16/07/2026).**
+Premier point d'entrée `Application` réel : `Domain/Calcul/Repositories/`
+définit trois ports (`IAgentCarriereRepository`, `IVariableRepository`,
+`IPayrollReadRepository`) — nécessaires car `DependencyRulesTests` interdit à
+`Application` de référencer `Infrastructure` directement ; les 3 repositories
+existants les implémentent sans changement de comportement.
+`Application/Payroll/UseCases/CalculerBulletin.cs` orchestre ces ports +
+`CalculationPipeline` (instancié directement, service Domain pur). Lecture
+seule — pas de persistance (`ValiderBulletin`, à venir). 336 tests verts
+(334 + 2). Câblage DI dans `Bootstrapper`, persistance, et les 4 autres use
+cases pilotes restent entiers.
+
+**`CréerAgent` (2e use case pilote, tâche 4) : ✅ FAIT (16/07/2026).** Premier
+use case d'**écriture** : `Domain/Agents/` (nouveau bounded context) définit
+`NouvelAgent` (DTO partagé, réutilisé tel quel comme paramètre du use case —
+pas de duplication) et le port `IAgentRepository.CreerAsync`.
+`AgentRepository` (Infrastructure) crée `Agents`+`Carrieres` en une seule
+transaction Dapper (`BeginTransaction`/`ExecuteAsync`/`Commit`, patron déjà
+utilisé par `ReglementaireSeeder`), Id généré en GUID (ADR-0004 : tables de
+gestion = GUID, contrairement aux référentiels = code métier), matricule
+vérifié unique avant insertion (`Error.Conflict` explicite, pas d'exception).
+`Application/Agents/UseCases/CreerAgent.cs` valide les champs requis et les
+valeurs énumérées (Sexe/SituationFamiliale/TypeContrat) avant d'appeler le
+port — première utilisation réelle d'`IClock` (jusque-là défini mais jamais
+injecté) pour `CreatedAt`. FK (Grade/Catégorie/Échelon/Fonction/
+Établissement) non vérifiées proactivement — hors périmètre V1, cohérent
+avec le reste des repositories. Test bout-en-bout : un agent créé par
+`CreerAgent` est immédiatement résoluble par `AgentCarriereRepository`
+(lecture) — les deux use cases pilotes sont cohérents sur le même schéma.
+340 tests verts (336 + 4). Câblage DI, persistance du bulletin, et les 3
+autres use cases pilotes (`ValiderBulletin`, `ConsulterBulletin`,
+`GérerRéférentiels`) restent entiers.
+
+**`ValiderBulletin` (3e use case pilote, tâche 4) : ✅ FAIT (16/07/2026).**
+Fige le bulletin via le Snapshot Engine (Phase 4) et le persiste — prérequis
+bloquant d'ADR-0008 pour tout futur rappel. Migration `V012__bulletins.sql`
+(`Bulletins`, unicité `(AgentId, DatePaie)` — un bulletin validé n'est jamais
+réécrit). Obstacle technique découvert et résolu : 5 Value Objects du
+sous-arbre calc (`Fraction`, `PeriodeReglementaire`, `BaremeValue`,
+`ConditionEligibilite`, `CritereEligibilite`) ont un constructeur privé +
+fabrique `.Creer(...)`, non désérialisables par défaut par
+`System.Text.Json` — 5 `JsonConverter<T>` sur mesure
+(`Infrastructure/Serialization/BulletinSnapshotJsonConverters.cs`). Un test
+dédié prouve l'exigence dure d'ADR-0008 : sérialiser puis désérialiser un
+snapshot et rejouer `CalculationPipeline.Calculer` sur l'Input désérialisé
+reproduit le bulletin à l'identique (net 57 739 DA, pas une réévaluation du
+passé). `IBulletinRepository`/`BulletinRepository` suivent le même patron
+que `AgentRepository` (vérification d'unicité avant écriture →
+`Error.Conflict` explicite). `ValiderBulletin` duplique l'orchestration de
+lecture de `CalculerBulletin` plutôt que de la factoriser (celui-ci ne
+renvoie pas le `PayrollInput` nécessaire au snapshot — changer son contrat
+aurait cassé ses tests). Transition d'état `Periodes`
+(`OUVERTE`→`VALIDEE`/`CLOTUREE`) explicitement hors périmètre — l'unicité
+`(AgentId, DatePaie)` suffit à garantir l'immutabilité de base. 345 tests
+verts (340 + 5). Câblage DI, `ConsulterBulletin`, `GérerRéférentiels`, et les
+use cases Workbench D5-D11 restent entiers.
+
+**`ConsulterBulletin` (4e use case pilote, tâche 4) : ✅ FAIT (16/07/2026).**
+Symétrique en lecture de `ValiderBulletin` : `IBulletinReadRepository`/
+`BulletinReadRepository` (`Repositories/Payroll/`, même dossier, nom en écho
+à `PayrollReadRepository`) relisent `SnapshotJson` et le désérialisent via
+les mêmes convertisseurs que l'écriture (`BulletinSnapshotJson.Options`,
+tranche précédente) — aucun nouveau problème de sérialisation. Le use case
+projette `Bulletin` depuis le `BulletinSnapshot` complet (pas de
+recalcul : ADR-0008, le snapshot est la seule source de vérité une fois
+validé). Testé bout-en-bout en enchaînant `ValiderBulletin` puis
+`ConsulterBulletin` dans le même test — le bulletin relu est identique à
+celui validé (net 57 739 DA). Tranche volontairement petite (aucune
+recherche/décision nouvelle, tout le travail dur avait été fait pour
+`ValiderBulletin`) — passée directement sans repasser par Plan Mode. 349
+tests verts (345 + 4). Il ne reste de la tâche 4 que `GérerRéférentiels`.
+Câblage DI `Bootstrapper` et use cases Workbench D5-D11 restent entiers.
+
+**`GérerRéférentiels` — grille indiciaire (5e et dernier use case pilote,
+tâche 4) : ✅ FAIT (16/07/2026).** Q3 couvre plusieurs entités
+(rubriques/cotisations/barèmes/grille) ; périmètre choisi avec l'utilisateur :
+grille indiciaire (`ValeurPoint`/`GrilleIndiciaire`/`IndicesEchelon`, V003) —
+symétrique en écriture de `VariableRepository` (VariableEngine). Écart
+corrigé avant implémentation en relisant ADR-0004 : ces tables sont des
+tables de **référentiel** (PK = code métier, ex. `"GI-13-2024-01-01"`), pas
+des tables de gestion (GUID) comme `Agents`/`Bulletins` — le réflexe des
+tranches précédentes (GUID) aurait été faux ici. `IGrilleIndiciaireRepository`/
+`GrilleIndiciaireRepository` (3 méthodes, même algorithme de versionnement :
+rejet si la date d'effet existe déjà — `Conflict` — ou n'est pas postérieure
+à la version en vigueur — `Validation` — sinon ferme la version courante
+(`DateFin` = veille exacte, `DateOnly`) et insère la nouvelle en transaction).
+3 use cases Application distincts (`DefinirValeurPoint`,
+`DefinirIndiceMinGrille`, `DefinirIndiceEchelon`, nouveau dossier
+`Application/Referentiels/UseCases/`) plutôt qu'une classe à 3 méthodes —
+ce sont 3 actions utilisateur distinctes même si l'implémentation
+Infrastructure est mutualisée. Test bout-en-bout : écrire deux versions
+successives d'un indice de catégorie puis relire via `VariableRepository`
+(déjà livré) résout la bonne valeur selon la date — preuve que l'écriture et
+la lecture point-in-time restent cohérentes. 363 tests verts (349 + 14).
+**Les 5 use cases pilotes de la tâche 4 sont complets.** Reste : câblage DI
+`Bootstrapper`, use cases Workbench D5-D11 (tâche 5), et les autres
+entités de `GérerRéférentiels` (rubriques/cotisations/barèmes) si besoin.
+
+**Tâche 3 — Composition Root (câblage DI) : ✅ FAIT (16/07/2026),
+partiellement.** `Application`/`Infrastructure` référençaient déjà
+`Microsoft.Extensions.DependencyInjection.Abstractions` sans jamais l'avoir
+utilisé — scaffolding anticipé, jamais câblé. `AddInfrastructure(services,
+connectionString)` (`Infrastructure/DependencyInjection/`) enregistre
+`IClock`→`SystemClock` (Singleton), `SqliteConnection` (Scoped, `PRAGMA
+foreign_keys=ON` à l'ouverture) et les 7 repositories déjà livrés (Scoped).
+`AddApplication(services)` enregistre les 7 use cases pilotes +
+`SimulerEvolutionReglementaire` (Transient). Testé en résolvant
+`CalculerBulletin` depuis un vrai conteneur DI (`ServiceCollection` +
+`BuildServiceProvider`) et en l'exécutant contre une base SQLite migrée et
+seedée — même résultat (net 57 739 DA) que tous les tests qui instanciaient
+les classes à la main. **Volontairement laissé de côté** : `App.xaml.cs`/
+`MainWindow.xaml` (ouvrir une fenêtre vide sur `Presentation` — toujours un
+projet vide — ne prouverait rien de plus) et `appsettings.json`/liaison
+`IConfiguration` réelle (aucune convention de chemin `.db` de production
+n'existe encore, pas inventée ici). Ce sera à câbler par Bootstrapper quand
+Phase 6 aura un Shell réel. Écart doc/code relevé en passant, non traité :
+`docs/CONVENTIONS.md` §5 prescrit un objet valeur `Money`, jamais utilisé
+depuis Phase 4 (`decimal` nu partout) — hors périmètre de cette tranche.
+365 tests verts (363 + 2). Rien commité.
+
+**Tâche 5 — Use cases Workbench (D5-D11) : `SuggererRubriques` (D5) livré
+(16/07/2026), 1/7.** Pour un agent et une date, évalue les rubriques
+affectables (`EstAffectableManuellement=1`) via le moteur DNF
+(`RegleEligibiliteEvaluator`, déjà livré) et crée une ligne `AgentRubriques
+(Statut=SUGGEREE, Origine=GROUPE:<Id>@<DateEffet>)` pour chaque rubrique dont
+un groupe DNF est satisfait — cycle ISSRP de J3H §10(a). Portée volontairement
+limitée aux rubriques dont l'éligibilité repose sur un groupe DNF (`GroupeId`
+non nul) : une rubrique affectable éligible seulement par conditions communes
+(sans groupe) n'a pas de `GroupeId` à citer dans `Origine` et n'a aucun
+exemple documenté — ignorée dans cette tranche, pas une erreur. Nouveaux
+ports `IWorkbenchReadRepository`/`IAgentRubriqueRepository`
+(`Domain/Workbench/Repositories/`, 3e bounded context de ports après
+`Agents`/`Calcul`) ; `WorkbenchReadRepository` (déjà livré, jamais interfacé)
+gagne `ListerRubriquesAffectablesAsync` + implémente le nouveau port.
+Écriture idempotente (`AgentRubriqueRepository.SuggererAsync` : `Result<string?>`,
+`null` = déjà suggérée/affectée, no-op silencieux, jamais de doublon). Câblé
+dans `AddInfrastructure`/`AddApplication` (Composition Root déjà livré).
+Test bout-en-bout rejoue exactement le cycle ISSRP avec les groupes réels
+`GE-ISSRP45-DIRECT`/`GE-ISSRP45-ORIGINE` (J4F) déjà utilisés par
+`BulletinEndToEndTests` — même grades (`SDL-G007` éligible conditionnel,
+`A-G048` hors groupe), preuve que suggestion d'affectation et éligibilité au
+calcul restent cohérentes. N'écrit jamais `AvertissementsHistorique` (émis à
+l'acceptation, pas à la suggestion). 371 tests verts (365 + 6). Reste :
+`AccepterSuggestion`/`SupprimerAffectation`/`SuspendreAffectation` (agissent
+sur ce que `SuggererRubriques` crée), `AppliquerEvolutionReglementaire`,
+`CloreVersion`/`DupliquerVersion`, `GenererRappels`, `ListerMatriceCouverture`.
+
 **Tâches.**
 1. **Application** : Use Cases (CQRS léger), Commands/Queries, DTO, mapping, validation applicative, `IUnitOfWork`, notifications, gestion d'erreurs normalisée.
 2. **Persistence** : `Persistence Models` distincts des entités (ADR-066), mappers, **repositories spécialisés** par agrégat (Dapper), transactions, migrations, backup/restore — incluant les nouveaux repositories V009 (`BaremeRepository`, `SourceValeurRepository`, `GroupeEligibiliteRepository`, `CriteresEligibiliteRepository`).

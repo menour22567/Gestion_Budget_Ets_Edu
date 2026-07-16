@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Workbench.Enums;
+using PaieEducation.Domain.Workbench.Repositories;
 using PaieEducation.Domain.Workbench.ValueObjects;
 
 namespace PaieEducation.Infrastructure.Repositories.Workbench;
@@ -15,7 +16,7 @@ namespace PaieEducation.Infrastructure.Repositories.Workbench;
 /// synchrone (Microsoft.Data.Sqlite). Le <c>using async</c> est conservé pour
 /// la compatibilité future avec un driver async natif (ADR-0005).
 /// </remarks>
-public sealed class WorkbenchReadRepository
+public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
 {
     private readonly SqliteConnection _connection;
 
@@ -23,6 +24,23 @@ public sealed class WorkbenchReadRepository
     {
         ArgumentNullException.ThrowIfNull(connection);
         _connection = connection;
+    }
+
+    /// <summary>
+    /// Ids des rubriques actives et affectables manuellement
+    /// (<c>EstAffectableManuellement = 1</c>, V010) — alimente les
+    /// suggestions d'affectation (J3H lot 3), indépendamment de la date
+    /// (le flag n'est pas versionné, seules les conditions/barèmes le sont).
+    /// </summary>
+    public async Task<IReadOnlyList<string>> ListerRubriquesAffectablesAsync(string datePaie, CancellationToken ct = default)
+    {
+        const string sql = """
+            SELECT Id FROM Rubriques
+            WHERE Actif = 1 AND EstAffectableManuellement = 1
+            ORDER BY Id;
+            """;
+        var rows = await _connection.QueryAsync<string>(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.ToList();
     }
 
     // -----------------------------------------------------------------------

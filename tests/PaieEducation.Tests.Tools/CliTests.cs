@@ -119,7 +119,7 @@ public class CliTests
 
         using var conn = new SqliteConnection(db.ConnectionString);
         conn.Open();
-        Assert.Equal(8L, Count(conn, "Rubriques"));
+        Assert.Equal(10L, Count(conn, "Rubriques"));
         Assert.Equal(3L, Count(conn, "Cotisations"));
         Assert.Equal(7L, Count(conn, "Parametres"));
     }
@@ -163,11 +163,13 @@ public class CliTests
 
             using var conn = new SqliteConnection(db.ConnectionString);
             conn.Open();
-            // V009 (Workbench réglementaire, ADR-0007) ajoutée le 15/07/2026 : 9
+            // V010 (flags d'affectation, J4.e) ajoutée le 16/07/2026 : 10
             // migrations au total. Le test reste robuste à l'ajout futur.
-            Assert.True(Count(conn, "SchemaVersions") >= 9L);
-            Assert.Equal(2L, Count(conn, "Filieres"));
-            Assert.Equal(8L, Count(conn, "Rubriques"));
+            Assert.True(Count(conn, "SchemaVersions") >= 10L);
+            // 2 filières du CSV échantillon (ADMIN, ENSEIGNANT) + 1 ajoutée par
+            // le seed supplémentaire Q-C3 (INSPECTION, ReglementaireSeeder).
+            Assert.Equal(3L, Count(conn, "Filieres"));
+            Assert.Equal(10L, Count(conn, "Rubriques"));
             Assert.Equal(4L, Count(conn, "IRGReglesPeriode"));
         }
         finally

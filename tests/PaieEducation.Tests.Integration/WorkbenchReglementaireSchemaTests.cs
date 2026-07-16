@@ -8,7 +8,10 @@ namespace PaieEducation.Tests.Integration;
 ///
 /// Vérifie :
 ///  R1 — Absence des tables de gestion (AgentAttributs, AgentRubriques,
-///       AvertissementsHistorique) — créées en Phase 5, pas en V009.
+///       AvertissementsHistorique) en V009 : décision historique, non
+///       testable ici depuis que V011 les crée (<c>CreateMigrated()</c>
+///       applique toutes les migrations). Leur présence effective est
+///       vérifiée par <c>AgentCarriereSchemaTests</c> (Phase 5, jalon D).
 ///  R2 — PK = `Id` partout (harmonisation ADR-0004).
 ///  R3 — `ReglesEligibilite.Critere` (TEXT + CHECK) SUPPRIMÉ au profit de
 ///       `CritereId` (FK vers CriteresEligibilite.Id) — source unique.
@@ -56,20 +59,10 @@ public class WorkbenchReglementaireSchemaTests
     }
 
     // =========================================================================
-    // R1 — Tables de gestion NON créées en V009
+    // R1 — Tables de gestion NON créées en V009 (décision historique).
+    // Non testable via CreateMigrated() depuis que V011 les crée (Phase 5,
+    // jalon D) : voir AgentCarriereSchemaTests pour la vérification positive.
     // =========================================================================
-
-    [Fact]
-    public void R1_pas_de_AgentAttributs_AgentRubriques_AvertissementsHistorique()
-    {
-        using var scope = SchemaTestSupport.CreateMigrated();
-        using var cmd = scope.Conn.CreateCommand();
-        cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('AgentAttributs','AgentRubriques','AvertissementsHistorique');";
-        using var rdr = cmd.ExecuteReader();
-        var found = new List<string>();
-        while (rdr.Read()) found.Add(rdr.GetString(0));
-        Assert.Empty(found);
-    }
 
     // =========================================================================
     // R2 — PK = `Id` partout (pas `Code`) sur les nouveaux catalogues

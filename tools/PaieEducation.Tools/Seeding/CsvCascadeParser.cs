@@ -37,44 +37,79 @@ public sealed class CsvCascadeParser
         ArgumentNullException.ThrowIfNull(reader);
 
         var rows = new List<CascadeRow>();
-        string? line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+        string? record = await ReadLogicalRecordAsync(reader, ct).ConfigureAwait(false);
 
-        // Sauter l'en-tête (potentiellement multi-ligne) : on cherche la
-        // première ligne qui commence par un chiffre (= premier Num_Ord).
-        while (line is not null && !LooksLikeDataLine(line))
+        // Sauter l'en-tête (potentiellement multi-ligne, y compris à l'intérieur
+        // de champs entre guillemets) : on cherche le premier enregistrement
+        // logique qui commence par un chiffre (= premier Num_Ord).
+        while (record is not null && !LooksLikeDataLine(record))
         {
-            line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            record = await ReadLogicalRecordAsync(reader, ct).ConfigureAwait(false);
         }
 
-        while (line is not null)
+        while (record is not null)
         {
             ct.ThrowIfCancellationRequested();
-            var parsed = TryParseLine(line, rows.Count + 1);
+            var parsed = TryParseLine(record, rows.Count + 1);
             if (parsed is not null)
             {
                 rows.Add(parsed);
             }
-            line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            record = await ReadLogicalRecordAsync(reader, ct).ConfigureAwait(false);
         }
 
         return rows;
     }
 
-    private static bool LooksLikeDataLine(string line)
+    /// <summary>
+    /// Lit un enregistrement CSV logique : une ou plusieurs lignes physiques,
+    /// fusionnées tant qu'un champ entre guillemets contient un retour chariot
+    /// littéral (ex. libellé de grade sur deux lignes dans la source). La
+    /// parité du nombre de guillemets accumulés indique si on est « à
+    /// l'intérieur » d'un champ ouvert — y compris avec des guillemets doublés
+    /// (échappement RFC4180 <c>""</c>), qui contribuent toujours un nombre pair
+    /// et ne perturbent donc pas la détection de limite d'enregistrement.
+    /// </summary>
+    private static async Task<string?> ReadLogicalRecordAsync(TextReader reader, CancellationToken ct)
     {
-        // Heuristique : la ligne de données commence par un entier.
+        string? line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+        if (line is null) return null;
+
+        var buffer = line;
+        while (CountQuotes(buffer) % 2 != 0)
+        {
+            var next = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+            if (next is null) break; // guillemet non refermé en fin de fichier : au mieux.
+            buffer = buffer + "\n" + next;
+        }
+        return buffer;
+    }
+
+    private static int CountQuotes(string s)
+    {
+        var count = 0;
+        foreach (var c in s)
+        {
+            if (c == '"') count++;
+        }
+        return count;
+    }
+
+    private static bool LooksLikeDataLine(string record)
+    {
+        // Heuristique : l'enregistrement de données commence par un entier.
         // On évite ainsi d'avaler les fragments d'en-tête qui contiennent
         // "Indice Minimum", "01/03/2022", etc.
-        var trimmed = line.AsSpan().TrimStart();
+        var trimmed = record.AsSpan().TrimStart();
         if (trimmed.IsEmpty) return false;
         var first = trimmed[0];
         return first is >= '0' and <= '9';
     }
 
-    private static CascadeRow? TryParseLine(string line, int lineNumber)
+    private static CascadeRow? TryParseLine(string record, int lineNumber)
     {
-        var parts = line.Split(';');
-        if (parts.Length != ExpectedColumnCount)
+        var parts = SplitCsvRecord(record);
+        if (parts.Count != ExpectedColumnCount)
         {
             // On ne lève pas : un CSV peut contenir des lignes vides ou
             // parasites. Le nombre de lignes sautées est rapporté par le
@@ -105,18 +140,72 @@ public sealed class CsvCascadeParser
     }
 
     /// <summary>
-    /// Nettoie un champ : trim, supprime les espaces doubles, décode les
-    /// guillemets résiduels si le CSV en utilise (le notre n'en a pas dans
-    /// les données, mais c'est défensif).
+    /// Découpe un enregistrement logique en champs, séparateur <c>;</c>, en
+    /// respectant les guillemets : un <c>;</c> à l'intérieur d'un champ entre
+    /// guillemets n'est pas un délimiteur, et <c>""</c> représente un
+    /// guillemet littéral (échappement RFC4180). Nécessaire depuis que
+    /// <see cref="ReadLogicalRecordAsync"/> peut fusionner plusieurs lignes
+    /// physiques (champ avec retour chariot littéral, ex. libellé de grade
+    /// sur deux lignes dans la source).
+    /// </summary>
+    private static List<string> SplitCsvRecord(string record)
+    {
+        var fields = new List<string>();
+        var field = new StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < record.Length; i++)
+        {
+            var c = record[i];
+            if (inQuotes)
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < record.Length && record[i + 1] == '"')
+                    {
+                        field.Append('"');
+                        i++; // guillemet doublé = un seul guillemet littéral
+                    }
+                    else
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    field.Append(c);
+                }
+            }
+            else if (c == '"')
+            {
+                inQuotes = true;
+            }
+            else if (c == ';')
+            {
+                fields.Add(field.ToString());
+                field.Clear();
+            }
+            else
+            {
+                field.Append(c);
+            }
+        }
+        fields.Add(field.ToString());
+        return fields;
+    }
+
+    /// <summary>
+    /// Nettoie un champ déjà dé-quoté par <see cref="SplitCsvRecord"/> : trim,
+    /// remplace les retours chariot littéraux (champ reconstruit sur plusieurs
+    /// lignes physiques, cf. <see cref="ReadLogicalRecordAsync"/>) par un
+    /// espace, puis supprime les espaces doubles.
     /// </summary>
     private static string NormalizeField(string raw)
     {
-        var s = raw.Trim();
-        // Pas de guillemets attendus ici, mais on les retire s'il y en a.
-        if (s.Length >= 2 && s[0] == '"' && s[^1] == '"')
-        {
-            s = s[1..^1];
-        }
+        var s = raw.Replace("\r\n", " ", StringComparison.Ordinal)
+                    .Replace('\n', ' ')
+                    .Replace('\r', ' ')
+                    .Trim();
         // Espaces multiples → simple.
         while (s.Contains("  ", StringComparison.Ordinal))
         {

@@ -1,9 +1,12 @@
 using System.Globalization;
+using PaieEducation.Domain.Calcul.Audit;
 using PaieEducation.Domain.Calcul.Cotisations;
+using PaieEducation.Domain.Calcul.Explicabilite;
 using PaieEducation.Domain.Calcul.Formules;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.ValueObjects;
+using PaieEducation.Domain.Calcul.Validation;
 using PaieEducation.Domain.Common;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Services;
@@ -14,9 +17,9 @@ namespace PaieEducation.Domain.Calcul.Pipeline;
 /// <summary>
 /// Orchestre le calcul d'un bulletin à partir d'un <see cref="PayrollInput"/>
 /// résolu : ordre de calcul (DAG) → éligibilité DNF → évaluation des formules
-/// (lues en base) → assiettes → cotisations → IRG → totaux → net. Pur,
-/// déterministe (ADR-0005) : aucune I/O, tout arrondi passe par
-/// <see cref="ArrondiService"/> (RM-120).
+/// (lues en base) → assiettes → cotisations → IRG → totaux → net → contrôles
+/// finaux (RM-081). Pur, déterministe (ADR-0005) : aucune I/O, tout arrondi
+/// passe par <see cref="ArrondiService"/> (RM-120).
 /// </summary>
 public sealed class CalculationPipeline
 {
@@ -26,6 +29,7 @@ public sealed class CalculationPipeline
     private readonly BaremeResolver _bareme = new();
     private readonly RegleEligibiliteEvaluator _eligibilite = new(new CritereEligibiliteResolver());
     private readonly DependencyResolver _dependances = new();
+    private readonly ValidationEngine _validation = new();
     private readonly ArrondiService _arrondi;
 
     public CalculationPipeline(ArrondiService arrondi)
@@ -53,30 +57,39 @@ public sealed class CalculationPipeline
             input.Baremes, input.DatePaie, _bareme);
 
         var lignes = new List<BulletinLigne>();
+        var etapes = new List<EtapeAudit>();
         var indexGain = gains.ToDictionary(g => g.Id, StringComparer.Ordinal);
+        var rang = 0;
 
         foreach (var id in ordre.Value)
         {
             var rub = indexGain[id];
+            rang++;
 
             // Éligibilité (DNF) : une rubrique sans condition est due à tous.
             var eval = _eligibilite.Evaluer(rub.Id, input.Agent, input.DatePaie, input.Conditions, input.Criteres);
             if (!eval.EstEligible)
+            {
+                etapes.Add(new EtapeAudit(rub.Id, rang, Eligible: false, eval, Montant: null));
                 continue;
+            }
 
             if (rub.Expression is null)
                 return Result.Failure<Bulletin>(
                     Error.Validation($"Rubrique GAIN « {rub.Id} » sans formule."));
 
+            contexte.PurgerLectures();
             var montant = _evaluateur.Evaluer(rub.Expression, contexte);
             if (montant.IsFailure)
                 return Result.Failure<Bulletin>(
                     Error.Evaluation($"Rubrique « {rub.Id} » : {montant.Error.Message}"));
+            var lectures = contexte.PurgerLectures();
 
             var arrondi = _arrondi.Arrondir(montant.Value);
             variables[rub.Id] = arrondi;   // disponible pour les rubriques suivantes
             lignes.Add(new BulletinLigne(rub.Id, NatureRubrique.Gain, arrondi,
-                rub.EstImposable, rub.EstCotisable, $"{rub.Expression} = {Inv(arrondi)}"));
+                rub.EstImposable, rub.EstCotisable, new ExplicationLigne(rub.Expression, lectures)));
+            etapes.Add(new EtapeAudit(rub.Id, rang, Eligible: true, eval, arrondi));
         }
 
         var totalGains = lignes.Where(l => l.Nature == NatureRubrique.Gain).Sum(l => l.Montant);
@@ -84,18 +97,24 @@ public sealed class CalculationPipeline
         var gainsImposables = lignes.Where(l => l is { Nature: NatureRubrique.Gain, Imposable: true }).Sum(l => l.Montant);
 
         // Cotisations : salariales retenues sur le net ET déductibles de l'imposable.
+        // Toujours appliquées si présentes en entrée (aucun DNF ne les conditionne dans
+        // le pilote actuel) — éligibilité de convention pour le journal d'audit.
         decimal cotisationsSalariales = 0m;
+        rang = 0;
         foreach (var cot in input.Cotisations)
         {
+            rang++;
             var assiette = AssiettePour(cot.Def.Assiette, assietteCotisable, gainsImposables, variables);
             var montantCot = _cotisation.Calculer(cot.Def, assiette);
             if (montantCot.IsFailure)
                 return Result.Failure<Bulletin>(montantCot.Error);
 
             var arrondi = _arrondi.Arrondir(montantCot.Value);
+            var explication = new ExplicationLigne(
+                $"{cot.Def.Code} sur assiette", new[] { new VariableUtilisee("Assiette", assiette) });
             lignes.Add(new BulletinLigne(cot.Def.Code, NatureRubrique.Cotisation, arrondi,
-                Imposable: false, Cotisable: false,
-                $"{cot.Def.Code} sur {Inv(assiette)} = {Inv(arrondi)}"));
+                Imposable: false, Cotisable: false, explication));
+            etapes.Add(new EtapeAudit(cot.Def.Code, rang, Eligible: true, ResultatEligibilite.Eligible(), arrondi));
             if (cot.EstSalariale)
                 cotisationsSalariales += arrondi;
         }
@@ -111,17 +130,22 @@ public sealed class CalculationPipeline
             if (resultatIrg.IsFailure)
                 return Result.Failure<Bulletin>(resultatIrg.Error);
             irg = _arrondi.Arrondir(resultatIrg.Value.Final);
+            var explicationIrg = new ExplicationLigne(
+                "IRG", Array.Empty<VariableUtilisee>(), resultatIrg.Value);
             lignes.Add(new BulletinLigne("IRG", NatureRubrique.Impot, irg,
-                Imposable: false, Cotisable: false,
-                $"IRG {resultatIrg.Value.EtapeAppliquee} sur {Inv(assietteImposable)} = {Inv(irg)}"));
+                Imposable: false, Cotisable: false, explicationIrg));
+            etapes.Add(new EtapeAudit("IRG", ++rang, Eligible: true, ResultatEligibilite.Eligible(), irg));
         }
 
         var totalRetenues = cotisationsSalariales + irg
             + lignes.Where(l => l.Nature == NatureRubrique.Retenue).Sum(l => l.Montant);
         var net = _arrondi.Arrondir(totalGains - totalRetenues);
 
-        return Result.Success(new Bulletin(
-            lignes, totalGains, assietteCotisable, assietteImposable, totalRetenues, irg, net));
+        var bulletin = new Bulletin(
+            lignes, totalGains, assietteCotisable, assietteImposable, totalRetenues, irg, net,
+            new JournalAudit(etapes));
+
+        return _validation.Valider(bulletin);
     }
 
     private static decimal AssiettePour(
@@ -135,8 +159,6 @@ public sealed class CalculationPipeline
             _ => 0m   // MontantFixe : assiette ignorée par le calculateur
         };
 
-    private static string Inv(decimal d) => d.ToString(CultureInfo.InvariantCulture);
-
     /// <summary>Contexte de formule adossé au bundle d'entrée + résultats courants.</summary>
     private sealed class PipelineContext : IFormulaContext
     {
@@ -146,6 +168,7 @@ public sealed class CalculationPipeline
         private readonly IReadOnlyList<BaremeValue> _baremes;
         private readonly string _datePaie;
         private readonly BaremeResolver _resolver;
+        private readonly List<VariableUtilisee> _lectures = new();
 
         public PipelineContext(
             IReadOnlyDictionary<string, decimal> variables,
@@ -163,10 +186,25 @@ public sealed class CalculationPipeline
             _resolver = resolver;
         }
 
-        public Result<decimal> ResoudreVariable(string nom) =>
-            _variables.TryGetValue(nom, out var v)
-                ? Result.Success(v)
-                : Result.Failure<decimal>(Error.Evaluation($"Variable inconnue : {nom}"));
+        /// <summary>
+        /// Renvoie les variables lues par <see cref="ResoudreVariable"/> depuis le
+        /// dernier appel, puis vide le tampon (Explainability Engine, RM-105) —
+        /// un appel par rubrique évaluée, encadrant <c>FormulaEvaluator.Evaluer</c>.
+        /// </summary>
+        public IReadOnlyList<VariableUtilisee> PurgerLectures()
+        {
+            var copie = _lectures.ToList();
+            _lectures.Clear();
+            return copie;
+        }
+
+        public Result<decimal> ResoudreVariable(string nom)
+        {
+            if (!_variables.TryGetValue(nom, out var v))
+                return Result.Failure<decimal>(Error.Evaluation($"Variable inconnue : {nom}"));
+            _lectures.Add(new VariableUtilisee(nom, v));
+            return Result.Success(v);
+        }
 
         public Result<decimal> ResoudreSource(string rubrique) =>
             _sources.TryGetValue(rubrique, out var v)

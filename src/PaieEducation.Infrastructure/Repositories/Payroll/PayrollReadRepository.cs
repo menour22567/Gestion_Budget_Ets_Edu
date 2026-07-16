@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
+using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.ValueObjects;
 using PaieEducation.Domain.Common;
 using PaieEducation.Domain.Workbench.Enums;
@@ -25,7 +26,7 @@ namespace PaieEducation.Infrastructure.Repositories.Payroll;
 /// n'existe pas encore). Ce repository prouve le cœur de la Phase 4 : les
 /// <b>formules réglementaires sont lues en base</b>, pas codées en dur.
 /// </remarks>
-public sealed class PayrollReadRepository
+public sealed class PayrollReadRepository : IPayrollReadRepository
 {
     private readonly SqliteConnection _connection;
 

@@ -35,15 +35,18 @@ public sealed class FormulesSeeder
     // TRAITEMENT — traitement mensuel de base (TRT), ligne principale du bulletin.
     private static async Task InsertTraitementRubriqueAsync(SqliteConnection c, SeedReport r, CancellationToken ct)
     {
+        // Non affectable manuellement (V-2, J4E § 5) : base structurelle du
+        // bulletin — la supprimer priverait l'agent de tout salaire.
         var n = await c.ExecuteAsync("""
             INSERT INTO Rubriques
                 (Id, Libelle, Nature, BaseCalcul, Periodicite, OrdreCalcul,
-                 EstImposable, EstCotisable, Description, Actif, CreatedAt, Source, Hash)
+                 EstImposable, EstCotisable, Description, Actif, CreatedAt, Source, Hash,
+                 EstAffectableManuellement, OccurrencesMultiples)
             VALUES
                 ('TRAITEMENT', 'Traitement mensuel de base', 'GAIN', 'INDICE_ECHELON',
                  'MENSUELLE', 100, 1, 1,
                  'Traitement principal (INDICE_MIN + INDICE_ECH) × valeur du point',
-                 1, $at, 'J4.c — pilote', 'h-rubrique-TRAITEMENT')
+                 1, $at, 'J4.c — pilote', 'h-rubrique-TRAITEMENT', 0, 0)
             ON CONFLICT(Id) DO NOTHING;
             """,
             new { at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture) });
@@ -60,6 +63,8 @@ public sealed class FormulesSeeder
             ("TRAITEMENT", "(INDICE_MIN + INDICE_ECH) * VPI", "J3C §1 — TRT = (indice min + indice échelon) × VPI"),
             ("EXP_PEDAG",  "TBASE * 0.04 * ECH",              "J3C §2 — 4 % × TBASE × n° échelon"),
             ("PAPP",       "TRT * valeurSource(PAPP)",        "J3C §2 — TRT × taux de notation (0–40 %)"),
+            ("QUALIF",     "TRT * bareme(QUALIF, CATEGORIE)", "J3C §2 — TRT × taux par tranche de catégorie (40 %/45 %)"),
+            ("DOC_PEDAG",  "bareme(DOC_PEDAG, CATEGORIE)",    "J3C §2 — forfait par tranche de catégorie"),
             ("ISSRP_45",   "TRT * 0.45",                      "J3C §2 — ISSRP 45 % (2025+)"),
         };
 

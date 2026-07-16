@@ -90,6 +90,43 @@ public class CsvCascadeParserTests
     }
 
     [Fact]
+    public async Task Parse_un_champ_donnee_avec_retour_chariot_littteral_entre_guillemets_est_reconstruit()
+    {
+        // Régression n° 134 (Cascade_Corps_Grades_30526.csv) : le libellé de
+        // grade est entre guillemets et contient un retour chariot littéral
+        // ("Inspecteur de l'orientation et de la\nguidance scolaire et
+        // professionnelle"). Avant correctif, la lecture ligne à ligne
+        // scindait l'enregistrement en 2 fragments de mauvaise arité, tous
+        // deux silencieusement ignorés — la ligne disparaissait du seed.
+        const string csv = "Num_Ord;Type_Contrat;Type_Filiere;Type_Secteur;Type_Personnel;Corps_Filiere;Grades;Categorie;\"A\";\"B\";\"C\";\"D\"\n"
+            + "134;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;"
+            + "Corps des Inspecteurs de l'orientation et de la guidance scolaire et professionnelle;"
+            + "\"Inspecteur de l'orientation et de la\nguidance scolaire et professionnelle\";15;666;716;791;866\n";
+
+        var rows = await Parse(csv);
+
+        var row = Assert.Single(rows);
+        Assert.Equal(134, row.NumOrd);
+        Assert.Equal("Inspecteur de l'orientation et de la guidance scolaire et professionnelle", row.Grade);
+        Assert.Equal(15, row.Categorie);
+        Assert.Equal(866, row.IndiceAp2024_01);
+    }
+
+    [Fact]
+    public async Task Parse_un_champ_avec_point_virgule_entre_guillemets_nest_pas_scinde()
+    {
+        const string csv = """
+            Num_Ord;Type_Contrat;Type_Filiere;Type_Secteur;Type_Personnel;Corps_Filiere;Grades;Categorie;"A";"B";"C";"D"
+            1;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Adjoints de l'Education;"Adjoint; principal";7;348;398;473;548
+            """;
+
+        var rows = await Parse(csv);
+
+        var row = Assert.Single(rows);
+        Assert.Equal("Adjoint; principal", row.Grade);
+    }
+
+    [Fact]
     public async Task Parse_un_csv_vide_retourne_une_liste_vide()
     {
         var rows = await Parse("");

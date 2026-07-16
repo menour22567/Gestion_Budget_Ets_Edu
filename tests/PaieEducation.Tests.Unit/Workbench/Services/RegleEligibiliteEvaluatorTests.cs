@@ -48,7 +48,7 @@ public class RegleEligibiliteEvaluatorTests
             conditions: new[] { Cond("C1", "ISSRP_45", "CORPS", Operateur.Egal, "PELP") },
             criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
         Assert.False(r.EstEligible);
-        Assert.Single(r.Diagnostics);
+        Assert.Single(r.ConditionsNonSatisfaites);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class RegleEligibiliteEvaluatorTests
                 ["ORIGINE_STATUTAIRE"] = C("ORIGINE_STATUTAIRE", SourceResolution.AttributAgent),
             });
         Assert.False(r.EstEligible);
-        Assert.Equal(2, r.Diagnostics.Count);   // les 2 conditions du groupe non satisfaites
+        Assert.Equal(2, r.ConditionsNonSatisfaites.Count);   // les 2 conditions du groupe non satisfaites
     }
 
     [Fact]
@@ -159,5 +159,123 @@ public class RegleEligibiliteEvaluatorTests
             },
             criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
         Assert.True(r.EstEligible);
+    }
+
+    // --- Contrat d'explicabilité (J4.e § 7.1, lot 2-restes) ---
+
+    [Fact]
+    public void Explication_porte_aussi_les_conditions_satisfaites_avec_valeur_agent()
+    {
+        // « Pourquoi cette rubrique ? » a besoin des conditions SATISFAITES :
+        // critère, opérateur, valeur attendue, valeur de l'agent.
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var r = eval.Evaluer("ISSRP_45", Agent("PEM"), "2025-06-15",
+            conditions: new[] { Cond("C1", "ISSRP_45", "CORPS", Operateur.Egal, "PEM", groupeId: "GA") },
+            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
+
+        Assert.True(r.EstEligible);
+        var groupe = Assert.Single(r.Groupes);
+        Assert.Equal("GA", groupe.GroupeId);
+        Assert.True(groupe.Satisfait);
+        var cond = Assert.Single(groupe.Conditions);
+        Assert.True(cond.Satisfaite);
+        Assert.Equal("CORPS", cond.CritereId);
+        Assert.Equal("PEM", cond.ValeurAttendue);
+        Assert.Equal("PEM", cond.ValeurAgent);
+        Assert.Null(cond.Detail);
+    }
+
+    [Fact]
+    public void Explication_DNF_evalue_tous_les_groupes_sans_court_circuit()
+    {
+        // L'explication est complète : le groupe satisfait ET le groupe non
+        // satisfait sont tous deux présents dans le résultat.
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var r = eval.Evaluer("R", Agent("B"), "2025-06-15",
+            conditions: new[]
+            {
+                Cond("C1", "R", "CORPS", Operateur.Egal, "B", groupeId: "G1"), // satisfait
+                Cond("C2", "R", "CORPS", Operateur.Egal, "A", groupeId: "G2"), // non satisfait
+            },
+            criteres: new Dictionary<string, CritereEligibilite> { ["CORPS"] = C("CORPS") });
+
+        Assert.True(r.EstEligible);
+        Assert.Equal(2, r.Groupes.Count);
+        Assert.True(r.Groupes.Single(g => g.GroupeId == "G1").Satisfait);
+        Assert.False(r.Groupes.Single(g => g.GroupeId == "G2").Satisfait);
+    }
+
+    [Fact]
+    public void Explication_conditions_communes_dans_groupe_null()
+    {
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var r = eval.Evaluer("R", Agent("PEM"), "2025-06-15",
+            conditions: new[]
+            {
+                Cond("C0", "R", "CORPS", Operateur.Egal, "PEM"),                  // commune
+                Cond("C1", "R", "ORIGINE_STATUTAIRE", Operateur.Egal, "ENSEIGNANT", groupeId: "G1"),
+            },
+            criteres: new Dictionary<string, CritereEligibilite>
+            {
+                ["CORPS"] = C("CORPS"),
+                ["ORIGINE_STATUTAIRE"] = C("ORIGINE_STATUTAIRE", SourceResolution.AttributAgent),
+            });
+
+        Assert.True(r.EstEligible);
+        var communes = r.Groupes.Single(g => g.GroupeId is null);
+        Assert.True(communes.Satisfait);
+        Assert.Equal("C0", Assert.Single(communes.Conditions).ConditionId);
+    }
+
+    [Fact]
+    public void Abstention_critere_non_resolu_condition_non_satisfaite_avec_detail()
+    {
+        // ADR-0009 : information absente ⇒ jamais de droit déduit. Le critère
+        // GRADE n'est pas renseigné dans le dossier → condition non satisfaite,
+        // ValeurAgent null, Detail explicable — jamais d'exception.
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var r = eval.Evaluer("R", Agent(grade: null), "2025-06-15",
+            conditions: new[] { Cond("C1", "R", "GRADE", Operateur.In, "PEM-G105,PEM-G106") },
+            criteres: new Dictionary<string, CritereEligibilite> { ["GRADE"] = C("GRADE") });
+
+        Assert.False(r.EstEligible);
+        var cond = Assert.Single(r.ConditionsNonSatisfaites);
+        Assert.Null(cond.ValeurAgent);
+        Assert.Contains("non résolu", cond.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Explication_critere_inconnu_detail_explicable_sans_exception()
+    {
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var r = eval.Evaluer("R", Agent(), "2025-06-15",
+            conditions: new[] { Cond("C1", "R", "ZONE", Operateur.Egal, "SUD") },
+            criteres: new Dictionary<string, CritereEligibilite>()); // ZONE absent du dictionnaire
+
+        Assert.False(r.EstEligible);
+        var cond = Assert.Single(r.ConditionsNonSatisfaites);
+        Assert.Contains("inconnu", cond.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Determinisme_memes_entrees_memes_sorties()
+    {
+        var eval = new RegleEligibiliteEvaluator(new CritereEligibiliteResolver());
+        var conditions = new[]
+        {
+            Cond("C1", "R", "CORPS", Operateur.Egal, "CENSEUR", groupeId: "G"),
+            Cond("C2", "R", "ORIGINE_STATUTAIRE", Operateur.Egal, "ENSEIGNANT", groupeId: "G"),
+        };
+        var criteres = new Dictionary<string, CritereEligibilite>
+        {
+            ["CORPS"] = C("CORPS"),
+            ["ORIGINE_STATUTAIRE"] = C("ORIGINE_STATUTAIRE", SourceResolution.AttributAgent),
+        };
+        var r1 = eval.Evaluer("R", Agent("CENSEUR"), "2025-06-15", conditions, criteres);
+        var r2 = eval.Evaluer("R", Agent("CENSEUR"), "2025-06-15", conditions, criteres);
+        Assert.Equal(r1.EstEligible, r2.EstEligible);
+        Assert.Equal(
+            r1.Groupes.Select(g => (g.GroupeId, g.Satisfait)),
+            r2.Groupes.Select(g => (g.GroupeId, g.Satisfait)));
     }
 }

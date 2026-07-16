@@ -12,14 +12,17 @@ namespace PaieEducation.Domain.Workbench.Services;
 /// Algorithme :
 ///  1. Récupérer toutes les conditions de la rubrique à la date demandée.
 ///  2. Séparer conditions communes (GroupeId == null) et conditions groupées.
-///  3. Si TOUTES les conditions communes sont satisfaites ET AU MOINS UN groupe
-///     a TOUTES ses conditions satisfaites, la rubrique est éligible.
-///  4. Sinon, retourner un diagnostic listant les conditions non satisfaites
-///     (par sévérité décroissante).
+///  3. Évaluer TOUTES les conditions (pas de court-circuit) : le résultat porte
+///     l'explication complète — conditions satisfaites ET non satisfaites,
+///     valeur attendue et valeur de l'agent (contrat d'explicabilité J4.e § 7.1).
+///  4. Éligible ssi toutes les communes sont satisfaites ET (aucun groupe OU au
+///     moins un groupe entièrement satisfait).
 ///
 /// La résolution effective d'une valeur de critère utilise
 /// <see cref="CritereEligibiliteResolver"/> (extensibilité D3 : un nouveau type
 /// de source = nouvelle stratégie de résolution, pas de modification du moteur).
+/// Critère inconnu ou non résolu = condition non satisfaite + détail explicable,
+/// jamais d'exception, jamais de droit déduit (ADR-0009).
 /// </remarks>
 public sealed class RegleEligibiliteEvaluator
 {
@@ -75,88 +78,80 @@ public sealed class RegleEligibiliteEvaluator
         var communes = actives.Where(c => c.GroupeId is null).ToList();
         var groupees = actives.Where(c => c.GroupeId is not null).ToList();
 
-        var diagnostics = new List<DiagnosticCondition>();
+        var groupes = new List<ExplicationGroupe>();
 
-        // 3. Évalue les conditions communes (ET plat).
-        foreach (var cond in communes)
+        // 3. Évalue TOUTES les conditions communes (ET plat) — même après un
+        //    premier échec : l'explication doit être complète (J4.e § 7.1),
+        //    l'UI et l'ExplainabilityEngine la consomment sans retraitement.
+        var communesOk = true;
+        if (communes.Count > 0)
         {
-            if (!criteres.TryGetValue(cond.CritereId, out var critere))
+            var explications = new List<ExplicationCondition>(communes.Count);
+            foreach (var cond in communes)
             {
-                diagnostics.Add(new DiagnosticCondition(
-                    cond, false, $"Critère inconnu '{cond.CritereId}'"));
-                continue;
+                var e = Expliquer(cond, criteres, agent);
+                if (!e.Satisfaite) communesOk = false;
+                explications.Add(e);
             }
-
-            var ok = EvaluerCondition(cond, critere, agent);
-            if (!ok)
-            {
-                diagnostics.Add(new DiagnosticCondition(cond, false, null));
-            }
+            groupes.Add(new ExplicationGroupe(GroupeId: null, communesOk, explications));
         }
 
-        // Si UNE condition commune n'est pas satisfaite → pas éligible.
-        if (diagnostics.Count > 0)
+        // 4. DNF : chaque groupe est évalué INTÉGRALEMENT (pas de court-circuit) —
+        //    au moins un groupe entièrement satisfait rend la partie DNF vraie.
+        var unGroupeSatisfait = false;
+        foreach (var grp in groupees.GroupBy(c => c.GroupeId!, StringComparer.Ordinal))
         {
-            return ResultatEligibilite.Ineligible(diagnostics);
-        }
-
-        // 4. S'il n'y a aucune condition groupée, l'éligibilité est acquise
-        //    (ET plat V008 uniquement).
-        if (groupees.Count == 0)
-        {
-            return ResultatEligibilite.Eligible();
-        }
-
-        // 5. DNF : au moins un groupe doit avoir TOUTES ses conditions satisfaites.
-        var parGroupe = groupees.GroupBy(c => c.GroupeId!, StringComparer.Ordinal).ToList();
-        var groupeSatisfaitTrouve = false;
-        var diagnosticsGroupes = new List<DiagnosticCondition>();
-
-        foreach (var grp in parGroupe)
-        {
-            var groupeEligible = true;
+            var explications = new List<ExplicationCondition>();
+            var groupeOk = true;
             foreach (var cond in grp)
             {
-                if (!criteres.TryGetValue(cond.CritereId, out var critere))
-                {
-                    diagnosticsGroupes.Add(new DiagnosticCondition(
-                        cond, false, $"Critère inconnu '{cond.CritereId}'"));
-                    groupeEligible = false;
-                    continue;
-                }
-                if (!EvaluerCondition(cond, critere, agent))
-                {
-                    diagnosticsGroupes.Add(new DiagnosticCondition(cond, false, null));
-                    groupeEligible = false;
-                }
+                var e = Expliquer(cond, criteres, agent);
+                if (!e.Satisfaite) groupeOk = false;
+                explications.Add(e);
             }
-            if (groupeEligible)
-            {
-                groupeSatisfaitTrouve = true;
-                break; // un seul groupe suffit (OU)
-            }
+            if (groupeOk) unGroupeSatisfait = true;
+            groupes.Add(new ExplicationGroupe(grp.Key, groupeOk, explications));
         }
 
-        if (!groupeSatisfaitTrouve)
-        {
-            return ResultatEligibilite.Ineligible(diagnosticsGroupes);
-        }
-        return ResultatEligibilite.Eligible();
+        // 5. Verdict : communes toutes satisfaites ET (pas de DNF OU un groupe vrai).
+        var eligible = communesOk && (groupees.Count == 0 || unGroupeSatisfait);
+        return new ResultatEligibilite(eligible, groupes);
     }
 
     /// <summary>
-    /// Évalue une condition atomique (résolution de la valeur côté agent puis
-    /// application de l'opérateur). Le résolveur de critère est l'extension
-    /// D3 : <see cref="CritereEligibiliteResolver"/>.
+    /// Évalue une condition atomique et retourne son explication complète
+    /// (valeur attendue, valeur de l'agent, verdict). Critère inconnu ou non
+    /// résolu = condition non satisfaite avec <see cref="ExplicationCondition.Detail"/>
+    /// renseigné — jamais d'exception, jamais de droit déduit (ADR-0009,
+    /// principe d'abstention réglementaire).
     /// </summary>
-    private bool EvaluerCondition(
+    private ExplicationCondition Expliquer(
         ConditionEligibilite cond,
-        CritereEligibilite critere,
+        IReadOnlyDictionary<string, CritereEligibilite> criteres,
         AgentContext agent)
     {
+        if (!criteres.TryGetValue(cond.CritereId, out var critere))
+        {
+            return new ExplicationCondition(
+                cond.Id, cond.CritereId, cond.Operateur, cond.Valeur,
+                ValeurAgent: null, Satisfaite: false,
+                Detail: $"Critère inconnu '{cond.CritereId}'");
+        }
+
         var valeurAgent = _critere.Resoudre(critere, agent);
-        if (valeurAgent is null) return false;
-        return Appliquer(cond.Operateur, valeurAgent, cond.Valeur);
+        if (valeurAgent is null)
+        {
+            return new ExplicationCondition(
+                cond.Id, cond.CritereId, cond.Operateur, cond.Valeur,
+                ValeurAgent: null, Satisfaite: false,
+                Detail: $"Critère non résolu : '{cond.CritereId}' absent du dossier agent");
+        }
+
+        var ok = Appliquer(cond.Operateur, valeurAgent, cond.Valeur);
+        return new ExplicationCondition(
+            cond.Id, cond.CritereId, cond.Operateur, cond.Valeur,
+            ValeurAgent: Convert.ToString(valeurAgent, System.Globalization.CultureInfo.InvariantCulture),
+            Satisfaite: ok, Detail: null);
     }
 
     private static bool Appliquer(Operateur op, object valeurAgent, string valeurCondition)
@@ -210,20 +205,49 @@ public sealed class RegleEligibiliteEvaluator
 }
 
 /// <summary>
-/// Résultat de l'évaluation d'éligibilité (éligible / non, + diagnostics).
+/// Résultat de l'évaluation d'éligibilité avec explication complète (J4.e § 7.1) :
+/// chaque groupe évalué — y compris les conditions SATISFAITES — pour que
+/// « Pourquoi cette rubrique ? » et l'<c>ExplainabilityEngine</c> consomment le
+/// résultat sans retraitement. La <c>Source</c> réglementaire, la sévérité et le
+/// message sont joints par les moteurs de suggestion/avertissement (couche
+/// au-dessus) à partir des en-têtes <c>GroupesEligibilite</c> — l'évaluateur
+/// reste pur et n'en dépend jamais pour le verdict.
 /// </summary>
-public sealed record ResultatEligibilite(bool EstEligible, IReadOnlyList<DiagnosticCondition> Diagnostics)
+public sealed record ResultatEligibilite(
+    bool EstEligible,
+    IReadOnlyList<ExplicationGroupe> Groupes)
 {
-    public static ResultatEligibilite Eligible() => new(true, Array.Empty<DiagnosticCondition>());
-    public static ResultatEligibilite Ineligible(IReadOnlyList<DiagnosticCondition> diagnostics)
-        => new(false, diagnostics);
+    /// <summary>Éligible sans condition (RM-040 : vide ⊨ vraie).</summary>
+    public static ResultatEligibilite Eligible() => new(true, Array.Empty<ExplicationGroupe>());
+
+    /// <summary>
+    /// Vue à plat des conditions non satisfaites, tous groupes confondus
+    /// (diagnostic rapide ; l'explication structurée reste <see cref="Groupes"/>).
+    /// </summary>
+    public IReadOnlyList<ExplicationCondition> ConditionsNonSatisfaites
+        => Groupes.SelectMany(g => g.Conditions).Where(c => !c.Satisfaite).ToList();
 }
 
 /// <summary>
-/// Diagnostic d'une condition non satisfaite (utilisé par l'UI Workbench pour
-/// afficher « Pourquoi cette rubrique ? »).
+/// Explication d'un groupe DNF évalué. <see cref="GroupeId"/> <c>null</c> =
+/// conditions communes (ET plat, garde-fous partagés V008).
 /// </summary>
-public sealed record DiagnosticCondition(
-    ConditionEligibilite Condition,
+public sealed record ExplicationGroupe(
+    string? GroupeId,
+    bool Satisfait,
+    IReadOnlyList<ExplicationCondition> Conditions);
+
+/// <summary>
+/// Explication d'une condition évaluée — satisfaite ou non. <see cref="ValeurAgent"/>
+/// <c>null</c> signifie « critère non résolu » : la condition est non satisfaite et
+/// <see cref="Detail"/> explique pourquoi (principe d'abstention, ADR-0009) — le
+/// moteur d'avertissements en dérive le diagnostic <c>DONNEE_MANQUANTE</c>.
+/// </summary>
+public sealed record ExplicationCondition(
+    string ConditionId,
+    string CritereId,
+    Operateur Operateur,
+    string ValeurAttendue,
+    string? ValeurAgent,
     bool Satisfaite,
-    string? Motif);
+    string? Detail);

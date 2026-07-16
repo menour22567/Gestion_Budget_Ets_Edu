@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Persistence.Migrations;
 using PaieEducation.Tools.Seeding;
@@ -31,26 +32,60 @@ public class ReglementaireSeederTests
     // Rubriques
     // -------------------------------------------------------------------------
     [Fact]
-    public async Task Seed_insere_les_8_rubriques_canoniques()
+    public async Task Seed_insere_les_10_rubriques_canoniques()
     {
         var (conn, db) = OpenMigrated();
         using (conn) using (db)
         {
             var report = await new ReglementaireSeeder().SeedAsync(conn);
 
-            Assert.Equal(8L, Count(conn, "Rubriques"));
+            Assert.Equal(10L, Count(conn, "Rubriques"));
             var ids = ReadStrings(conn, "Rubriques", "Id");
             Assert.Contains("IEP_FONC", ids);
             Assert.Contains("IEP_CONT", ids);
             Assert.Contains("EXP_PEDAG", ids);
             Assert.Contains("PAPP", ids);
+            Assert.Contains("QUALIF", ids);
+            Assert.Contains("DOC_PEDAG", ids);
             Assert.Contains("ISSRP_45", ids);
             Assert.Contains("ISSRP_30", ids);
             Assert.Contains("ISSRP_15", ids);
             Assert.Contains("IRG", ids);
 
-            // Toutes insérées (8 Inserees), pas 0.
-            Assert.Equal(8, report.Tables.Single(t => t.Table == "Rubriques").Inserees);
+            // Toutes insérées (10 Inserees), pas 0.
+            Assert.Equal(10, report.Tables.Single(t => t.Table == "Rubriques").Inserees);
+        }
+    }
+
+    [Fact]
+    public async Task Seed_QUALIF_et_DOC_PEDAG_ont_les_baremes_par_categorie()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            // QUALIF : 2 tranches (RM-045) — 40 % (≤12), 45 % (≥13).
+            Assert.Equal("TAUX", TestSupport.Scalar<string>(conn,
+                "SELECT TypeValeur FROM RubriqueBaremes WHERE Id = 'RB-QUALIF-CAT-LE12';"));
+            Assert.Equal("0.40", TestSupport.Scalar<string>(conn,
+                "SELECT Valeur FROM RubriqueBaremes WHERE Id = 'RB-QUALIF-CAT-LE12';"));
+            Assert.Equal("0.45", TestSupport.Scalar<string>(conn,
+                "SELECT Valeur FROM RubriqueBaremes WHERE Id = 'RB-QUALIF-CAT-GE13';"));
+            Assert.Null(TestSupport.Scalar<string?>(conn,
+                "SELECT BorneSup FROM RubriqueBaremes WHERE Id = 'RB-QUALIF-CAT-GE13';"));
+
+            // DOC_PEDAG : 3 tranches forfaitaires (RM-046) — 2000/2500/3000 DA.
+            Assert.Equal("MONTANT", TestSupport.Scalar<string>(conn,
+                "SELECT TypeValeur FROM RubriqueBaremes WHERE Id = 'RB-DOCPEDAG-CAT-LE10';"));
+            Assert.Equal("2000", TestSupport.Scalar<string>(conn,
+                "SELECT Valeur FROM RubriqueBaremes WHERE Id = 'RB-DOCPEDAG-CAT-LE10';"));
+            Assert.Equal("2500", TestSupport.Scalar<string>(conn,
+                "SELECT Valeur FROM RubriqueBaremes WHERE Id = 'RB-DOCPEDAG-CAT-11-12';"));
+            Assert.Equal("3000", TestSupport.Scalar<string>(conn,
+                "SELECT Valeur FROM RubriqueBaremes WHERE Id = 'RB-DOCPEDAG-CAT-GE13';"));
+
+            Assert.Equal(5L, Count(conn, "RubriqueBaremes"));
         }
     }
 
@@ -128,57 +163,201 @@ public class ReglementaireSeederTests
     }
 
     // -------------------------------------------------------------------------
-    // ReglesEligibilite
+    // GroupesEligibilite / ReglesEligibilite — ISSRP en groupes DNF (grain
+    // GRADE, J4F, remplace la matrice à plat par CORPS le 16/07/2026).
     // -------------------------------------------------------------------------
     [Fact]
-    public async Task Seed_insere_la_matrice_ISSRP_avec_3_taux()
+    public async Task Seed_insere_les_6_groupes_DNF_ISSRP()
     {
         var (conn, db) = OpenMigrated();
         using (conn) using (db)
         {
             await new ReglementaireSeeder().SeedAsync(conn);
 
-            // 4 corps en 45% + 4 en 30% + 2 en 15% = 10 règles.
-            Assert.Equal(10L, Count(conn, "ReglesEligibilite"));
+            // 45-DIRECT, 45-ORIGINE, 30-DIRECT, 30-ORIGINE, 15-DIRECT, 15-HIST.
+            Assert.Equal(6L, Count(conn, "GroupesEligibilite"));
 
-            // Vérifie que la matrice est bien (RubriqueId, CritereId='CORPS', Operateur='=')
-            // R3 (V009) : CritereId FK remplace Critere TEXT — source unique de vérité
-            // (cf. CriteresEligibilite.Id = 'CORPS').
-            var cnt45 = TestSupport.Scalar<long>(conn, """
-                SELECT COUNT(*) FROM ReglesEligibilite
-                WHERE RubriqueId = 'ISSRP_45' AND CritereId = 'CORPS' AND Operateur = '=';
-                """);
-            Assert.Equal(4L, cnt45);
+            // Conditions : 1 (45-DIRECT) + 2 (45-ORIGINE) + 1 (30-DIRECT)
+            // + 2 (30-ORIGINE) + 1 (15-DIRECT) + 1 (15-HIST) = 8.
+            Assert.Equal(8L, Count(conn, "ReglesEligibilite"));
+
+            // Toutes les conditions référencent bien un groupe (grain GRADE
+            // exclusivement — plus de matrice à plat par CORPS).
+            var sansGroupe = TestSupport.Scalar<long>(conn,
+                "SELECT COUNT(*) FROM ReglesEligibilite WHERE GroupeId IS NULL;");
+            Assert.Equal(0L, sansGroupe);
+            var critereCorps = TestSupport.Scalar<long>(conn,
+                "SELECT COUNT(*) FROM ReglesEligibilite WHERE CritereId = 'CORPS';");
+            Assert.Equal(0L, critereCorps);
         }
     }
 
     [Fact]
-    public async Task Resolution_par_corps_retourne_la_bonne_rubrique_ISSRP()
+    public async Task Groupe_45_direct_couvre_les_titulaires_et_les_3_contractuels_Q08()
     {
         var (conn, db) = OpenMigrated();
         using (conn) using (db)
         {
             await new ReglementaireSeeder().SeedAsync(conn);
 
-            // Pour un agent en corps CPDE (Professeurs d'Education), c'est
-            // ISSRP_45 qui est éligible. R3 (V009) : CritereId FK remplace Critere TEXT.
-            var eligible = TestSupport.Scalar<string>(conn, """
-                SELECT RubriqueId FROM ReglesEligibilite
-                WHERE CritereId = 'CORPS' AND Operateur = '=' AND Valeur = 'CPDE'
-                  AND DateEffet <= '2025-12-31'
-                  AND (DateFin IS NULL OR DateFin >= '2025-12-31');
+            var valeur = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP45-DIRECT' AND CritereId = 'GRADE';
                 """);
-            Assert.Equal("ISSRP_45", eligible);
+            // Titulaire (Professeur de l'Ecole primaire).
+            Assert.Contains("PDLP-G105", valeur);
+            // Contractuels réintégrés (Q-08 résolue par l'arrêté 6 primes).
+            Assert.Contains("PDLP-G130", valeur);
+            Assert.Contains("PDLM-G131", valeur);
+            Assert.Contains("PDLS-G132", valeur);
+            Assert.DoesNotContain("PDLP-G106,PDLP-G105", valeur); // pas de doublon trivial
+        }
+    }
 
-            // Pour un agent en corps CDAE (Adjoints de l'Education), c'est
-            // ISSRP_30. R3 (V009) : CritereId FK remplace Critere TEXT.
-            var eligible30 = TestSupport.Scalar<string>(conn, """
-                SELECT RubriqueId FROM ReglesEligibilite
-                WHERE CritereId = 'CORPS' AND Operateur = '=' AND Valeur = 'CDAE'
-                  AND DateEffet <= '2025-12-31'
-                  AND (DateFin IS NULL OR DateFin >= '2025-12-31');
+    [Fact]
+    public async Task Groupe_origine_conditionne_45_ou_30_selon_ORIGINE_STATUTAIRE_jamais_par_defaut()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            // Q-C1 : les 7 grades conditionnels apparaissent dans LES DEUX groupes
+            // ORIGINE (45 % si ENSEIGNANT, 30 % si AUTRE) — jamais par défaut, jamais
+            // via un opérateur `<>` (abstention si ORIGINE_STATUTAIRE = INCONNU).
+            var origine45 = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP45-ORIGINE' AND CritereId = 'ORIGINE_STATUTAIRE';
                 """);
-            Assert.Equal("ISSRP_30", eligible30);
+            Assert.Equal("ENSEIGNANT", origine45);
+
+            var origine30 = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP30-ORIGINE' AND CritereId = 'ORIGINE_STATUTAIRE';
+                """);
+            Assert.Equal("AUTRE", origine30);
+
+            var operateurs = TestSupport.Scalar<long>(conn, """
+                SELECT COUNT(*) FROM ReglesEligibilite
+                WHERE CritereId = 'ORIGINE_STATUTAIRE' AND Operateur = '<>';
+                """);
+            Assert.Equal(0L, operateurs);
+
+            var gradeDansLes2Groupes = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP45-ORIGINE' AND CritereId = 'GRADE';
+                """);
+            Assert.Contains("SDL-G007", gradeDansLes2Groupes);
+            var memesGrades = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP30-ORIGINE' AND CritereId = 'GRADE';
+                """);
+            Assert.Equal(gradeDansLes2Groupes, memesGrades);
+        }
+    }
+
+    [Fact]
+    public async Task Groupe_historique_couvre_les_conditionnels_sans_distinction_d_origine()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            // RM-042 : taux unique 15 % 2008-2024 pour tous les corps EN classés —
+            // les 7 grades conditionnels sont couverts SANS condition d'origine
+            // (la distinction n'existe qu'à partir de D.ex. 25-55, 2025).
+            var hist = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP15-HIST' AND CritereId = 'GRADE';
+                """);
+            Assert.Contains("SDL-G007", hist);   // conditionnel, inclus
+            Assert.Contains("PDLP-G130", hist);  // contractuel, inclus
+            Assert.Contains("PDLP-G105", hist);  // titulaire 45%, inclus
+            Assert.Contains("ADL-G001", hist);   // 30% direct, inclus
+            Assert.Contains("ADSE-G035", hist);  // 15% direct, inclus
+
+            var periode = TestSupport.Scalar<string>(conn,
+                "SELECT DateFin FROM GroupesEligibilite WHERE Id = 'GE-ISSRP15-HIST';");
+            Assert.Equal("2024-12-31", periode);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Q-C3 (résolue 16/07/2026) — grades « hors catégorie » (HC-S1/HC-S2),
+    // seed supplémentaire ciblé sourcé sur Liste_Grades_Fr.csv.
+    // -------------------------------------------------------------------------
+    [Fact]
+    public async Task Seed_insere_les_4_grades_hors_categorie_et_leur_grille()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            var ids = ReadStrings(conn, "Grades", "Id")
+                .Where(g => g.StartsWith("IDLS-G1", StringComparison.Ordinal)).ToList();
+            Assert.Equal(new[] { "IDLS-G144", "IDLS-G145", "IDLS-G146", "IDLS-G148" }, ids);
+
+            // Corps + Filiere créés (indépendamment de NomenclatureSeeder).
+            Assert.Equal("IDLS", TestSupport.Scalar<string>(conn,
+                "SELECT CorpsId FROM Grades WHERE Id = 'IDLS-G144';"));
+            Assert.Equal("INSPECTION", TestSupport.Scalar<string>(conn,
+                "SELECT FiliereId FROM Corps WHERE Id = 'IDLS';"));
+
+            // Categories : Niveau 18/19 (au-delà des 17 catégories numériques),
+            // HorsCategorie = 1.
+            Assert.Equal(18L, TestSupport.Scalar<long>(conn,
+                "SELECT Niveau FROM Categories WHERE Id = 'HC-S1';"));
+            Assert.Equal(19L, TestSupport.Scalar<long>(conn,
+                "SELECT Niveau FROM Categories WHERE Id = 'HC-S2';"));
+            Assert.Equal(1L, TestSupport.Scalar<long>(conn,
+                "SELECT HorsCategorie FROM Categories WHERE Id = 'HC-S1';"));
+
+            // GrilleIndiciaire : 3 lignes par catégorie (pas de ligne avant
+            // 2022-03-01 — indice 0 dans la source, interdit par IndiceMin > 0).
+            Assert.Equal(3L, TestSupport.Scalar<long>(conn,
+                "SELECT COUNT(*) FROM GrilleIndiciaire WHERE CategorieId = 'HC-S1';"));
+            Assert.Equal(980L, TestSupport.Scalar<long>(conn,
+                "SELECT IndiceMin FROM GrilleIndiciaire WHERE CategorieId = 'HC-S1' AND DateEffet = '2022-03-01';"));
+            Assert.Equal(1190L, TestSupport.Scalar<long>(conn,
+                "SELECT IndiceMin FROM GrilleIndiciaire WHERE CategorieId = 'HC-S2' AND DateEffet = '2024-01-01';"));
+        }
+    }
+
+    [Fact]
+    public async Task Seed_ISSRP_complet_185_grades_apres_resolution_Q_C3()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            // Les 3 grades 45 % (disciplines, administration, générique EN).
+            var direct45 = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP45-DIRECT' AND CritereId = 'GRADE';
+                """);
+            Assert.Contains("IDLS-G144", direct45);
+            Assert.Contains("IDLS-G145", direct45);
+            Assert.Contains("IDLS-G148", direct45);
+
+            // Le grade 30 % (orientation/guidance aux lycées).
+            var direct30 = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP30-DIRECT' AND CritereId = 'GRADE';
+                """);
+            Assert.Contains("IDLS-G146", direct30);
+
+            // Historique 2008-2024 : les 4 grades couverts sans distinction (RM-042).
+            var hist = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP15-HIST' AND CritereId = 'GRADE';
+                """);
+            foreach (var g in new[] { "IDLS-G144", "IDLS-G145", "IDLS-G146", "IDLS-G148" })
+            {
+                Assert.Contains(g, hist);
+            }
         }
     }
 
@@ -267,8 +446,15 @@ public class ReglementaireSeederTests
 
             // 2e run : Inserees = 0 partout.
             Assert.All(r2.Tables, t => Assert.Equal(0, t.Inserees));
-            Assert.Equal(8L, Count(conn, "Rubriques"));
-            Assert.Equal(10L, Count(conn, "ReglesEligibilite"));
+            Assert.Equal(10L, Count(conn, "Rubriques"));
+            Assert.Equal(1L, Count(conn, "Filieres"));
+            Assert.Equal(1L, Count(conn, "Corps"));
+            Assert.Equal(2L, Count(conn, "Categories"));
+            Assert.Equal(6L, Count(conn, "GrilleIndiciaire"));
+            Assert.Equal(4L, Count(conn, "Grades"));
+            Assert.Equal(6L, Count(conn, "GroupesEligibilite"));
+            Assert.Equal(8L, Count(conn, "ReglesEligibilite"));
+            Assert.Equal(5L, Count(conn, "RubriqueBaremes"));
             Assert.Equal(3L, Count(conn, "Cotisations"));
             Assert.Equal(7L, Count(conn, "Parametres"));
         }

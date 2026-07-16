@@ -1,7 +1,7 @@
 # Dictionnaire de Données — PaieEducation ERP
 
 > **Source de vérité** : les scripts `V*.sql` de `src/PaieEducation.Persistence.Migrations/`.
-> **Version courante :** V001 → V008 (déjà en place) + **V009 (Workbench réglementaire, ADR-0007 / J3I)** — 7 migrations de données (V001-V008) + 1 migration de référentiel (V009), **~30 tables** (2 système + ~28 métier), **0 valeur réglementaire en dur**.
+> **Version courante :** V001 → V010 (déjà en place) + **V011 (Agents, Carrière, Période — Phase 5, jalon D)** — 9 migrations référentielles/socle (V001-V010) + 1 migration de gestion (V011), **~37 tables** (2 système + ~35 métier), **0 valeur réglementaire en dur**.
 > **Principe cardinal** : aucune règle ou valeur n'est codée en dur. Tout vit en base, versionné par date d'effet, éditable par l'utilisateur via le Workbench réglementaire (D7).
 
 Ce document est **vivant** : il est régénéré/mis à jour à chaque ajout de migration en Phase 1, Phase 3bis (V009) et chaque évolution de schéma en Phase 5 (Persistence & Infrastructure).
@@ -20,7 +20,9 @@ Ce document est **vivant** : il est régénéré/mis à jour à chaque ajout de 
 | IRG + paramètres système | 4 | V006 |
 | Workbench — barèmes indexés (J3E L1) + `PeriodiciteVersement` (J3E L3) | 1 (+2 colonnes) | V008 |
 | **Workbench réglementaire (ADR-0007, J3I)** : sources de valeur, groupes d'éligibilité (DNF), dictionnaire de critères, messages, amorces gestion | 5 nouvelles + 2 amendées | **V009** |
-| **Total** | **~30** (2 système + ~28 métier) | |
+| Flags d'affectation manuelle sur `Rubriques` (D1/D4, J4.e) | 2 colonnes | V010 |
+| **Agents, Carrière, Période (Phase 5, jalon D)** : identité agent, carrière versionnée point-in-time, cycle de vie des périodes, affectation de rubriques par agent | 7 nouvelles | **V011** |
+| **Total** | **~37** (2 système + ~35 métier) | |
 
 **Moteur de résolution par date** : toutes les tables « réglementaires » (V003, V004 sauf `Rubriques`, V005 sauf `Cotisations`, V006 sauf `BaremeIRG`/`Parametres`) partagent la même requête de résolution : on cherche la ligne dont la `DateEffet` est la plus récente **≤ date_demandée**, et dont la `DateFin` est **≥ date_demandée** (ou `NULL` pour « toujours en vigueur »).
 
@@ -244,6 +246,8 @@ Identité stable d'un élément de paie. Ce qui change (taux, seuil, formule) vi
 | `EstCotisable` | INTEGER | NOT NULL `CHECK IN (0,1)` | DEFAULT 0 |
 | `Description` | TEXT | | Explication humaine (utilisée par l'UI) |
 | `Actif` | INTEGER | `CHECK IN (0,1)` | DEFAULT 1 |
+| `EstAffectableManuellement` | INTEGER | NOT NULL `CHECK IN (0,1)` | DEFAULT 0. V010 (J4.e, D1). La rubrique peut être ajoutée/retirée librement par l'utilisateur pour un agent (module d'affectation). 0 = pipeline exclusif (cotisations, impôt, composantes structurelles du traitement — ex. `TRAITEMENT`, `IEP_FONC`, `IEP_CONT`). |
+| `OccurrencesMultiples` | INTEGER | NOT NULL `CHECK IN (0,1)` | DEFAULT 0. V010 (J4.e, D4). 1 = plusieurs occurrences possibles pour un même agent (retenues optionnelles à montant fixe, rappels Q7). |
 
 ### 6.2. `RubriqueFormules` (versionnée)
 Expression de calcul **en texte**, évaluée par le `FormulaEngine` (Phase 4). Aucune formule n'est codée en dur.
@@ -302,7 +306,8 @@ Une même rubrique peut être éligible ou non selon le profil de l'agent.
 
 Index : `IX_ReglesEligibilite_RubriqueId`, `IX_ReglesEligibilite_Critere_Valeur`.
 
-**Cas d'usage (issu de la matrice Q6)** : les 3 taux d'ISSRP (45 / 30 / 15) sont modélisés par **3 rubriques distinctes** (`ISSRP_45`, `ISSRP_30`, `ISSRP_15`), chacune avec sa règle d'éligibilité pointant sur son groupe de corps. La requête de résolution du moteur : « pour un agent en corps `PEM`, quelle est la rubrique `ISSRP_*` applicable ? »
+**Cas d'usage (mis à jour V010, J4.f/J4.e, 16/07/2026)** : les 3 taux d'ISSRP (45 / 30 / 15) sont modélisés par **3 rubriques distinctes** (`ISSRP_45`, `ISSRP_30`, `ISSRP_15`), chacune éligible via un ou plusieurs **groupes DNF** (`GroupesEligibilite`, V009) — au grain **GRADE**, pas CORPS (une matrice à plat par corps est incompatible avec l'évaluateur : le taux varie *à l'intérieur* d'un même corps, ex. inspecteurs). Deux groupes (`GE-ISSRP45-ORIGINE`, `GE-ISSRP30-ORIGINE`) conditionnent en plus sur `ORIGINE_STATUTAIRE` pour 7 grades communs — voir `docs/analysis/J4F_TABLEAU_ISSRP_GRAIN_GRADE.md` pour la matrice complète et le détail des groupes.
+> ⚠️ Cette section (§7.1) décrit encore la colonne `Critere` (TEXT + CHECK) remplacée par `CritereId` (FK) en V009 — mise à jour de la table ci-dessus non faite à cette date, dette documentaire distincte de V010.
 
 ### 7.2. `Cotisations` (versionnée)
 Paramétrage fin des retenues (taux + assiette), conformément à Q3.
@@ -613,16 +618,17 @@ Ajoutées en V009 (alignement `AuditLog` V001) :
 dans `AuditLog` (qui, quand, valeur avant/après, source). C'est le **Pattern Editor**
 du Workbench (§5.2 J3I) qui en est l'auteur.
 
-### 8ter.8. Tables NON créées en V009 (R1 — reportées à Phase 5)
+### 8ter.8. Tables NON créées en V009 (R1 — reportées à Phase 5, créées en V011)
 
-Conformément à R1 (validé utilisateur, J3J § 6) : ces tables de gestion dépendent
-directement du modèle `Agents` et ne sont **pas créées en avance**. Leur conception
-intentionnelle est documentée dans `J3J_REFACTORING_AVANT_V009.md` § 8.3-8.5 pour
-préserver la cohérence avec les phases suivantes.
+Conformément à R1 (validé utilisateur, J3J § 6) : ces tables de gestion dépendaient
+directement du modèle `Agents` et n'étaient **pas créées en avance**. Leur conception
+intentionnelle avait été documentée dans `J3J_REFACTORING_AVANT_V009.md` § 8.3-8.5.
+**Créées depuis V011** (§8quater.4, Phase 5 jalon D) — cette section reste comme trace
+historique de la décision R1.
 
-- ~~`AgentAttributs`~~ — design preview J3J § 8.3
-- ~~`AgentRubriques`~~ — design preview J3J § 8.4
-- ~~`AvertissementsHistorique`~~ — design preview J3J § 8.5
+- `AgentAttributs` — créée en V011 (§8quater.4), design preview J3J § 8.3
+- `AgentRubriques` (+ `AgentRubriqueParametres`) — créée en V011, design preview J3J § 8.4
+- `AvertissementsHistorique` — créée en V011, design preview J3J § 8.5
 
 > **Cohérence J3I / J3H** : J3H § 1 dit déjà « les tables de gestion sont créées
 > avec `Agents` en Phase 5 ». J3I § 9 v1.0 (initial) divergeait par erreur. La
@@ -655,6 +661,97 @@ Référencé par `PLAN_ACTION.md` Phase 3bis :
    (technique) et un nouveau message dans `MessagesRegles` (réglementaire) ; vérifier
    que la première a un audit minimal (CreatedAt/By) et le second un audit complet
    (Source, DateEffet/Fin).
+
+---
+
+## 8quater. V011 — Agents, Carrière, Période (Phase 5, jalon D)
+
+Fondation manquante identifiée après J4.d : le moteur de calcul (Phase 4) fonctionne
+avec un `AgentContext` construit à la main par les appelants faute de table `Agents`.
+Conception discutée avec le Tome B — Modèle de Domaine (V4, vol. 8 §4-§12), puis
+validée par STOP&ASK sur 4 écarts assumés par rapport au diagramme conceptuel :
+
+- **D-A** — `Agents` = identité pure, aucune colonne de carrière dupliquée.
+- **D-B** — Une seule table `Carrieres` (poste + affectation fusionnés), cohérente
+  avec le seed V009 réel (`TYPE_ETABLISSEMENT` déjà résolu en `SourceResolution='CARRIERE'`).
+- **D-C** — Agrégat `Contrat` différé : `TypeContrat` reste un champ de `Carrieres`.
+- **D-D** — `AgentAttributs`/`AgentRubriques`/`AgentRubriqueParametres`/
+  `AvertissementsHistorique` créées ici, DDL portée verbatim depuis
+  `docs/analysis/J3H_MODELE_AFFECTATION.md` §4/7/8.
+
+### 8quater.1. `Agents` (gestion, PK GUID — ADR-0004)
+
+| Colonne | Type | Contraintes | Notes |
+| --- | --- | --- | --- |
+| `Id` | TEXT | PK | GUID |
+| `Matricule` | TEXT | NOT NULL UNIQUE | identité fonctionnelle, jamais PK (ADR-0004) |
+| `Nom`, `Prenom` | TEXT | NOT NULL | |
+| `DateNaissance`, `DateRecrutement` | TEXT | NOT NULL | ISO 8601 |
+| `Sexe` | TEXT | `CHECK IN ('M','F')` | |
+| `SituationFamiliale` | TEXT | `CHECK IN (...)` DEFAULT `CELIBATAIRE` | |
+| `Statut` | TEXT | `CHECK IN ('ACTIF','SUSPENDU','RADIE')` DEFAULT `ACTIF` | pas de colonne `Actif` séparée (D-A) |
+| `CreatedAt`, `UpdatedAt` | TEXT | | |
+
+Aucune colonne de carrière (Grade/Corps/Catégorie/Échelon/Fonction) : tout est résolu
+via `Carrieres` à la date de paie (§8quater.2).
+
+### 8quater.2. `Carrieres` (gestion, versionnée point-in-time)
+
+Source unique de vérité pour tous les critères `SourceResolution='CARRIERE'` de
+`CriteresEligibilite` (V009) : `FILIERE`/`CORPS` (dérivés via `GradeId → Corps.FiliereId`),
+`GRADE`, `CATEGORIE`, `FONCTION`, `TYPE_CONTRAT`, `ECHELON`, `TYPE_ETABLISSEMENT`.
+
+| Colonne | Type | Contraintes | Notes |
+| --- | --- | --- | --- |
+| `Id` | TEXT | PK | GUID |
+| `AgentId` | TEXT | NOT NULL FK → `Agents` | |
+| `GradeId` | TEXT | NOT NULL FK → `Grades` | |
+| `CategorieId` | TEXT | NOT NULL FK → `Categories` | indépendante de `Grade` (pas de FK Grade→Categorie) |
+| `EchelonId` | TEXT | NOT NULL FK → `Echelons` | |
+| `FonctionId` | TEXT | FK → `Fonctions`, nullable | |
+| `TypeContrat` | TEXT | `CHECK IN ('STATUTAIRE','CONTRACTUEL')` | D-C |
+| `EtablissementId` | TEXT | FK → `Etablissements`, nullable | |
+| `DateEffet`, `DateFin` | TEXT | `DateEffet` NOT NULL | résolution point-in-time (§2.2) |
+| `Motif` | TEXT | NOT NULL | "Recrutement", "Promotion de grade"... (RM-027) |
+| `NumeroDecision`, `Source` | TEXT | | |
+| `CreatedAt` | TEXT | NOT NULL | |
+
+Contraintes : `UNIQUE (AgentId, DateEffet)`. Résolution par
+`AgentCarriereRepository.ResoudreAsync` (Infrastructure) : `Categorie` de
+l'`AgentContext` = `Categories.Niveau` (int, couvre aussi HC-S1/HC-S2 dont `Id` est
+textuel) ; `OrigineStatutaire` absent de `AgentAttributs` → `"INCONNU"` (jamais déduit,
+ADR-0009).
+
+### 8quater.3. `Periodes` (Tome B vol. 8 §12)
+
+Cycle de vie requis par ADR-0008 : une période `CLOTUREE` n'est jamais recalculée,
+seule une ligne de rappel corrige un montant déjà payé.
+
+| Colonne | Type | Contraintes | Notes |
+| --- | --- | --- | --- |
+| `Id` | TEXT | PK | format `"YYYY-MM"` |
+| `Annee`, `Mois` | INTEGER | NOT NULL, `Mois CHECK BETWEEN 1 AND 12` | `UNIQUE (Annee, Mois)` |
+| `Etat` | TEXT | `CHECK IN ('OUVERTE','EN_CALCUL','VALIDEE','CLOTUREE','ARCHIVEE')` DEFAULT `OUVERTE` | |
+| `DateOuverture`, `DateCloture` | TEXT | `DateOuverture` NOT NULL | |
+| `CreatedAt`, `UpdatedAt` | TEXT | | |
+
+### 8quater.4. `AgentAttributs` / `AgentRubriques` / `AgentRubriqueParametres` / `AvertissementsHistorique` (J3H §4/7/8)
+
+DDL portée verbatim depuis `docs/analysis/J3H_MODELE_AFFECTATION.md`, zéro modification :
+
+- **`AgentAttributs`** — critères propres à la personne (D3), symétrique de
+  `GradeAttributs`. `UNIQUE (AgentId, Attribut, DateEffet)`. Attribut V1 requis dès
+  cette tranche : `ORIGINE_STATUTAIRE` (résolu par `AgentCarriereRepository`).
+- **`AgentRubriques`** (+ `AgentRubriqueParametres`) — affectation vue et décidée par
+  l'utilisateur (ADR-0006). `Statut CHECK IN ('SUGGEREE','ACCEPTEE','SUPPRIMEE','SUSPENDUE')`.
+  `UNIQUE (AgentId, RubriqueId, Occurrence, DateEffet)`.
+- **`AvertissementsHistorique`** — append-only (ni UPDATE ni DELETE par convention).
+  `Decision CHECK IN ('ACCEPTE','IGNORE','SUPPRIME')`. `MessageAffiche` est un
+  instantané du texte résolu, pas une référence vivante à `MessagesRegles`.
+
+Ces 4 tables n'ont **pas encore** de use case Application qui les consomme en écriture
+(Workbench D5-D11, tranche ultérieure de Phase 5) — seul le schéma est posé ici,
+conformément à J3H §11 point 2 (« créées avec `Agents` »).
 
 ---
 
@@ -745,14 +842,28 @@ WHERE r.Id = $r;
 -- Le calculateur typé est résolu côté DI (pas en SQL).
 ```
 
+### 9.11. Carrière d'un agent à une date (V011, Phase 5 jalon D)
+
+```sql
+SELECT c.*, cat.Niveau AS CategorieNiveau, ech.Numero AS EchelonNumero
+FROM Carrieres c
+JOIN Categories cat ON cat.Id = c.CategorieId
+JOIN Echelons ech ON ech.Id = c.EchelonId
+WHERE c.AgentId = $agentId
+  AND c.DateEffet <= $d AND (c.DateFin IS NULL OR c.DateFin >= $d)
+ORDER BY c.DateEffet DESC LIMIT 1;
+-- Portée par AgentCarriereRepository.ResoudreAsync (Infrastructure), qui assemble
+-- le résultat en AgentContext (Domain, Workbench/Services/ISourceValeurResolver.cs).
+```
+
 ---
 
 ## 10. Reconstruction depuis zéro
 
 1. **Créer une base vide** : `Data Source=paie.db` (fichier) — le `SqliteMigrator` crée le fichier.
-2. **Appliquer les migrations** : `var migrator = new SqliteMigrator(options, MigrationLoader.LoadFromAssembly(...)); migrator.Apply();` — applique **V001 → V009** (V009 = Workbench réglementaire, ADR-0007).
-3. **Seeder** : Phase 2 — lecture des fichiers `Reglementation/` et `Documentation de Référence du Projet/`, insertion idempotente. Un **rapport d'import** (lignes lues/insérées/rejetées) est produit. Seed complémentaire V009 : `SourcesValeur` (7 codes), `CriteresEligibilite` (≥10 codes).
-4. **Vérifier** : `SELECT COUNT(*) FROM SchemaVersions` doit retourner **8** (V001-V008) après application complète des migrations jusqu'à V008, ou **9** si V009 est appliqué. La CI enforce la cohérence.
+2. **Appliquer les migrations** : `var migrator = new SqliteMigrator(options, MigrationLoader.LoadFromAssembly(...)); migrator.Apply();` — applique **V001 → V011** (V009 = Workbench réglementaire, ADR-0007 ; V011 = Agents/Carrière/Période, Phase 5 jalon D).
+3. **Seeder** : Phase 2 — lecture des fichiers `Reglementation/` et `Documentation de Référence du Projet/`, insertion idempotente. Un **rapport d'import** (lignes lues/insérées/rejetées) est produit. Seed complémentaire V009 : `SourcesValeur` (7 codes), `CriteresEligibilite` (≥10 codes). V011 ne seed rien (tables de gestion, alimentées par les use cases Application).
+4. **Vérifier** : `SELECT COUNT(*) FROM SchemaVersions` doit retourner le nombre de migrations appliquées (**11** après V011). La CI enforce la cohérence.
 5. **Auditer** : la colonne `Hash` permet de rejouer le seed et de détecter les dérives (comparaison SHA-256). Pour les modifications en cours d'exploitation, `AuditLog` (V001) + colonnes `RubriqueBaremes.UpdatedAt`/`UpdatedBy` (V009) tracent l'auteur et la date.
 
 ---
@@ -760,8 +871,9 @@ WHERE r.Id = $r;
 ## 11. Hors périmètre (rappel)
 
 - **Calcul de paie** : la logique métier (assemblage des rubriques, calcul IRG détaillé, ...) est dans la couche `Application` / `Domain`, **pas** dans la base. Aucune procédure stockée, aucun trigger. La base stocke les règles, le moteur les interprète.
-- **Bulletins** : pas dans cette phase (V010+, J5+).
-- **Agents** : tables `AgentAttributs` / `AgentRubriques` / `AvertissementsHistorique` **non créées** en V009 (R1, J3J § 6 et 8.3-8.5) — leur création effective attend la Phase 5, avec `Agents` et le Workbench UI.
+- **Bulletins** : pas de table persistée (le pipeline de calcul, Phase 4, produit un `Bulletin` en mémoire ; la persistance des bulletins validés reste une tranche ultérieure de Phase 5).
+- **Use cases Workbench D5-D11** (`SuggererRubriques`, `AccepterSuggestion`...) : le schéma (`AgentRubriques`, `AvertissementsHistorique`, V011) existe mais aucun use case Application ne les consomme encore en écriture — tranche ultérieure de Phase 5.
+- **VariableEngine** : `INDICE_MIN`/`INDICE_ECH`/`VPI`/`TBASE`/`TRT`/`ECH`/`CAT` restent fournis par l'appelant (pas résolus depuis `GrilleIndiciaire`/`IndicesEchelon`/`ValeurPoint` via `Carrieres`) — tranche ultérieure de Phase 5, distincte du jalon D (V011).
 - **Historique des valeurs** : chaque changement = nouvelle version (ligne avec nouvelle `DateEffet`). `AuditLog` (V001) trace les actions ; les colonnes `UpdatedAt`/`UpdatedBy` ajoutées en V009 sur `RubriqueBaremes` complètent l'audit au niveau des barèmes.
 - **Triggers** : aucune contrainte `RAISE` / trigger. Tout le contrôle est dans l'app.
 

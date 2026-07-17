@@ -71,4 +71,70 @@ public class AgentRubriqueRepositoryTests
         Assert.Null(result.Value);
         Assert.Equal(1, SchemaTestSupport.Scalar<long>(scope.Conn, "SELECT COUNT(*) FROM AgentRubriques;"));
     }
+
+    [Fact]
+    public async Task ListerParAgentAsync_renvoie_les_lignes_couvrant_la_date_y_compris_SUPPRIMEE()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedAgentEtRubrique(scope.Conn);
+        SchemaTestSupport.Exec(scope.Conn, """
+            INSERT INTO AgentRubriques (Id, AgentId, RubriqueId, Occurrence, Statut, Origine, DateEffet, CreatedAt)
+            VALUES ('AR-1', 'A-1', 'ISSRP_45', 1, 'SUPPRIMEE', 'MANUELLE', '2025-01-01', '2026-01-01T00:00:00Z');
+            """);
+        var repo = new AgentRubriqueRepository(scope.Conn);
+
+        var result = await repo.ListerParAgentAsync("A-1", "2025-06-01");
+
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
+        var affectation = Assert.Single(result.Value);
+        Assert.Equal("AR-1", affectation.Id);
+        Assert.Equal("SUPPRIMEE", affectation.Statut);
+    }
+
+    [Fact]
+    public async Task ChangerStatutAsync_transition_nominale()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedAgentEtRubrique(scope.Conn);
+        var repo = new AgentRubriqueRepository(scope.Conn);
+        var suggestion = await repo.SuggererAsync(
+            "A-1", "ISSRP_45", 1, "GROUPE:GE-ISSRP45-ORIGINE@2025-01-01", "2025-06-01", DateTimeOffset.UtcNow);
+
+        var result = await repo.ChangerStatutAsync(suggestion.Value!, "ACCEPTEE", DateTimeOffset.UtcNow);
+
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
+        Assert.Equal("ACCEPTEE", SchemaTestSupport.Scalar<string>(
+            scope.Conn, "SELECT Statut FROM AgentRubriques WHERE Id = @id;", ("@id", suggestion.Value!)));
+    }
+
+    [Fact]
+    public async Task ChangerStatutAsync_ligne_SUPPRIMEE_est_terminale()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedAgentEtRubrique(scope.Conn);
+        SchemaTestSupport.Exec(scope.Conn, """
+            INSERT INTO AgentRubriques (Id, AgentId, RubriqueId, Occurrence, Statut, Origine, DateEffet, CreatedAt)
+            VALUES ('AR-1', 'A-1', 'ISSRP_45', 1, 'SUPPRIMEE', 'MANUELLE', '2025-01-01', '2026-01-01T00:00:00Z');
+            """);
+        var repo = new AgentRubriqueRepository(scope.Conn);
+
+        var result = await repo.ChangerStatutAsync("AR-1", "ACCEPTEE", DateTimeOffset.UtcNow);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains("terminal", result.Error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("SUPPRIMEE", SchemaTestSupport.Scalar<string>(
+            scope.Conn, "SELECT Statut FROM AgentRubriques WHERE Id = 'AR-1';"));
+    }
+
+    [Fact]
+    public async Task ChangerStatutAsync_ligne_inexistante_echoue_explicitement()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var repo = new AgentRubriqueRepository(scope.Conn);
+
+        var result = await repo.ChangerStatutAsync("AR-INEXISTANT", "ACCEPTEE", DateTimeOffset.UtcNow);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains("introuvable", result.Error.Message, StringComparison.OrdinalIgnoreCase);
+    }
 }

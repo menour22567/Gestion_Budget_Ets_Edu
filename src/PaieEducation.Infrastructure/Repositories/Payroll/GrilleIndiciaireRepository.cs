@@ -136,6 +136,43 @@ public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
         return Result.Success(id);
     }
 
+    public async Task<Result<string>> DupliquerValeurPointAsync(
+        string nouvelleDateEffet, string version, string? source, DateTimeOffset creeLe, CancellationToken ct = default)
+    {
+        var courante = await _connection.QuerySingleOrDefaultAsync<ValeurPointCourante>(
+            new CommandDefinition(
+                "SELECT Id, DateEffet, Valeur FROM ValeurPoint WHERE DateFin IS NULL;", cancellationToken: ct));
+        if (courante is null)
+            return Result.Failure<string>(Error.NotFound("Aucune valeur du point indiciaire en vigueur à dupliquer."));
+
+        var existeDeja = await _connection.QuerySingleOrDefaultAsync<string>(
+            new CommandDefinition(
+                "SELECT Id FROM ValeurPoint WHERE DateEffet = @nouvelleDateEffet;",
+                new { nouvelleDateEffet }, cancellationToken: ct));
+        if (existeDeja is not null)
+            return Result.Failure<string>(Error.Conflict($"Une valeur du point indiciaire est déjà définie à la date {nouvelleDateEffet}."));
+
+        var erreurContinuite = ValiderContinuite(new VersionCourante(courante.Id, courante.DateEffet), nouvelleDateEffet);
+        if (erreurContinuite is not null)
+            return Result.Failure<string>(erreurContinuite);
+
+        var id = $"VP-{nouvelleDateEffet}";
+        var createdAt = creeLe.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+
+        using var tx = _connection.BeginTransaction();
+        await FermerVersionAsync("ValeurPoint", courante.Id, nouvelleDateEffet, tx, ct);
+
+        await _connection.ExecuteAsync(new CommandDefinition("""
+            INSERT INTO ValeurPoint (Id, DateEffet, DateFin, Valeur, Version, Source, Hash, CreatedAt)
+            VALUES (@id, @nouvelleDateEffet, NULL, @valeur, @version, @source, @hash, @createdAt);
+            """,
+            new { id, nouvelleDateEffet, valeur = (decimal)courante.Valeur, version, source, hash = $"h-{id}", createdAt },
+            tx, cancellationToken: ct));
+
+        tx.Commit();
+        return Result.Success(id);
+    }
+
     private static Error? ValiderContinuite(VersionCourante? courante, string nouvelleDateEffet)
         => courante is not null && string.CompareOrdinal(nouvelleDateEffet, courante.DateEffet) <= 0
             ? Error.Validation(
@@ -152,4 +189,6 @@ public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
     }
 
     private sealed record VersionCourante(string Id, string DateEffet);
+
+    private sealed record ValeurPointCourante(string Id, string DateEffet, double Valeur);
 }

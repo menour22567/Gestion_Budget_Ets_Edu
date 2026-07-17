@@ -435,10 +435,157 @@ Test bout-en-bout rejoue exactement le cycle ISSRP avec les groupes réels
 `BulletinEndToEndTests` — même grades (`SDL-G007` éligible conditionnel,
 `A-G048` hors groupe), preuve que suggestion d'affectation et éligibilité au
 calcul restent cohérentes. N'écrit jamais `AvertissementsHistorique` (émis à
-l'acceptation, pas à la suggestion). 371 tests verts (365 + 6). Reste :
-`AccepterSuggestion`/`SupprimerAffectation`/`SuspendreAffectation` (agissent
-sur ce que `SuggererRubriques` crée), `AppliquerEvolutionReglementaire`,
-`CloreVersion`/`DupliquerVersion`, `GenererRappels`, `ListerMatriceCouverture`.
+l'acceptation, pas à la suggestion). 371 tests verts (365 + 6).
+
+**`AccepterSuggestion`/`SupprimerAffectation`/`SuspendreAffectation` (D5)
+livrés (17/07/2026), 4/7.** Implémentent la machine à états J3H §7
+(`SUGGEREE ⇄ ACCEPTEE ⇄ SUSPENDUE`, tout état non-`SUPPRIMEE` →
+`SUPPRIMEE` terminal). « Aucune transition n'est bloquée par une règle » →
+aucune précondition sur l'état de départ ; seule la sortie de l'état
+terminal `SUPPRIMEE` est refusée explicitement. `IAgentRubriqueRepository`
+étendu (pas un nouveau port) avec `ListerParAgentAsync` (nouvelle projection
+`AffectationRubrique`, traçabilité complète y compris les lignes
+`SUPPRIMEE`) et **une seule méthode générique** `ChangerStatutAsync` pour
+les 3 transitions (mécaniquement identiques) — mais **3 use cases
+Application séparés** (même choix que `DefinirValeurPoint`/`...Grille`/
+`...Echelon` : mécaniquement proches, sémantiquement distincts, nommage
+déjà fixé par ce document). `AccepterSuggestion` gère à la fois
+`SUGGEREE→ACCEPTEE` et la réactivation `SUSPENDUE→ACCEPTEE` (même cible sur
+le diagramme). `AvertissementsHistorique` toujours **hors périmètre**
+(nécessite de résoudre `MessageAffiche` depuis `GroupeId`→`MessageId`→
+`MessagesRegles.TexteFr`, machinerie non construite). Test bout-en-bout
+enchaîne `SuggererRubriques` (cycle ISSRP réel) → transition → vérifie le
+nouveau `Statut`, y compris suspension puis réactivation et le rejet d'une
+transition sur une ligne déjà `SUPPRIMEE`. Pas de câblage UI dans cette
+tranche (retour Application après plusieurs tranches Phase 6 ; l'écran
+`SuggererRubriques` sera enrichi plus tard). 392 tests verts (385 + 7).
+
+**`ListerMatriceCouverture` (D11) livré (17/07/2026), 5/7.** Vue tabulaire
+`corps × rubriques` (J3I §5.5) : indique par couple si une règle
+d'éligibilité couvre ce corps pour cette rubrique (`Couverte`) et si elle
+est actuellement en vigueur (`Active`). Découverte structurante avant
+conception : les données réelles (ISSRP) référencent **exclusivement**
+`CritereId='GRADE'`, jamais `CORPS` directement — une matrice ignorant ça
+afficherait zéro couverture pour le seul exemple détaillé du projet. Résout
+donc les conditions `GRADE` vers leur corps via `Grades.CorpsId` en plus des
+conditions `CORPS` directes ; seuls `=`/`IN` sont résolus (`NOT_IN` ignoré,
+limite documentée). `IWorkbenchReadRepository` étendu avec 4 méthodes,
+dont `ListerConditionsCorpsGradeAsync` qui **ne filtre pas par date**
+(contrairement à toutes les autres méthodes de lecture) — la matrice a
+besoin de l'historique complet pour distinguer Vert (actif) d'Orange
+(expiré), calcul fait en Application, jamais en SQL. Aucune couleur
+calculée côté backend : renvoie des faits bruts (`Couverte`/`Active`), la
+4e nuance du mockup (« Gris = non applicable ») n'a pas de définition
+précise dans J3I et sera une règle d'affichage Phase 6. Tests bout-en-bout
+sur les données ISSRP réelles (seedées par `ReglementaireSeeder`, aucune
+donnée inventée) : le corps `IDLS` (seul corps avec des grades ISSRP
+réellement seedés, via les 4 grades hors catégorie IDLS-G144/145/146/148)
+est couvert et actif pour `ISSRP_45`, couvert mais inactif pour `ISSRP_15`
+(uniquement via le groupe historique expiré), non couvert pour `QUALIF`
+(barème, pas d'éligibilité). Pas de câblage UI (vue matricielle = tâche 9
+Phase 6). 402 tests verts (395 + 7).
+
+**17/07/2026 — `GenererRappels` (D9) livré, portée volontairement
+réduite.** La conception documentée (J3C §11, J4E §8) décrit le rappel
+comme une ligne d'un **futur bulletin ouvert** (rubrique de rappel), pas
+une table à part — mais `Bulletins` (V012) stocke un `SnapshotJson` figé
+en un seul `INSERT` par `ValiderBulletin`, sans aucun mécanisme pour
+ajouter des lignes à un futur bulletin ; implémenter le design complet
+demanderait de modifier le moteur de calcul lui-même, hors périmètre
+d'une tranche. **Simplification assumée** : nouvelle table dédiée
+`Rappels` (V013, `IRappelRepository`/`RappelRepository`) qui persiste les
+`LigneRappel` produites par `RappelCalculator` (Phase 4, jusqu'ici jamais
+appelé hors de ses propres tests) — un agent + un bulletin validé à la
+fois (pas de balayage multi-agents par période, cette énumération
+n'existe toujours pas). `GenererRappels` recalcule « à droit constant
+actuel » à la **même** `DatePaie` que le bulletin d'époque : le patron de
+résolution point-in-time déjà en place (`WHERE DateEffet <= @date ORDER
+BY DateEffet DESC LIMIT 1`) fait automatiquement remonter une évolution
+réglementaire rétroactive, sans logique de détection dédiée. Garde
+d'idempotence en Application (`IRappelRepository.ExisteAsync` avant tout
+recalcul, `Error.Conflict` si des rappels existent déjà pour cet agent à
+cette date) ; aucun delta réel → succès avec liste vide, rien persisté.
+Test bout-en-bout : agent pilote `A-PILOTE` déjà utilisé par
+`ValiderBulletinTests`/`CalculerBulletinTests`, évolution rétroactive
+simulée par l'insertion directe d'une nouvelle `ValeurPoint` avec
+`DateEffet` antérieure à la `DatePaie` du bulletin validé — les lignes
+renvoyées par le use case sont vérifiées contre les valeurs persistées en
+base, pas de montant deviné à l'avance. 408 tests verts (402 + 6). Reste
+`AppliquerEvolutionReglementaire`, `CloreVersion`/`DupliquerVersion` —
+dépendent toujours de briques non construites (`AuditLog` jamais câblé en
+code, pas de cible unique pour « clôturer/dupliquer une version
+réglementaire »). **Dette explicite** : le rattachement des rappels à un
+véritable futur bulletin (le design documenté) reste à faire — cette
+tranche les rend seulement calculables et traçables en base.
+
+**17/07/2026 — `DupliquerVersion` livré ; `CloreVersion` clarifié comme
+déjà couvert.** Recherche dédiée avant conception : `CloreVersion` au
+sens « clôture + nouvelle version » (mode 2, J3I §7.4) est en fait déjà
+ce que fait `DefinirValeurPoint`/`DefinirIndiceMinGrille`/`DefinirIndiceEchelon`
+(Phase 5 tâche 4) — `GrilleIndiciaireRepository.DefinirXxxAsync` ferme
+atomiquement la version courante avant d'insérer la nouvelle valeur ; il
+n'y a aucun scénario métier documenté pour « clôturer un point d'indice
+sans le remplacer ». **Aucun nouveau code pour `CloreVersion`** — le
+sous-item est donc considéré clos par ce qui existe déjà. `DupliquerVersion`
+(mode 3, « Duplication »), en revanche, n'avait aucun précédent de code :
+livré, scopé à `ValeurPoint` (même périmètre que `GérerRéférentiels`) —
+`IGrilleIndiciaireRepository.DupliquerValeurPointAsync` clone la valeur
+en vigueur (lue, pas redemandée) vers une nouvelle `DateEffet`/`Version`/`Source`,
+en réutilisant telles quelles `ValiderContinuite`/`FermerVersionAsync`
+(les mêmes méthodes privées que `DefinirValeurPointAsync`) ; échoue
+`NotFound` si aucune version n'est en vigueur à cloner (distinct de
+`DefinirValeurPointAsync`, qui accepte l'absence de version courante
+comme une première définition normale). 414 tests verts (408 + 6). Reste
+`AppliquerEvolutionReglementaire` — dépend toujours d'`AuditLog`, jamais
+câblé en code.
+
+**17/07/2026 — `AppliquerEvolutionReglementaire` (D8) livré — tâche 5
+complète, 7/7 use cases Workbench.** Premier câblage applicatif
+d'`AuditLog` (V001) : jamais utilisée en code jusqu'ici (confirmé par 2
+recherches successives), désormais écrite par
+`IAuditLogRepository`/`AuditLogRepository` (un seul `INSERT`, pas de
+transaction nécessaire). Portée limitée à `ValeurPoint`, aux 2 modes de
+J3I §7.4 qui ont un chemin d'écriture réel : **clôture + nouvelle
+version** (délègue à `DefinirValeurPointAsync`) et **duplication**
+(délègue à `DupliquerValeurPointAsync`, livré à la tranche précédente) —
+« Modification en place » (qualifiée de « rare » par la doc elle-même)
+reste hors périmètre, sans précédent d'écriture. **Deux limites
+assumées et documentées, pas cachées** : (1) aucune notion d'identité
+utilisateur n'existe dans tout le projet (pas d'authentification, de
+session, ni d'`IUserContext`) — `Actor` reste un paramètre fourni par
+l'appelant, à brancher sur un vrai système d'auth plus tard ; (2)
+l'écriture réglementaire et la ligne `AuditLog` ne sont **pas**
+atomiques entre elles — aucun `IUnitOfWork` n'existe dans le projet et
+chaque méthode de `GrilleIndiciaireRepository` gère sa propre
+transaction interne sans en exposer une externe ; si l'audit échoue
+après un commit réglementaire réussi, le use case renvoie un échec
+explicite (pas un succès menteur) mais le changement reste en base.
+`Demande` exige un `RapportImpact` (le DTO déjà produit par
+`SimulerEvolutionReglementaire`, jusqu'ici jamais consommé par personne)
+— une convention de forme d'API pour la porte « dry-run vu », pas une
+preuve cryptographique ; il est sérialisé dans le `Payload` `AuditLog`.
+420 tests verts (414 + 6). **Tâche 5 (use cases Workbench, D5-D11)
+terminée.** Reste tâche 6 Phase 5 (validation applicative transverse) et
+le câblage UI des use cases Workbench (Phase 6, tâches 4-10).
+
+**17/07/2026 — Tâche 6 Phase 5 (validation applicative transverse)
+terminée.** Spec réduite à une ligne (« rejet de tout commit Workbench
+sans dry-run préalable, sauf bypass admin (`AuditLog`記录) ») — dans le
+contexte du seul use case qui « commit » réellement une évolution
+réglementaire (`AppliquerEvolutionReglementaire`), c'était en fait déjà
+**plus strict** que la spec : `RapportImpact` était non-nullable, donc
+aucun bypass n'était possible du tout. Corrigé : `Demande.RapportImpact`
+devient nullable, `BypassDryRun`/`RaisonBypass` ajoutés — sans bypass,
+`RapportImpact` reste obligatoire (`Validation` sinon) ; avec bypass,
+`RaisonBypass` devient obligatoire à la place (`Validation` sinon) ;
+`AuditLog.Action` distingue `APPLIQUER_EVOLUTION` de
+`APPLIQUER_EVOLUTION_BYPASS` — filtrable sans désérialiser le `Payload`,
+pour un vrai usage de conformité (« qui a bypassé, quand, pourquoi »).
+3 nouveaux tests (sans dry-run ni bypass → échec ; bypass sans raison →
+échec ; bypass avec raison → succès, action tracée). 425 tests verts
+(422 + 3). **Phase 5 est maintenant complète dans son intégralité**
+(tâches 1-6). Reste uniquement le câblage UI des use cases Workbench
+(Phase 6, tâches 2 et 4-10).
 
 **Tâches.**
 1. **Application** : Use Cases (CQRS léger), Commands/Queries, DTO, mapping, validation applicative, `IUnitOfWork`, notifications, gestion d'erreurs normalisée.
@@ -465,9 +612,88 @@ sur ce que `SuggererRubriques` crée), `AppliquerEvolutionReglementaire`,
 ## Phase 6 — Présentation WPF/MVVM (Workbench + UI bulletin)
 **Objectif.** Interface professionnelle MVVM strict (V4 Tome E) — incluant le Workbench réglementaire complet (D7).
 **Tâches.**
-1. **Shell** (fenêtre principale, navigation centralisée `INavigationService`, `IDialogService`, notifications) — avec entrée « Workbench réglementaire » dans le menu principal.
+1. **Shell** (fenêtre principale, navigation centralisée `INavigationService`, `IDialogService`, notifications) — avec entrée « Workbench réglementaire » dans le menu principal. **✅ FAIT (16/07/2026)**, notifications exceptées. `Presentation` (`Navigation/`, `Dialogs/`, `Shell/`, `Payroll/`, `Workbench/`, `DependencyInjection/`) porte tout — `Bootstrapper` reste une pure Composition Root (`App.xaml.cs` : `Host.CreateApplicationBuilder()`, migrations avant affichage, résolution DI de `ShellWindow`, plus de `MainWindow`/`StartupUri`). Navigation ViewModel-first (`DataTemplate` implicites, `Presentation/Resources/ViewTemplates.xaml`) — aucune logique en code-behind. Écran réel livré : « Calculer un bulletin » (`CalculerBulletinViewModel`, appelle le use case `CalculerBulletin` de Phase 5) — preuve de la chaîne complète WPF→ViewModel→Application→Infrastructure→SQLite ; l'entrée « Workbench réglementaire » reste un panneau placeholder (tâche 4). Chemin de base par défaut fixé (`%LOCALAPPDATA%\PaieEducation\paie.db`, overridable via `appsettings.json`). Nouveau projet `Tests.Presentation` (`net10.0-windows`, seul moyen de référencer `Presentation` — cf. `Tests.Architecture`) pour les tests de ViewModel (ports mockés). Vérifié par `dotnet run` réel (fenêtre affichée, DB créée, aucun crash) — **pas** une vérification visuelle du rendu, honnêtement signalé comme limite de l'environnement. 373 tests verts (371 + 2). Notifications explicitement hors périmètre (aucune spécification, aucun consommateur réel). Reste : tâches 2-10 (Design System, écrans référentiels/agents/bulletin, arborescence Workbench complète, FormulaEditor, éditeurs barème/DNF, assistant d'évolution, vues matricielles).
 2. Design System + Business Controls (MoneyTextBox, sélecteurs corps/grade/échelon/période, `ExplainabilityPanel`, `ERPDataGrid`).
 3. Écrans : **paramétrage des référentiels** (rubriques, taux cotisations, barèmes, grilles — édition par l'utilisateur, Q3) ; gestion agents/carrière ; lancement/contrôle des calculs ; **consultation bulletin + panneau d'explication**.
+   - **Créer un agent : ✅ FAIT (16/07/2026)**, 2e écran réel du Shell. `CreerAgentViewModel`/`CreerAgentView` (`Presentation/Agents/`), appelle le use case `CreerAgent` (Phase 5). `Sexe`/`SituationFamiliale`/`TypeContrat` en `ComboBox` (listes fermées, mêmes valeurs que les `CHECK` V011 — pas besoin d'une source de données) ; `GradeId`/`CategorieId`/`EchelonId`/`FonctionId`/`EtablissementId` en code référentiel brut (texte) — aucun sélecteur métier construit encore (nécessiterait un use case de liste des référentiels, hors périmètre ; relève de la tâche 2 Design System). Menu Shell étendu (`Agents` → `Créer un agent`). Vérifié par `dotnet run` réel (fenêtre affichée, aucun crash au chargement du nouveau `DataTemplate`). 375 tests verts (373 + 2).
+   - **Valider un bulletin + Consulter un bulletin : ✅ FAIT (17/07/2026)**,
+     3e et 4e écrans réels. `ValiderBulletinViewModel`/`View` et
+     `ConsulterBulletinViewModel`/`View` (`Presentation/Payroll/`), même
+     patron que `CalculerBulletin` (mêmes valeurs fixes `ClesBareme`/
+     `SourcesValeur`, même dette connue). Menu `Paie` complet : Calculer /
+     Valider / Consulter — cycle de vie du bulletin entièrement navigable
+     depuis le Shell. 4 tests de ViewModel (ports mockés, dont un
+     `PayrollInput` minimal réel pour prouver que le pipeline/Snapshot
+     Engine s'exécute vraiment). Vérifié par `dotnet run` réel. 379 tests
+     verts (375 + 4).
+   - **Grille indiciaire (paramétrage référentiels, Q3) : ✅ FAIT
+     (17/07/2026)**, 5e écran réel. `GrilleIndiciaireViewModel`/`View`
+     (`Presentation/Referentiels/`) — **un seul écran, 3 onglets**
+     (Valeur du point / Indice min. catégorie / Indice d'échelon), un par
+     use case déjà livré (`DefinirValeurPoint`/`DefinirIndiceMinGrille`/
+     `DefinirIndiceEchelon`, Phase 5) — regroupés parce qu'ils partagent le
+     même repository et le même concept métier, pas 3 écrans séparés.
+     Validation du format numérique côté ViewModel avant l'appel au use
+     case (`decimal`/`int.TryParse`, message d'erreur explicite si invalide
+     — jamais une exception de parsing qui fuit). Menu Shell étendu
+     (`Référentiels` → `Grille indiciaire`). 4 tests de ViewModel. Vérifié
+     par `dotnet run` réel. 383 tests verts (379 + 4).
+     **4e onglet « Dupliquer » ajouté le 17/07/2026** après la livraison
+     Phase 5 de `DupliquerVersion` — même patron exact que les 3 autres
+     onglets (formulaire simple, use case déjà existant), extension
+     mécanique d'un patron déjà validé (pas de repassage par Plan Mode).
+     2 nouveaux tests de ViewModel. Vérifié par `dotnet run` réel. 422
+     tests verts (420 + 2).
+   - **Suggérer des rubriques : ✅ FAIT (17/07/2026)**, 6e écran réel — le
+     premier consommant un use case **Workbench** (`SuggererRubriques`, D5,
+     Phase 5). `SuggererRubriquesViewModel`/`View`
+     (`Presentation/Workbench/`), menu étendu (`Agents` → `Suggérer des
+     rubriques` — action agent-centrique, distincte du placeholder
+     `Workbench réglementaire` qui reste réservé à l'arborescence complète,
+     tâche 4). Ferme la boucle Créer un agent → Suggérer ses rubriques →
+     Calculer/Valider son bulletin, entièrement navigable depuis le Shell.
+     2 tests de ViewModel. Vérifié par `dotnet run` réel. 385 tests verts
+     (383 + 2). **Les 5 use cases Application non-Workbench + 1 use case
+     Workbench (sur 9 au total) ont maintenant tous un écran** — restent
+     `SimulerEvolutionReglementaire` (plus complexe, relève plutôt de la
+     tâche 8 « Assistant d'évolution réglementaire ») et les 6 autres use
+     cases Workbench pas encore construits (tâche 5 Phase 5).
+   - **Écran enrichi (17/07/2026)** : après la livraison Phase 5 des 3 use
+     cases de transition d'état (`AccepterSuggestion`/`SupprimerAffectation`/
+     `SuspendreAffectation`), l'écran devient un vrai écran de gestion —
+     premier `DataGrid` de la session (les 6 écrans précédents n'étaient que
+     des formulaires simples). Nouveau use case `ListerAffectationsAgent`
+     (enveloppe `IAgentRubriqueRepository.ListerParAgentAsync`, même patron
+     que `ConsulterBulletin`/`IBulletinReadRepository`) — créé pour préserver
+     la frontière Presentation→Application (aucun écran ne référence
+     directement un port Domain, seulement des use cases). Liste les
+     affectations de l'agent (y compris `SUPPRIMEE`, traçabilité complète) ;
+     boutons Accepter/Suspendre/Supprimer par ligne (`DataGridTemplateColumn`,
+     `CommandParameter="{Binding Id}"`) ; après chaque action, la liste est
+     **rechargée depuis la base** (jamais de mise à jour optimiste). 3
+     nouveaux tests. 395 tests verts (392 + 3).
+   - **Sélecteurs référentiels réels (17/07/2026)** : `Grade`/`Catégorie`/
+     `Échelon`, saisis en texte brut jusqu'ici sur `CréerAgent` et
+     `Grille indiciaire` (Design System, tâche 2, en dépendait), sont
+     maintenant des `ComboBox` réels. Nouveau port
+     `IReferentielReadRepository` (`Domain/Calcul/Repositories/`, même
+     dossier que `IGrilleIndiciaireRepository` — Grades/Categories/Echelons
+     sont la nomenclature V002 consommée par le sous-arbre Calcul) et use
+     case `ListerReferentiels` (`Application/Referentiels/UseCases/`) qui
+     agrège les 3 listes en un seul aller-retour (même patron que
+     `ListerMatriceCouverture` — pas 3 use cases séparés, ces lectures
+     n'ont pas d'intention métier distincte). Nouveau patron de
+     chargement : `[RelayCommand] ChargerReferentielsAsync` invoqué en
+     fire-and-forget dans le constructeur du ViewModel (peuple les listes
+     dès l'ouverture de l'écran, sans logique dans le code-behind XAML) —
+     premier écran de la session à charger des données sans action
+     utilisateur explicite. 6 nouveaux tests (3 repository, 1 use case, 2
+     ViewModel). Vérifié par `dotnet run` réel. 431 tests verts (425 + 6).
+     **Design System (tâche 2) partiellement débloqué** : sélecteurs
+     simples livrés pour Grade/Catégorie/Échelon ; les contrôles
+     réutisables (`MoneyTextBox`, `ERPDataGrid`, etc.) et les sélecteurs
+     manquants (Fonction/Établissement — absents de `NouvelAgent`, donc
+     jamais bloquants jusqu'ici) restent à faire.
 4. **Workbench réglementaire — arborescence complète** (D7, J3I §5) :
    - `Rubriques` (catalogue) → fiches par rubrique avec onglets : Identité, **Formule** (FormulaEditor avec coloration + auto-complétion + simulation sur agent témoin), **Paramètres** (clé/valeur typé, P2/P9), **Barème** (P4/P5/P6/P12, éditeur de tranches avec garde-fous), **Éligibilité** (P7/P8, éditeur de groupes DNF), **Audit** (L-U6, timeline + recherche)
    - `Cotisations` (P9, P10) → taux, assiettes, composition, mutuelles

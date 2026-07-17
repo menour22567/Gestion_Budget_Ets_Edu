@@ -22,8 +22,17 @@ public static class ApplicationServiceCollectionExtensions
         services.AddTransient<DefinirValeurPoint>();
         services.AddTransient<DefinirIndiceMinGrille>();
         services.AddTransient<DefinirIndiceEchelon>();
+        services.AddTransient<ListerReferentiels>();
         services.AddTransient<SimulerEvolutionReglementaire>();
         services.AddTransient<SuggererRubriques>();
+        services.AddTransient<AccepterSuggestion>();
+        services.AddTransient<SupprimerAffectation>();
+        services.AddTransient<SuspendreAffectation>();
+        services.AddTransient<ListerAffectationsAgent>();
+        services.AddTransient<ListerMatriceCouverture>();
+        services.AddTransient<GenererRappels>();
+        services.AddTransient<DupliquerVersion>();
+        services.AddTransient<AppliquerEvolutionReglementaire>();
 
         return services;
     }

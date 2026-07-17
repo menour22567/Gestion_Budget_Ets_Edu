@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:agents="clr-namespace:PaieEducation.Presentation.Agents"
+                    xmlns:payroll="clr-namespace:PaieEducation.Presentation.Payroll"
+                    xmlns:referentiels="clr-namespace:PaieEducation.Presentation.Referentiels"
+                    xmlns:workbench="clr-namespace:PaieEducation.Presentation.Workbench">
+
+    <!-- Navigation ViewModel-first (Phase 6, tâche 1) : le type du ViewModel
+         courant (Shell.CurrentViewModel) détermine automatiquement la Vue
+         affichée par le ContentControl du Shell — aucune logique de
+         navigation en code-behind. -->
+
+    <DataTemplate DataType="{x:Type agents:CreerAgentViewModel}">
+        <agents:CreerAgentView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type payroll:CalculerBulletinViewModel}">
+        <payroll:CalculerBulletinView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type payroll:ValiderBulletinViewModel}">
+        <payroll:ValiderBulletinView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type payroll:ConsulterBulletinViewModel}">
+        <payroll:ConsulterBulletinView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type referentiels:GrilleIndiciaireViewModel}">
+        <referentiels:GrilleIndiciaireView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type workbench:SuggererRubriquesViewModel}">
+        <workbench:SuggererRubriquesView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type workbench:WorkbenchPlaceholderViewModel}">
+        <workbench:WorkbenchPlaceholderView />
+    </DataTemplate>
+
+</ResourceDictionary>

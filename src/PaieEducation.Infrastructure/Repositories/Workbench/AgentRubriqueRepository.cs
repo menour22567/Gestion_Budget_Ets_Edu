@@ -3,6 +3,7 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Common;
 using PaieEducation.Domain.Workbench.Repositories;
+using PaieEducation.Domain.Workbench.ValueObjects;
 
 namespace PaieEducation.Infrastructure.Repositories.Workbench;
 
@@ -47,4 +48,52 @@ public sealed class AgentRubriqueRepository : IAgentRubriqueRepository
 
         return Result.Success<string?>(id);
     }
+
+    public async Task<Result<IReadOnlyList<AffectationRubrique>>> ListerParAgentAsync(
+        string agentId, string datePaie, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(agentId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(datePaie);
+
+        var rows = await _connection.QueryAsync<AffectationRow>(new CommandDefinition("""
+            SELECT Id, RubriqueId, Occurrence, Statut, Origine, DateEffet, DateFin
+            FROM AgentRubriques
+            WHERE AgentId = @agentId
+              AND DateEffet <= @datePaie AND (DateFin IS NULL OR DateFin >= @datePaie)
+            ORDER BY DateEffet DESC, RubriqueId;
+            """,
+            new { agentId, datePaie }, cancellationToken: ct));
+
+        var affectations = rows
+            .Select(r => new AffectationRubrique(
+                r.Id, r.RubriqueId, checked((int)r.Occurrence), r.Statut, r.Origine, r.DateEffet, r.DateFin))
+            .ToList();
+        return Result.Success<IReadOnlyList<AffectationRubrique>>(affectations);
+    }
+
+    public async Task<Result<string>> ChangerStatutAsync(
+        string agentRubriqueId, string nouveauStatut, DateTimeOffset maintenant, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(agentRubriqueId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(nouveauStatut);
+
+        var statutActuel = await _connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition(
+            "SELECT Statut FROM AgentRubriques WHERE Id = @agentRubriqueId;",
+            new { agentRubriqueId }, cancellationToken: ct));
+        if (statutActuel is null)
+            return Result.Failure<string>(Error.NotFound($"Affectation introuvable : '{agentRubriqueId}'."));
+        if (statutActuel == "SUPPRIMEE")
+            return Result.Failure<string>(Error.Conflict(
+                $"L'affectation '{agentRubriqueId}' est à l'état terminal SUPPRIMEE — créer une nouvelle ligne plutôt que la modifier."));
+
+        var updatedAt = maintenant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+        await _connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE AgentRubriques SET Statut = @nouveauStatut, UpdatedAt = @updatedAt WHERE Id = @agentRubriqueId;",
+            new { nouveauStatut, updatedAt, agentRubriqueId }, cancellationToken: ct));
+
+        return Result.Success(agentRubriqueId);
+    }
+
+    private sealed record AffectationRow(
+        string Id, string RubriqueId, long Occurrence, string Statut, string Origine, string DateEffet, string? DateFin);
 }

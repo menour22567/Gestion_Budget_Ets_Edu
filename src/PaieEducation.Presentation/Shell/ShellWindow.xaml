@@ -1,0 +1,26 @@
+<Window x:Class="PaieEducation.Presentation.Shell.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="PaieEducation" Height="600" Width="960">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Paie">
+                <MenuItem Header="_Calculer un bulletin" Command="{Binding NaviguerVersCalculerBulletinCommand}"/>
+                <MenuItem Header="_Valider un bulletin" Command="{Binding NaviguerVersValiderBulletinCommand}"/>
+                <MenuItem Header="C_onsulter un bulletin" Command="{Binding NaviguerVersConsulterBulletinCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Agents">
+                <MenuItem Header="_Créer un agent" Command="{Binding NaviguerVersCreerAgentCommand}"/>
+                <MenuItem Header="_Suggérer des rubriques" Command="{Binding NaviguerVersSuggererRubriquesCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Référentiels">
+                <MenuItem Header="_Grille indiciaire" Command="{Binding NaviguerVersGrilleIndiciaireCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Workbench réglementaire" Command="{Binding NaviguerVersWorkbenchCommand}"/>
+        </Menu>
+        <ContentControl Content="{Binding CurrentViewModel}"/>
+    </DockPanel>
+</Window>

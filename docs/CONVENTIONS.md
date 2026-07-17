@@ -61,6 +61,7 @@ Un type public = un fichier. PascalCase (types/méthodes/propriétés), `_camelC
 
 - `Tests.Unit` : Domain / Application / Shared (sans I/O).
 - `Tests.Integration` : Persistence / Infrastructure / Reporting (SQLite temporaire).
+- `Tests.Presentation` : ViewModels / commandes / navigation (`net10.0-windows` — seul moyen de référencer `Presentation`, WPF ; ports mockés, aucune I/O réelle).
 - `Tests.Architecture` : règles de dépendance (NetArchTest).
 - Cibles de couverture (V4) : Domaine ≥ 95 % ; calculateurs de paie 100 % des cas critiques.
 - Framework : xUnit + Moq.

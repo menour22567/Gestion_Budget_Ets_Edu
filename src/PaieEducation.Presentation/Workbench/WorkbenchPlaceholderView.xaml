@@ -1,0 +1,9 @@
+<UserControl x:Class="PaieEducation.Presentation.Workbench.WorkbenchPlaceholderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <TextBlock Text="Workbench réglementaire — à venir (Phase 6, tâche 4)"
+               Margin="24" FontStyle="Italic" Foreground="Gray"/>
+</UserControl>

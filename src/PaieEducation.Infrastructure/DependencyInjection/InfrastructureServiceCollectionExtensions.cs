@@ -41,9 +41,12 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IAgentRepository, AgentRepository>();
         services.AddScoped<IBulletinRepository, BulletinRepository>();
         services.AddScoped<IBulletinReadRepository, BulletinReadRepository>();
+        services.AddScoped<IRappelRepository, RappelRepository>();
         services.AddScoped<IGrilleIndiciaireRepository, GrilleIndiciaireRepository>();
+        services.AddScoped<IReferentielReadRepository, ReferentielReadRepository>();
         services.AddScoped<IWorkbenchReadRepository, WorkbenchReadRepository>();
         services.AddScoped<IAgentRubriqueRepository, AgentRubriqueRepository>();
+        services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
         return services;
     }

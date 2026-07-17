@@ -1,0 +1,64 @@
+<UserControl x:Class="PaieEducation.Presentation.Workbench.SuggererRubriquesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="700" x:Name="Root">
+    <StackPanel Margin="24" MaxWidth="640" HorizontalAlignment="Left">
+        <TextBlock Text="Suggérer des rubriques" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+
+        <TextBlock Text="Identifiant agent"/>
+        <TextBox Text="{Binding AgentId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxWidth="420" HorizontalAlignment="Left"/>
+
+        <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
+        <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxWidth="420" HorizontalAlignment="Left"/>
+
+        <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
+            <Button Content="Suggérer" Command="{Binding SuggererCommand}" Width="120" Margin="0,0,8,0"/>
+            <Button Content="Actualiser" Command="{Binding ActualiserCommand}" Width="120"/>
+        </StackPanel>
+
+        <TextBlock Text="Évaluation en cours…" Foreground="Gray" Margin="0,0,0,8">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EnCours}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+        <TextBlock Text="Affectations de l'agent" FontWeight="Bold" Margin="0,0,0,8"/>
+        <DataGrid ItemsSource="{Binding Affectations}" AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Rubrique" Binding="{Binding RubriqueId}" Width="120"/>
+                <DataGridTextColumn Header="Statut" Binding="{Binding Statut}" Width="90"/>
+                <DataGridTextColumn Header="Origine" Binding="{Binding Origine}" Width="*"/>
+                <DataGridTextColumn Header="Date d'effet" Binding="{Binding DateEffet}" Width="100"/>
+                <DataGridTemplateColumn Header="Actions" Width="220">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Accepter" Margin="2"
+                                        Command="{Binding DataContext.AccepterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding Id}"/>
+                                <Button Content="Suspendre" Margin="2"
+                                        Command="{Binding DataContext.SuspendreCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding Id}"/>
+                                <Button Content="Supprimer" Margin="2"
+                                        Command="{Binding DataContext.SupprimerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding Id}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </StackPanel>
+</UserControl>

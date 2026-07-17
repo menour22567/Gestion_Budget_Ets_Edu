@@ -34,4 +34,15 @@ public interface IGrilleIndiciaireRepository
     Task<Result<string>> DefinirIndiceEchelonAsync(
         string echelonId, int indice, string dateEffet, string version, string? source, DateTimeOffset creeLe,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// Clone la valeur du point indiciaire en vigueur vers une nouvelle version
+    /// (même <c>Valeur</c>, nouvelle <paramref name="nouvelleDateEffet"/>/<paramref name="version"/>/<paramref name="source"/>) —
+    /// mode « Duplication » (J3I §7.4, reconduction d'un taux sur une nouvelle
+    /// période réglementaire). Échec explicite (<see cref="Error.NotFound"/>)
+    /// si aucune version n'est en vigueur à cloner.
+    /// </summary>
+    /// <returns>L'Id (code métier) de la ligne créée.</returns>
+    Task<Result<string>> DupliquerValeurPointAsync(
+        string nouvelleDateEffet, string version, string? source, DateTimeOffset creeLe, CancellationToken ct = default);
 }

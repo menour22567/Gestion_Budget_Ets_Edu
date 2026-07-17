@@ -103,6 +103,46 @@ public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
     }
 
     // -----------------------------------------------------------------------
+    // Matrice de couverture (D11, J3I § 5.5)
+    // -----------------------------------------------------------------------
+
+    public async Task<IReadOnlyList<CorpsResume>> ListerCorpsActifsAsync(CancellationToken ct = default)
+    {
+        const string sql = "SELECT Id, Libelle FROM Corps WHERE Actif = 1 ORDER BY Id;";
+        var rows = await _connection.QueryAsync<CorpsRow>(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.Select(r => new CorpsResume(r.Id, r.Libelle)).ToList();
+    }
+
+    public async Task<IReadOnlyList<RubriqueResume>> ListerRubriquesActivesAsync(CancellationToken ct = default)
+    {
+        const string sql = "SELECT Id, Libelle FROM Rubriques WHERE Actif = 1 ORDER BY Id;";
+        var rows = await _connection.QueryAsync<RubriqueRow>(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.Select(r => new RubriqueResume(r.Id, r.Libelle)).ToList();
+    }
+
+    public async Task<IReadOnlyList<(string GradeId, string CorpsId)>> ListerGradesActifsAsync(CancellationToken ct = default)
+    {
+        const string sql = "SELECT Id, CorpsId FROM Grades WHERE Actif = 1 ORDER BY Id;";
+        var rows = await _connection.QueryAsync<GradeRow>(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.Select(r => (r.Id, r.CorpsId)).ToList();
+    }
+
+    public async Task<IReadOnlyList<ConditionEligibilite>> ListerConditionsCorpsGradeAsync(CancellationToken ct = default)
+    {
+        // Pas de filtre par date, volontairement : la matrice de couverture
+        // distingue règle active / expirée elle-même (Application), il lui
+        // faut donc l'historique complet, pas seulement l'état courant.
+        const string sql = """
+            SELECT Id, RubriqueId, CritereId, GroupeId, Operateur, Valeur, DateEffet, DateFin
+            FROM ReglesEligibilite
+            WHERE CritereId IN ('GRADE', 'CORPS')
+            ORDER BY RubriqueId, Id;
+            """;
+        var rows = await _connection.QueryAsync<ConditionRow>(new CommandDefinition(sql, cancellationToken: ct));
+        return rows.Select(MapCondition).ToList();
+    }
+
+    // -----------------------------------------------------------------------
     // Données V008 / V004 / V005 utilisées par le Workbench
     // -----------------------------------------------------------------------
 
@@ -185,6 +225,12 @@ public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
         string? GroupeId, string Operateur, string Valeur, string DateEffet, string? DateFin);
 
     private sealed record PeriodeRow(string DateEffet, string? DateFin);
+
+    private sealed record CorpsRow(string Id, string Libelle);
+
+    private sealed record RubriqueRow(string Id, string Libelle);
+
+    private sealed record GradeRow(string Id, string CorpsId);
 
     private static SourceValeur MapSource(SourceRow r)
         => SourceValeur.Creer(r.Id, r.Libelle, r.Description);

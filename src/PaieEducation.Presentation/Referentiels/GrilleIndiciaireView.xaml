@@ -1,0 +1,78 @@
+<UserControl x:Class="PaieEducation.Presentation.Referentiels.GrilleIndiciaireView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="500">
+    <StackPanel Margin="24" MaxWidth="420" HorizontalAlignment="Left">
+        <TextBlock Text="Grille indiciaire" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+
+        <TabControl>
+            <!-- Valeur du point indiciaire -->
+            <TabItem Header="Valeur du point">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Valeur (DA)"/>
+                    <TextBox Text="{Binding VpValeur, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding VpDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Version (libellé)"/>
+                    <TextBox Text="{Binding VpVersion, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Définir" Command="{Binding DefinirValeurPointCommand}"
+                            Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding VpResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Indice minimum de grille (par catégorie) -->
+            <TabItem Header="Indice min. (catégorie)">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Catégorie"/>
+                    <ComboBox ItemsSource="{Binding CategoriesDisponibles}" SelectedItem="{Binding ImCategorieSelectionnee}"
+                              DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                    <TextBlock Text="Indice minimum"/>
+                    <TextBox Text="{Binding ImIndiceMin, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding ImDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Version (libellé)"/>
+                    <TextBox Text="{Binding ImVersion, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Définir" Command="{Binding DefinirIndiceMinCommand}"
+                            Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding ImResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Indice d'échelon -->
+            <TabItem Header="Indice d'échelon">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Échelon"/>
+                    <ComboBox ItemsSource="{Binding EchelonsDisponibles}" SelectedItem="{Binding IeEchelonSelectionne}"
+                              DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                    <TextBlock Text="Indice"/>
+                    <TextBox Text="{Binding IeIndice, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding IeDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Version (libellé)"/>
+                    <TextBox Text="{Binding IeVersion, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Définir" Command="{Binding DefinirIndiceEchelonCommand}"
+                            Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding IeResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Dupliquer la valeur du point (mode Duplication, J3I §7.4) -->
+            <TabItem Header="Dupliquer">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Nouvelle date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding DvDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Version (libellé)"/>
+                    <TextBox Text="{Binding DvVersion, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Source (référence réglementaire, optionnel)"/>
+                    <TextBox Text="{Binding DvSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Dupliquer" Command="{Binding DupliquerValeurPointCommand}"
+                            Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding DvResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
+</UserControl>

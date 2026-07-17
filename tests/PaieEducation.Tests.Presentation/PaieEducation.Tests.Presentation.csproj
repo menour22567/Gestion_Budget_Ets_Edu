@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- net10.0-windows : les ViewModels testés dépendent de Presentation (WPF,
+       CommunityToolkit.Mvvm) — même patron que Tests.Architecture.csproj
+       (seul autre projet de test net10.0-windows du dépôt). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PaieEducation.Domain\PaieEducation.Domain.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Application\PaieEducation.Application.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Presentation\PaieEducation.Presentation.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Shared\PaieEducation.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

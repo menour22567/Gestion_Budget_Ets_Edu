@@ -145,4 +145,63 @@ public class GrilleIndiciaireRepositoryTests
 
         Assert.True(result.IsFailure);
     }
+
+    // ---- DupliquerValeurPoint ----
+
+    [Fact]
+    public async Task DupliquerValeurPointAsync_clone_la_valeur_courante_et_ferme_la_precedente_a_la_veille()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var repo = new GrilleIndiciaireRepository(scope.Conn);
+        var premiere = await repo.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
+
+        var duplication = await repo.DupliquerValeurPointAsync("2026-01-01", "2026", "Décret X", DateTimeOffset.UtcNow);
+
+        Assert.True(duplication.IsSuccess, duplication.IsFailure ? duplication.Error.Message : null);
+        Assert.Equal("VP-2026-01-01", duplication.Value);
+        Assert.Equal(45.0, SchemaTestSupport.Scalar<double>(
+            scope.Conn, "SELECT Valeur FROM ValeurPoint WHERE Id = @id;", ("@id", duplication.Value)));
+        Assert.Null(SchemaTestSupport.Scalar<string>(
+            scope.Conn, "SELECT DateFin FROM ValeurPoint WHERE Id = @id;", ("@id", duplication.Value)));
+        Assert.Equal("2025-12-31", SchemaTestSupport.Scalar<string>(
+            scope.Conn, "SELECT DateFin FROM ValeurPoint WHERE Id = @id;", ("@id", premiere.Value)));
+    }
+
+    [Fact]
+    public async Task DupliquerValeurPointAsync_sans_version_en_vigueur_echoue_avec_not_found()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var repo = new GrilleIndiciaireRepository(scope.Conn);
+
+        var duplication = await repo.DupliquerValeurPointAsync("2026-01-01", "2026", null, DateTimeOffset.UtcNow);
+
+        Assert.True(duplication.IsFailure);
+        Assert.Equal("not_found", duplication.Error.Code);
+    }
+
+    [Fact]
+    public async Task DupliquerValeurPointAsync_date_effet_en_double_echoue_en_conflit()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var repo = new GrilleIndiciaireRepository(scope.Conn);
+        await repo.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
+
+        var duplication = await repo.DupliquerValeurPointAsync("2007-01-01", "2007-bis", null, DateTimeOffset.UtcNow);
+
+        Assert.True(duplication.IsFailure);
+        Assert.Equal("conflict", duplication.Error.Code);
+    }
+
+    [Fact]
+    public async Task DupliquerValeurPointAsync_date_effet_non_posterieure_a_la_version_en_vigueur_echoue()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var repo = new GrilleIndiciaireRepository(scope.Conn);
+        await repo.DefinirValeurPointAsync(45m, "2020-01-01", "2020", null, DateTimeOffset.UtcNow);
+
+        var duplication = await repo.DupliquerValeurPointAsync("2019-01-01", "2019", null, DateTimeOffset.UtcNow);
+
+        Assert.True(duplication.IsFailure);
+        Assert.Equal("validation", duplication.Error.Code);
+    }
 }

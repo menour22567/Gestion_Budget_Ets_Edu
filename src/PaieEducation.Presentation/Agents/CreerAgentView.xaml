@@ -1,0 +1,66 @@
+<UserControl x:Class="PaieEducation.Presentation.Agents.CreerAgentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="500">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="420" HorizontalAlignment="Left">
+            <TextBlock Text="Créer un agent" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+
+            <TextBlock Text="Matricule"/>
+            <TextBox Text="{Binding Matricule, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Nom"/>
+            <TextBox Text="{Binding Nom, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Prénom"/>
+            <TextBox Text="{Binding Prenom, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Date de naissance (AAAA-MM-JJ)"/>
+            <TextBox Text="{Binding DateNaissance, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Date de recrutement (AAAA-MM-JJ)"/>
+            <TextBox Text="{Binding DateRecrutement, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Sexe"/>
+            <ComboBox ItemsSource="{Binding SexesDisponibles}" SelectedItem="{Binding Sexe}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Situation familiale"/>
+            <ComboBox ItemsSource="{Binding SituationsDisponibles}" SelectedItem="{Binding SituationFamiliale}" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Grade"/>
+            <ComboBox ItemsSource="{Binding GradesDisponibles}" SelectedItem="{Binding GradeSelectionne}"
+                      DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Catégorie"/>
+            <ComboBox ItemsSource="{Binding CategoriesDisponibles}" SelectedItem="{Binding CategorieSelectionnee}"
+                      DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Échelon"/>
+            <ComboBox ItemsSource="{Binding EchelonsDisponibles}" SelectedItem="{Binding EchelonSelectionne}"
+                      DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+
+            <TextBlock Text="Type de contrat"/>
+            <ComboBox ItemsSource="{Binding TypesContratDisponibles}" SelectedItem="{Binding TypeContrat}" Margin="0,0,0,8"/>
+
+            <Button Content="Créer" Command="{Binding CreerCommand}"
+                    Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+
+            <TextBlock Text="Création en cours…" Foreground="Gray" Margin="0,0,0,8">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding EnCours}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

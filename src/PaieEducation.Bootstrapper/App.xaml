@@ -1,9 +1,15 @@
-﻿<Application x:Class="PaieEducation.Bootstrapper.App"
+<Application x:Class="PaieEducation.Bootstrapper.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:PaieEducation.Bootstrapper"
-             StartupUri="MainWindow.xaml">
+             xmlns:local="clr-namespace:PaieEducation.Bootstrapper">
+    <!-- Pas de StartupUri : la fenêtre (Presentation.Shell.ShellWindow) est
+         résolue par le conteneur DI dans App.xaml.cs (OnStartup), pas
+         instanciée directement par WPF. -->
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/PaieEducation.Presentation;component/Resources/ViewTemplates.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

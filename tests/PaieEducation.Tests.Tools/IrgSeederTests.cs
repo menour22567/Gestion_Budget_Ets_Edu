@@ -100,6 +100,34 @@ public class IrgSeederTests
         }
     }
 
+    [Fact]
+    public async Task Hash_stocke_en_base_correspond_au_hash_calcule_depuis_le_json()
+    {
+        // Test de drift end-to-end Lot 1.3α : si le JSON change, le hash
+        // calculé diffère, et un consommateur (audit, détection de drift)
+        // peut comparer la valeur en base à celle recalculée pour
+        // signaler une divergence.
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new IrgSeeder().SeedAsync(conn);
+
+            // Vérifie une tranche précise (T2 du barème 2008 — taux 20 %)
+            var hashEnBase = TestSupport.Scalar<string>(conn, """
+                SELECT Hash FROM BaremeIRGTranches WHERE Id = 'IRG-2008-T2';
+                """);
+            var data = BaremeIrgDataReader.Load();
+            var t2 = data.Baremes.Single(b => b.Id == "IRG-2008").Tranches.Single(t => t.Id == "IRG-2008-T2");
+            var hashAttendu = BaremeIrgDataReader.HashLigne(new
+            {
+                t2.Id, t2.BorneInf, t2.BorneSup, t2.Taux, t2.Ordre, t2.Source,
+            });
+
+            Assert.NotNull(hashEnBase);
+            Assert.Equal(hashAttendu, hashEnBase);
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------

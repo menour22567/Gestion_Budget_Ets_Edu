@@ -5,12 +5,7 @@ using Microsoft.Data.Sqlite;
 namespace PaieEducation.Seeding;
 
 /// <summary>
-/// Seeder du référentiel IRG : barème 2008 (4 tranches) + barème 2022
-/// (6 tranches, LF 2022 — refonte totale) + 4 règles de période
-/// (avant 2020-06, 2020-06..12, 2021, 2022+). Les coefficients et
-/// constantes sont stockés en <b>TEXT</b> sous forme de fractions
-/// canoniques (« 8/3 », « 20000/3 », « 137/51 », « 27925/8 », « 93/61 »,
-/// « 81213/41 ») — voir V007.
+/// Seeder du référentiel IRG.
 /// </summary>
 /// <remarks>
 /// <para>Sources :</para>
@@ -26,6 +21,11 @@ namespace PaieEducation.Seeding;
 /// </list>
 /// <para>Idempotent (<c>INSERT OR IGNORE</c>). Une base seedée avant Q-01 doit
 /// être reconstruite (le conflit d'Id laisse l'ancienne règle en place).</para>
+/// <para><b>Lot 1.3α</b> : les barèmes 2008/2022 et leurs 10 tranches sont
+/// lus depuis <c>Donnees/IRG/baremes_irg_v1.json</c> (ressource embarquée),
+/// plus codés en dur. Le hash SHA-256 de chaque ligne permet la détection
+/// de drift. Les <c>IRGReglesPeriode</c> (fractions, lissages) restent
+/// en C# pour V1 — chantier suivant.</para>
 /// </remarks>
 public sealed class IrgSeeder
 {
@@ -47,24 +47,11 @@ public sealed class IrgSeeder
     }
 
     // -------------------------------------------------------------------------
-    // Barèmes (en-têtes) : 2008 (LF 2008) et 2022 (LF 2022, refonte totale)
+    // Barèmes (en-têtes) + tranches — lus depuis le JSON embarqué (Lot 1.3α)
     // -------------------------------------------------------------------------
     private static async Task InsertBaremeAsync(SqliteConnection c, SeedReport r, CancellationToken ct)
     {
-        var baremes = new (string Id, string Libelle, string DateEffet, string? DateFin, string Source)[]
-        {
-            ("IRG-2008",
-             "Barème progressif mensuel (loi de finances 2008)",
-             "2007-01-01", "2021-12-31",
-             "JO N° 82 du 31/12/2007 — Art. 104 code des impôts directs"),
-            // Q-01 (14/07/2026, révise Q4b) : la LF 2022 refond le barème
-            // (6 tranches, seuil mensuel 20 000 DA). Pseudo-code étape 1 :
-            // « à partir de 2022-01-01 ⇒ nouveau barème ».
-            ("IRG-2022",
-             "Barème progressif mensuel (loi de finances 2022 — 6 tranches)",
-             "2022-01-01", null,
-             "LF 2022 — Art. 31 → Art. 104 CIDTA révisé"),
-        };
+        var data = BaremeIrgDataReader.Load();
 
         const string sql = """
             INSERT INTO BaremeIRG (Id, Code, Libelle, DateEffet, DateFin, Source, Hash, CreatedAt)
@@ -73,72 +60,69 @@ public sealed class IrgSeeder
             """;
         var inserted = 0;
         using var tx = c.BeginTransaction();
-        foreach (var b in baremes)
+        foreach (var b in data.Baremes)
         {
             ct.ThrowIfCancellationRequested();
+            var hash = BaremeIrgDataReader.HashLigne(new
+            {
+                b.Id, b.Code, b.Libelle, b.DateEffet, b.DateFin, b.Source,
+                TrancheCount = b.Tranches.Count,
+            });
             var n = await c.ExecuteAsync(sql, new
             {
-                id = b.Id, c = b.Id, l = b.Libelle,
+                id = b.Id, c = b.Code, l = b.Libelle,
                 de = b.DateEffet, df = b.DateFin ?? (object)DBNull.Value,
-                src = b.Source,
-                h = $"sha256:bareme-{b.Id}",
+                src = b.Source, h = hash,
                 at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
             }, tx);
             inserted += n;
         }
         tx.Commit();
-        r.Add("BaremeIRG", baremes.Length, inserted);
+        r.Add("BaremeIRG", data.Baremes.Count, inserted);
     }
 
-    // -------------------------------------------------------------------------
-    // Tranches : barème 2008 (0/20/30/35 %) + barème 2022 (0/23/27/30/33/35 %)
-    // -------------------------------------------------------------------------
     private static async Task InsertTranchesAsync(SqliteConnection c, SeedReport r, CancellationToken ct)
     {
-        var tranches = new (string Id, string BaremeId, int BorneInf, int? BorneSup, double Taux, int Ordre, string Source)[]
-        {
-            // Barème 2008 — mensuel, 4 tranches.
-            ("IRG-2008-T1", "IRG-2008", 0,      10000,   0.00, 1, "JO 82/2007"),
-            ("IRG-2008-T2", "IRG-2008", 10001,  30000,   0.20, 2, "JO 82/2007"),
-            ("IRG-2008-T3", "IRG-2008", 30001,  120000,  0.30, 3, "JO 82/2007"),
-            ("IRG-2008-T4", "IRG-2008", 120001, null,    0.35, 4, "JO 82/2007"),
-            // Barème 2022 — mensuel, 6 tranches (LF 2022, Art. 104 CIDTA révisé).
-            ("IRG-2022-T1", "IRG-2022", 0,      20000,   0.00, 1, "LF 2022 — Art. 31"),
-            ("IRG-2022-T2", "IRG-2022", 20001,  40000,   0.23, 2, "LF 2022 — Art. 31"),
-            ("IRG-2022-T3", "IRG-2022", 40001,  80000,   0.27, 3, "LF 2022 — Art. 31"),
-            ("IRG-2022-T4", "IRG-2022", 80001,  160000,  0.30, 4, "LF 2022 — Art. 31"),
-            ("IRG-2022-T5", "IRG-2022", 160001, 320000,  0.33, 5, "LF 2022 — Art. 31"),
-            ("IRG-2022-T6", "IRG-2022", 320001, null,    0.35, 6, "LF 2022 — Art. 31"),
-        };
+        var data = BaremeIrgDataReader.Load();
+        var totalTranches = data.Baremes.Sum(b => b.Tranches.Count);
 
         var inserted = 0;
         using var tx = c.BeginTransaction();
-        foreach (var tr in tranches)
+        foreach (var b in data.Baremes)
         {
-            ct.ThrowIfCancellationRequested();
-            var n = await c.ExecuteAsync("""
-                INSERT INTO BaremeIRGTranches
-                    (Id, BaremeId, BorneInf, BorneSup, Taux, Ordre, Source, Hash, CreatedAt)
-                VALUES
-                    ($id, $b, $bi, $bs, $taux, $o, $src, $h, $at)
-                ON CONFLICT(Id) DO NOTHING;
-                """,
-                new
+            foreach (var tr in b.Tranches)
+            {
+                ct.ThrowIfCancellationRequested();
+                var hash = BaremeIrgDataReader.HashLigne(new
                 {
-                    id = tr.Id, b = tr.BaremeId, bi = tr.BorneInf,
-                    bs = tr.BorneSup ?? (object)DBNull.Value, taux = tr.Taux, o = tr.Ordre,
-                    src = tr.Source,
-                    h = $"h-{tr.Id}",
-                    at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
-                }, tx);
-            inserted += n;
+                    tr.Id, tr.BorneInf, tr.BorneSup, tr.Taux, tr.Ordre, tr.Source,
+                });
+                var n = await c.ExecuteAsync("""
+                    INSERT INTO BaremeIRGTranches
+                        (Id, BaremeId, BorneInf, BorneSup, Taux, Ordre, Source, Hash, CreatedAt)
+                    VALUES
+                        ($id, $b, $bi, $bs, $taux, $o, $src, $h, $at)
+                    ON CONFLICT(Id) DO NOTHING;
+                    """,
+                    new
+                    {
+                        id = tr.Id, b = b.Id, bi = tr.BorneInf,
+                        bs = tr.BorneSup ?? (object)DBNull.Value,
+                        taux = tr.Taux, o = tr.Ordre,
+                        src = tr.Source, h = hash,
+                        at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
+                    }, tx);
+                inserted += n;
+            }
         }
         tx.Commit();
-        r.Add("BaremeIRGTranches", tranches.Length, inserted);
+        r.Add("BaremeIRGTranches", totalTranches, inserted);
     }
 
     // -------------------------------------------------------------------------
     // IRGReglesPeriode — 4 règles (avant 2020-06, 2020-06..12, 2021, 2022+)
+    // Hors scope Lot 1.3α : trop spécifique (fractions, lissages) pour un
+    // JSON plat. Chantier suivant.
     // -------------------------------------------------------------------------
     private static async Task InsertReglesPeriodeAsync(SqliteConnection c, SeedReport r, CancellationToken ct)
     {

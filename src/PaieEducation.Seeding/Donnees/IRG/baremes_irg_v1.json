@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "dateEffetGlobal": "2007-01-01",
+  "sourceGlobale": "JO N° 82 du 31/12/2007 (Art. 104 CIDTA) + LF 2022 (Art. 31, Art. 104 CIDTA révisé)",
+  "baremes": [
+    {
+      "id": "IRG-2008",
+      "code": "IRG-2008",
+      "libelle": "Barème progressif mensuel (loi de finances 2008)",
+      "dateEffet": "2007-01-01",
+      "dateFin": "2021-12-31",
+      "source": "JO N° 82 du 31/12/2007 — Art. 104 code des impôts directs",
+      "tranches": [
+        {
+          "id": "IRG-2008-T1",
+          "borneInf": 0,
+          "borneSup": 10000,
+          "taux": 0.00,
+          "ordre": 1,
+          "source": "JO 82/2007"
+        },
+        {
+          "id": "IRG-2008-T2",
+          "borneInf": 10001,
+          "borneSup": 30000,
+          "taux": 0.20,
+          "ordre": 2,
+          "source": "JO 82/2007"
+        },
+        {
+          "id": "IRG-2008-T3",
+          "borneInf": 30001,
+          "borneSup": 120000,
+          "taux": 0.30,
+          "ordre": 3,
+          "source": "JO 82/2007"
+        },
+        {
+          "id": "IRG-2008-T4",
+          "borneInf": 120001,
+          "borneSup": null,
+          "taux": 0.35,
+          "ordre": 4,
+          "source": "JO 82/2007"
+        }
+      ]
+    },
+    {
+      "id": "IRG-2022",
+      "code": "IRG-2022",
+      "libelle": "Barème progressif mensuel (loi de finances 2022 — 6 tranches)",
+      "dateEffet": "2022-01-01",
+      "dateFin": null,
+      "source": "LF 2022 — Art. 31 → Art. 104 CIDTA révisé",
+      "tranches": [
+        {
+          "id": "IRG-2022-T1",
+          "borneInf": 0,
+          "borneSup": 20000,
+          "taux": 0.00,
+          "ordre": 1,
+          "source": "LF 2022 — Art. 31"
+        },
+        {
+          "id": "IRG-2022-T2",
+          "borneInf": 20001,
+          "borneSup": 40000,
+          "taux": 0.23,
+          "ordre": 2,
+          "source": "LF 2022 — Art. 31"
+        },
+        {
+          "id": "IRG-2022-T3",
+          "borneInf": 40001,
+          "borneSup": 80000,
+          "taux": 0.27,
+          "ordre": 3,
+          "source": "LF 2022 — Art. 31"
+        },
+        {
+          "id": "IRG-2022-T4",
+          "borneInf": 80001,
+          "borneSup": 160000,
+          "taux": 0.30,
+          "ordre": 4,
+          "source": "LF 2022 — Art. 31"
+        },
+        {
+          "id": "IRG-2022-T5",
+          "borneInf": 160001,
+          "borneSup": 320000,
+          "taux": 0.33,
+          "ordre": 5,
+          "source": "LF 2022 — Art. 31"
+        },
+        {
+          "id": "IRG-2022-T6",
+          "borneInf": 320001,
+          "borneSup": null,
+          "taux": 0.35,
+          "ordre": 6,
+          "source": "LF 2022 — Art. 31"
+        }
+      ]
+    }
+  ]
+}

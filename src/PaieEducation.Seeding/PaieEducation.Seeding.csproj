@@ -15,6 +15,10 @@
     <!-- Jeu de données nomenclature : CSV cascade (185 grades) embarqué en
          ressource, plus de chemin CSV externe (C1.1). -->
     <EmbeddedResource Include="Data\Cascade_Corps_Grades_30526.csv" />
+    <!-- Lot 1.3α : barèmes IRG (2008 + 2022) et leurs tranches, versionnés.
+         Avant : valeurs codées en dur dans IrgSeeder.cs (lignes 76-121).
+         Le hash SHA256 calculé à l'insertion détecte tout drift. -->
+    <EmbeddedResource Include="Donnees\IRG\baremes_irg_v1.json" />
   </ItemGroup>
 
   <PropertyGroup>

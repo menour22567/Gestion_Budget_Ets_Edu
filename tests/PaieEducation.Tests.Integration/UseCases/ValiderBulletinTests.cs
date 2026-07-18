@@ -104,4 +104,52 @@ public class ValiderBulletinTests
         Assert.True(second.IsFailure);
         Assert.Contains("bulletin", second.Error.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task Un_bulletin_valide_n_est_jamais_reecrit_apres_evolution_reglementaire()
+    {
+        // Lot 2.3 — ADR-0008 : l'immutabilité n'est pas qu'un refus de
+        // re-validation, c'est aussi la garantie que le bulletin validé
+        // conserve son intégrité après une évolution réglementaire. Une
+        // évolution ne modifie pas l'historique : elle produit des lignes
+        // de rappel (Lot 2.3, GenererRappels) qui s'ajoutent au nouveau
+        // bulletin futur, jamais au bulletin validé existant.
+        using var scope = SchemaTestSupport.CreateMigrated();
+        await SeedTout(scope.Conn);
+        SeedAgentReel(scope.Conn);
+
+        var useCase = BuildUseCase(scope.Conn);
+        var original = await useCase.ExecuterAsync(Demande());
+        Assert.True(original.IsSuccess, original.IsFailure ? original.Error.Message : null);
+
+        // Capture l'état initial : 1 bulletin, net = 57 739 DA (pilote).
+        var netInitial = SchemaTestSupport.Scalar<double>(
+            scope.Conn, "SELECT Net FROM Bulletins WHERE AgentId = 'A-PILOTE' AND DatePaie = '2025-06-01';");
+        var countInitial = SchemaTestSupport.Scalar<long>(
+            scope.Conn, "SELECT COUNT(*) FROM Bulletins WHERE AgentId = 'A-PILOTE' AND DatePaie = '2025-06-01';");
+        Assert.Equal(57739.0, netInitial);
+        Assert.Equal(1L, countInitial);
+
+        // Évolution réglementaire : nouvelle valeur du point (45 → 50 DA
+        // à effet rétroactif). Si la re-validation passait, le bulletin
+        // serait écrasé — c'est précisément ce qu'on interdit.
+        Exec(scope.Conn, """
+            INSERT INTO ValeurPoint (Id, DateEffet, Valeur, Version, Hash, CreatedAt)
+            VALUES ('VP-RETRO', '2025-01-01', 50, 'v', 'h', '2026-07-17T00:00:00Z');
+            """);
+
+        var revalidation = await useCase.ExecuterAsync(Demande());
+
+        // 1) La re-validation échoue explicitement.
+        Assert.True(revalidation.IsFailure);
+        Assert.Equal("conflict", revalidation.Error.Code);
+
+        // 2) Le bulletin original est intact : 1 ligne, même net.
+        var netApres = SchemaTestSupport.Scalar<double>(
+            scope.Conn, "SELECT Net FROM Bulletins WHERE AgentId = 'A-PILOTE' AND DatePaie = '2025-06-01';");
+        var countApres = SchemaTestSupport.Scalar<long>(
+            scope.Conn, "SELECT COUNT(*) FROM Bulletins WHERE AgentId = 'A-PILOTE' AND DatePaie = '2025-06-01';");
+        Assert.Equal(57739.0, netApres);
+        Assert.Equal(1L, countApres);
+    }
 }

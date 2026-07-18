@@ -72,7 +72,7 @@ public class ConsulterBulletinTests
         var calculer = new CalculerBulletin(
             new AgentCarriereRepository(scope.Conn), new VariableRepository(scope.Conn),
             new PayrollReadRepository(scope.Conn), new ParametreSystemeRepository(scope.Conn),
-            SourceValeurResolverFactory.ResolverReel());
+            SourceValeurResolverFactory.ResolverReel(scope.Conn));
         var valider = new ValiderBulletin(
             calculer, new BulletinRepository(scope.Conn),
             new HorlogeFixe(new DateTimeOffset(2026, 7, 16, 10, 0, 0, TimeSpan.Zero)));

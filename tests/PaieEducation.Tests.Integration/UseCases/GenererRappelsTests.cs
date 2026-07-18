@@ -80,7 +80,7 @@ public class GenererRappelsTests
         var bulletinsEcriture = new BulletinRepository(conn);
         var bulletinsLecture = new BulletinReadRepository(conn);
         var rappels = new RappelRepository(conn);
-        var calculer = new CalculerBulletin(agents, variables, payroll, parametres, SourceValeurResolverFactory.ResolverReel());
+        var calculer = new CalculerBulletin(agents, variables, payroll, parametres, SourceValeurResolverFactory.ResolverReel(conn));
 
         return (
             new GenererRappels(bulletinsLecture, rappels, calculer, horloge),

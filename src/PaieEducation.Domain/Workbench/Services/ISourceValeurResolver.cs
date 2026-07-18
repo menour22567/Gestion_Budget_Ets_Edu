@@ -53,4 +53,19 @@ public sealed record AgentContext(
     decimal? Note,
     decimal? ValeurPointIndiciaire,
     decimal? AssietteCotisable,
-    decimal? AssietteImposable);
+    decimal? AssietteImposable,
+    /// <summary>
+    /// Indice d'échelon effectif de l'agent à la date de paie (lu depuis
+    /// <c>IndicesEchelon</c> via le numéro d'échelon de carrière). Lot 1.2 :
+    /// permet à <c>INDICE_ECHELON</c> de retourner la bonne valeur (≠
+    /// <see cref="Echelon"/> qui est le n° d'échelon 1-12). <c>null</c> si
+    /// la grille ne couvre pas la date.
+    /// </summary>
+    decimal? IndiceEchelon = null,
+    /// <summary>
+    /// Ancienneté du secteur privé en années (attribut agent D3
+    /// <c>ANCIENNETE_PRIVEE_ANNEES</c>). Lot 1.2 : alimenté depuis
+    /// <c>AgentAttributs</c> versionné. <c>null</c> si l'agent n'a pas
+    /// d'ancienneté privée (cas le plus fréquent, IEP_CONT).
+    /// </summary>
+    int? AnciennetePriveeAnnees = null);

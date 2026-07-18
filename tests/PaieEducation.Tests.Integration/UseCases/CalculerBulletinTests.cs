@@ -106,7 +106,7 @@ public class CalculerBulletinTests
             new AgentCarriereRepository(scope.Conn),
             new VariableRepository(scope.Conn),
             new PayrollReadRepository(scope.Conn), new ParametreSystemeRepository(scope.Conn),
-            SourceValeurResolverFactory.ResolverReel());
+            SourceValeurResolverFactory.ResolverReel(scope.Conn));
 
         // C2.2/C2.3 : on ne fournit PAS SourcesValeur ni ClesBareme — ils sont auto-résolus
         var bulletin = await useCase.ExecuterAsync(DemandeAuto("A-PILOTE"));
@@ -128,7 +128,7 @@ public class CalculerBulletinTests
             new AgentCarriereRepository(scope.Conn),
             new VariableRepository(scope.Conn),
             new PayrollReadRepository(scope.Conn), new ParametreSystemeRepository(scope.Conn),
-            SourceValeurResolverFactory.ResolverReel());
+            SourceValeurResolverFactory.ResolverReel(scope.Conn));
 
         var bulletin = await useCase.ExecuterAsync(DemandeAuto("A-SANS-NOTE"));
 
@@ -147,7 +147,7 @@ public class CalculerBulletinTests
             new AgentCarriereRepository(scope.Conn),
             new VariableRepository(scope.Conn),
             new PayrollReadRepository(scope.Conn), new ParametreSystemeRepository(scope.Conn),
-            SourceValeurResolverFactory.ResolverReel());
+            SourceValeurResolverFactory.ResolverReel(scope.Conn));
 
         var bulletin = await useCase.ExecuterAsync(DemandeAuto("A-INEXISTANT"));
 

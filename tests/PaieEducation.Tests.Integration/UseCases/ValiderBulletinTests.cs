@@ -61,7 +61,7 @@ public class ValiderBulletinTests
         var calculer = new CalculerBulletin(
             new AgentCarriereRepository(conn), new VariableRepository(conn),
             new PayrollReadRepository(conn), new ParametreSystemeRepository(conn),
-            SourceValeurResolverFactory.ResolverReel());
+            SourceValeurResolverFactory.ResolverReel(conn));
         return new ValiderBulletin(
             calculer, new BulletinRepository(conn),
             new HorlogeFixe(new DateTimeOffset(2026, 7, 16, 10, 0, 0, TimeSpan.Zero)));

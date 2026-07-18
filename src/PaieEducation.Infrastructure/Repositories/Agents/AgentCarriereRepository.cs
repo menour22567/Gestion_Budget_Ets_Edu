@@ -52,6 +52,17 @@ public sealed class AgentCarriereRepository : IAgentCarriereRepository
 
         var anciennete = CalculerAncienneteAnnees(agent.DateRecrutement, datePaie);
 
+        // Lot 1.2 — INDICE_ECHELON (lecture depuis la grille indiciaire,
+        // distinct du n° d'échelon de carrière). Null si la grille ne couvre
+        // pas la date de paie.
+        var indiceEchelon = await ChargerIndiceEchelonAsync(
+            checked((int)carriere.EchelonNumero), datePaie, ct);
+
+        // Lot 1.2 — ANCIENNETE_PRIVEE (attribut agent D3
+        // ANCIENNETE_PRIVEE_ANNEES, versionné). Null si l'agent n'a pas
+        // d'ancienneté privée (cas le plus fréquent, IEP_CONT).
+        var anciennetePrivee = await ChargerAnciennetePriveeAnneesAsync(agentId, datePaie, ct);
+
         return Result.Success(new AgentContext(
             Filiere: carriere.FiliereId,
             Corps: carriere.CorpsId,
@@ -66,7 +77,9 @@ public sealed class AgentCarriereRepository : IAgentCarriereRepository
             Note: note,
             ValeurPointIndiciaire: null,
             AssietteCotisable: null,
-            AssietteImposable: null));
+            AssietteImposable: null,
+            IndiceEchelon: indiceEchelon,
+            AnciennetePriveeAnnees: anciennetePrivee));
     }
 
     private async Task<decimal?> ChargerNoteAsync(string agentId, string date, CancellationToken ct)
@@ -74,6 +87,42 @@ public sealed class AgentCarriereRepository : IAgentCarriereRepository
         var raw = await ChargerAttributAsync(agentId, "NOTATION_AGENT", date, ct);
         if (raw is null) return null;
         return decimal.TryParse(raw, System.Globalization.NumberStyles.Number,
+            System.Globalization.CultureInfo.InvariantCulture, out var n)
+            ? n : null;
+    }
+
+    /// <summary>
+    /// Lot 1.2 — Charge l'indice d'échelon (distinct du n° d'échelon de
+    /// carrière) depuis <c>IndicesEchelon</c> en joignant sur <c>Echelons.Numero</c>.
+    /// Le n° d'échelon est petit (1-12) tandis que l'indice de grille est
+    /// grand (ex. 578 pour catégorie 13) : toute confusion entre les deux
+    /// produit des montants faux sans erreur visible.
+    /// </summary>
+    private async Task<decimal?> ChargerIndiceEchelonAsync(int echelonNumero, string date, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT ie.Indice
+            FROM IndicesEchelon ie
+            JOIN Echelons ech ON ech.Id = ie.EchelonId
+            WHERE ech.Numero = @echelonNumero
+              AND ie.DateEffet <= @date AND (ie.DateFin IS NULL OR ie.DateFin >= @date)
+            ORDER BY ie.DateEffet DESC LIMIT 1;
+            """;
+        var indice = await _connection.QuerySingleOrDefaultAsync<long?>(
+            new CommandDefinition(sql, new { echelonNumero, date }, cancellationToken: ct));
+        return indice is null ? null : (decimal)indice.Value;
+    }
+
+    /// <summary>
+    /// Lot 1.2 — Charge l'ancienneté privée en années depuis
+    /// <c>AgentAttributs</c> (clé D3 <c>ANCIENNETE_PRIVEE_ANNEES</c>).
+    /// Versionné : on prend la version en vigueur à la date de paie.
+    /// </summary>
+    private async Task<int?> ChargerAnciennetePriveeAnneesAsync(string agentId, string date, CancellationToken ct)
+    {
+        var raw = await ChargerAttributAsync(agentId, "ANCIENNETE_PRIVEE_ANNEES", date, ct);
+        if (raw is null) return null;
+        return int.TryParse(raw, System.Globalization.NumberStyles.Integer,
             System.Globalization.CultureInfo.InvariantCulture, out var n)
             ? n : null;
     }

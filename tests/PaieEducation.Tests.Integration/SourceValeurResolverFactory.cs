@@ -1,6 +1,9 @@
+using Microsoft.Data.Sqlite;
 using PaieEducation.Application.Payroll.Services;
 using PaieEducation.Domain.Workbench.Calculators;
 using PaieEducation.Domain.Workbench.Services;
+using PaieEducation.Infrastructure.Repositories.Payroll;
+using PaieEducation.Infrastructure.Workbench.Calculators;
 
 namespace PaieEducation.Tests.Integration;
 
@@ -12,8 +15,12 @@ namespace PaieEducation.Tests.Integration;
 /// </summary>
 public static class SourceValeurResolverFactory
 {
-    public static CalculEntreeResolver ResolverReel()
+    public static CalculEntreeResolver ResolverReel(SqliteConnection conn)
     {
+        // Lot 1.2 : ConstanteReglementaireCalculator a besoin d'un lookup
+        // I/O (table RubriqueParametres). On partage la connexion du scope
+        // de test pour rester cohérent avec la production.
+        var constanteCalc = new ConstanteReglementaireCalculator(new RubriqueParametreLookup(conn));
         var calculators = new ISourceValeurCalculator[]
         {
             new NotationAgentCalculator(),
@@ -22,9 +29,23 @@ public static class SourceValeurResolverFactory
             new IndiceEchelonCalculator(),
             new PointIndiciaireCalculator(),
             new BaseAssietteCalculator(),
-            new ConstanteReglementaireCalculator(),
+            constanteCalc,
         };
         var index = calculators.ToDictionary(c => c.CodeSource, c => c, StringComparer.OrdinalIgnoreCase);
         return new CalculEntreeResolver(new SourceValeurResolver(index));
+    }
+
+    /// <summary>
+    /// Variante sans connexion SQLite (utilisée par les tests qui n'ont pas
+    /// de scope migré sous la main). <see cref="ConstanteReglementaireCalculator"/>
+    /// est instancié avec un lookup SQLite éphémère qui pointera sur une
+    /// base vide : la source CONSTANTE_REGLEMENTAIRE renverra NotFound, ce
+    /// qui est le comportement attendu en l'absence de paramètres.
+    /// </summary>
+    public static CalculEntreeResolver ResolverReelSansDb()
+    {
+        using var conn = new SqliteConnection("Data Source=:memory:");
+        conn.Open();
+        return ResolverReel(conn);
     }
 }

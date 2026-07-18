@@ -11,6 +11,7 @@ using PaieEducation.Infrastructure.Repositories.Agents;
 using PaieEducation.Infrastructure.Repositories.Payroll;
 using PaieEducation.Infrastructure.Repositories.Workbench;
 using PaieEducation.Infrastructure.Time;
+using PaieEducation.Infrastructure.Workbench.Calculators;
 using PaieEducation.Shared.Time;
 
 namespace PaieEducation.Infrastructure.DependencyInjection;
@@ -60,6 +61,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IRubriqueRepository, RubriqueRepository>();
 
+        // Lot 1.2 — port pour la lecture des paramètres de rubrique
+        // (utilisé par ConstanteReglementaireCalculator). Enregistré en
+        // Scoped pour partager la connexion avec le reste de l'unité de calcul.
+        services.AddScoped<IRubriqueParametreLookup, RubriqueParametreLookup>();
+
         // C2.3 — SourceValeurResolver (pattern Open/Closed, ADR-0007 D6) : les 7
         // calculateurs de sources sont enregistrés individuellement puis indexés
         // par CodeSource pour construire le resolver.
@@ -69,6 +75,10 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddTransient<IndiceEchelonCalculator>();
         services.AddTransient<PointIndiciaireCalculator>();
         services.AddTransient<BaseAssietteCalculator>();
+        // Lot 1.2 — ConstanteReglementaireCalculator a quitté le Domain
+        // (besoin d'I/O via IRubriqueParametreLookup). Il vit maintenant
+        // dans Infrastructure.Workbench.Calculators et est câblé ici
+        // derrière ISourceValeurCalculator, sans changement du moteur.
         services.AddTransient<ConstanteReglementaireCalculator>();
         services.AddTransient<ISourceValeurResolver>(sp =>
         {

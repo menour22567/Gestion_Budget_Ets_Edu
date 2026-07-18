@@ -149,4 +149,85 @@ public class AgentCarriereRepositoryTests
         Assert.True(result.IsFailure);
         Assert.Contains("introuvable", result.Error.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    // ---------------------------------------------------------------------
+    // Lot 1.2 — INDICE_ECHELON et ANCIENNETE_PRIVEE
+    // ---------------------------------------------------------------------
+
+    private static void SeedIndiceEchelon(
+        SqliteConnection c, string id, string echelonId, string dateEffet, int indice)
+    {
+        SchemaTestSupport.Exec(c, """
+            INSERT INTO IndicesEchelon (Id, EchelonId, DateEffet, Indice, Version, Hash, CreatedAt)
+            VALUES ($id, $echelonId, $dateEffet, $indice, 'v1', 'h', '2026-01-01T00:00:00Z');
+            """, ("$id", id), ("$echelonId", echelonId), ("$dateEffet", dateEffet), ("$indice", indice));
+    }
+
+    [Fact]
+    public async Task IndiceEchelon_est_lu_depuis_la_grille_pour_le_numero_de_lechelon()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedReferentiel(scope.Conn);
+        SeedAgent(scope.Conn, "A-1", "MAT-001", "2015-09-01");
+        SeedCarriere(scope.Conn, "C-1", "A-1", "PEM-G1", "13", "5", "2015-09-01");
+        SeedIndiceEchelon(scope.Conn, "IE-5-2020", "5", "2020-01-01", 100);
+
+        var repo = new AgentCarriereRepository(scope.Conn);
+        var result = await repo.ResoudreAsync("A-1", "2025-06-01");
+
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
+        // Indice 100 (≠ n° d'échelon 5 — la confusion entre les deux est un
+        // risque identifié Lot 1.2).
+        Assert.Equal(100m, result.Value.IndiceEchelon);
+        Assert.Equal(5, result.Value.Echelon); // n° d'échelon inchangé
+    }
+
+    [Fact]
+    public async Task IndiceEchelon_est_null_quand_aucune_grille_ne_couvre_la_date()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedReferentiel(scope.Conn);
+        SeedAgent(scope.Conn, "A-1", "MAT-001", "2015-09-01");
+        SeedCarriere(scope.Conn, "C-1", "A-1", "PEM-G1", "13", "5", "2015-09-01");
+        SeedIndiceEchelon(scope.Conn, "IE-5-2020", "5", "2030-01-01", 200); // futur
+
+        var repo = new AgentCarriereRepository(scope.Conn);
+        var result = await repo.ResoudreAsync("A-1", "2025-06-01");
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value.IndiceEchelon);
+    }
+
+    [Fact]
+    public async Task AnciennetePrivee_est_lue_depuis_AgentAttributs_versionne()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedReferentiel(scope.Conn);
+        SeedAgent(scope.Conn, "A-1", "MAT-001", "2015-09-01");
+        SeedCarriere(scope.Conn, "C-1", "A-1", "PEM-G1", "13", "5", "2015-09-01");
+        SeedAttribut(scope.Conn, "AA-PRIV", "A-1", "ANCIENNETE_PRIVEE_ANNEES", "7", "2024-01-01");
+
+        var repo = new AgentCarriereRepository(scope.Conn);
+        var result = await repo.ResoudreAsync("A-1", "2025-06-01");
+
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
+        Assert.Equal(7, result.Value.AnciennetePriveeAnnees);
+    }
+
+    [Fact]
+    public async Task AnciennetePrivee_est_null_quand_aucun_attribut_renseigne()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        SeedReferentiel(scope.Conn);
+        SeedAgent(scope.Conn, "A-1", "MAT-001", "2015-09-01");
+        SeedCarriere(scope.Conn, "C-1", "A-1", "PEM-G1", "13", "5", "2015-09-01");
+
+        var repo = new AgentCarriereRepository(scope.Conn);
+        var result = await repo.ResoudreAsync("A-1", "2025-06-01");
+
+        Assert.True(result.IsSuccess);
+        // Cas le plus fréquent (IEP_CONT) : pas d'ancienneté privée →
+        // abstention, pas un 0 silencieux.
+        Assert.Null(result.Value.AnciennetePriveeAnnees);
+    }
 }

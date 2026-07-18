@@ -33,29 +33,44 @@ public sealed class AnciennetePubliqueCalculator : ISourceValeurCalculator
             : Result.Success<object>(agent.AncienneteAnnees.Value);
 }
 
-/// <summary>Source : <c>ANCIENNETE_PRIVEE</c>. Stub V1 — l'attribut D3 <c>ANCIENNETE_PRIVEE_ANNEES</c> sera stocké en Phase 5 dans <c>AgentAttributs</c>.</summary>
+/// <summary>
+/// Source : <c>ANCIENNETE_PRIVEE</c>. Lit l'attribut D3
+/// <c>ANCIENNETE_PRIVEE_ANNEES</c> depuis <see cref="AgentContext"/> (chargé
+/// depuis <c>AgentAttributs</c> versionné).
+/// </summary>
 public sealed class AnciennetePriveeCalculator : ISourceValeurCalculator
 {
     public string CodeSource => SourceValeurCodes.AnciennetePrivee;
     public Result<object> Calculer(AgentContext agent, string datePaie)
-        // V1 : pas d'attribut agent → 0 par défaut (contrat IEP_CONT). L'attribut
-        // ANCIENNETE_PRIVEE_ANNEES arrivera en Phase 5 (cf. J3J § 8.3) et sera
-        // ajouté à AgentContext.
-        => Result.Success<object>(0);
+        // Lot 1.2 : la valeur est portée par l'agent context (lecture
+        // versionnée). Null = pas d'ancienneté privée (cas le plus fréquent,
+        // IEP_CONT) → abstention explicite plutôt qu'un 0 silencieux qui
+        // contaminerait les formules la consommant.
+        => agent.AnciennetePriveeAnnees is null
+            ? Result.Failure<object>(Error.NotFound(
+                "Ancienneté privée absente du dossier agent (ANCIENNETE_PRIVEE_ANNEES non renseigné)."))
+            : Result.Success<object>(agent.AnciennetePriveeAnnees.Value);
 }
 
-/// <summary>Source : <c>INDICE_ECHELON</c>. Non câblée en V1 — la résolution
-/// depuis la grille indiciaire (V003) est branchée en Phase 4.</summary>
+/// <summary>
+/// Source : <c>INDICE_ECHELON</c>. Lit l'indice de grille effectif de l'agent
+/// depuis <see cref="AgentContext.IndiceEchelon"/> (chargé depuis
+/// <c>IndicesEchelon</c> via le n° d'échelon de carrière).
+/// </summary>
 public sealed class IndiceEchelonCalculator : ISourceValeurCalculator
 {
     public string CodeSource => SourceValeurCodes.IndiceEchelon;
     public Result<object> Calculer(AgentContext agent, string datePaie)
-        // Renvoyer agent.Echelon (n° 1-12) serait plausible mais FAUX : l'indice
-        // de grille (ex. 578) en diffère d'un ordre de grandeur, et IEP_FONC =
-        // IE × VPI produirait des montants faux sans aucune erreur visible.
-        // Échec explicite tant que la lecture de la grille n'est pas branchée.
-        => Result.Failure<object>(Error.Failure(
-            "INDICE_ECHELON non résolu en V1 — la lecture de la grille indiciaire (V003) est branchée en Phase 4."));
+        // Lot 1.2 : la valeur est portée par l'agent context. Renvoyer
+        // agent.Echelon (n° 1-12) serait plausible mais FAUX : l'indice de
+        // grille (ex. 578) en diffère d'un ordre de grandeur, et toute
+        // formule (IEP_FONC = IE × VPI) produirait des montants faux sans
+        // erreur visible. D'où l'abstention explicite si la grille ne
+        // couvre pas la date.
+        => agent.IndiceEchelon is null
+            ? Result.Failure<object>(Error.NotFound(
+                $"Indice d'échelon absent de la grille indiciaire à la date {datePaie}."))
+            : Result.Success<object>(agent.IndiceEchelon.Value);
 }
 
 /// <summary>Source : <c>POINT_INDICIAIRE</c>. Renvoie la valeur du point portée par le snapshot.</summary>
@@ -80,16 +95,10 @@ public sealed class BaseAssietteCalculator : ISourceValeurCalculator
     }
 }
 
-/// <summary>Source : <c>CONSTANTE_REGLEMENTAIRE</c>. Non câblée en V1 — la
-/// résolution depuis <c>RubriqueParametres</c> est branchée en Phase 4 (J3K § 4.2).</summary>
-public sealed class ConstanteReglementaireCalculator : ISourceValeurCalculator
-{
-    public string CodeSource => SourceValeurCodes.ConstanteReglementaire;
-    public Result<object> Calculer(AgentContext agent, string datePaie)
-        // Un « 0 par défaut » serait une valeur plausible mais fausse (taux,
-        // plafond ou borne réglementaire). Échec explicite tant que la lecture
-        // de RubriqueParametres n'est pas branchée.
-        => Result.Failure<object>(Error.Failure(
-            "CONSTANTE_REGLEMENTAIRE non résolue en V1 — la lecture de RubriqueParametres est branchée en Phase 4 (J3K § 4.2)."));
-}
+// Note Lot 1.2 : la source CONSTANTE_REGLEMENTAIRE a besoin d'un lookup
+// I/O (table RubriqueParametres). Le calculateur correspondant vit donc
+// dans Infrastructure (voir PaieEducation.Infrastructure.Workbench.Calculators
+// .ConstanteReglementaireCalculator), câblé en DI derrière l'interface
+// ISourceValeurCalculator. Pattern Open/Closed respecté : aucune
+// modification du moteur de calcul.
 

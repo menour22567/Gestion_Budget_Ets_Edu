@@ -117,7 +117,7 @@ public class ValiderBulletinViewModelTests
         var mock = new Mock<IParametreSystemeRepository>();
         mock.Setup(p => p.LireModeArrondiAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(ModeArrondi.DinarPlusProche));
-        mock.Setup(p => p.LireDecimalAsync(It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        mock.Setup(p => p.LireDecimalOuDefautAsync(It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string _, decimal defaut, string _, CancellationToken _) => Result.Success(defaut));
         mock.Setup(p => p.LireDecimalObligatoireAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string cle, string _, CancellationToken _) => cle switch

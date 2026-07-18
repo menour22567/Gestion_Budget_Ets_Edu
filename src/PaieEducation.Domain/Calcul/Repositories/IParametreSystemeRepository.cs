@@ -19,20 +19,29 @@ public interface IParametreSystemeRepository
 
     /// <summary>
     /// Résout le <see cref="ModeArrondi"/> effectif depuis le paramètre
-    /// <c>ARRONDI_MODE</c>. Par défaut <see cref="ModeArrondi.DinarPlusProche"/>
-    /// si absent ou invalide (valeur seedée par défaut, Q9b).
+    /// <c>ARRONDI_MODE</c> à la date d'effet. Strict (Lot 1.1) : échoue
+    /// avec <see cref="Error.NotFound"/> si la clé est absente à cette date
+    /// et avec <see cref="Error.Validation"/> si la valeur n'est pas un
+    /// mode reconnu. Aucun fallback silencieux — un paramètre corrompu
+    /// doit être diagnostiqué, pas masqué.
     /// </summary>
     Task<Result<ModeArrondi>> LireModeArrondiAsync(string dateEffet, CancellationToken ct = default);
 
     /// <summary>
     /// Lit un paramètre décimal depuis la table <c>Parametres</c>.
-    /// Renvoie la valeur par défaut si le paramètre est absent.
+    /// Helper réservé aux paramètres NON critiques : renvoie la valeur
+    /// par défaut si le paramètre est absent ou si la valeur n'est pas
+    /// décimale. Pour un paramètre métier dont l'absence doit bloquer le
+    /// calcul, utiliser <see cref="LireDecimalObligatoireAsync"/> à la place.
     /// </summary>
-    Task<Result<decimal>> LireDecimalAsync(string cle, decimal defaut, string dateEffet, CancellationToken ct = default);
+    Task<Result<decimal>> LireDecimalOuDefautAsync(string cle, decimal defaut, string dateEffet, CancellationToken ct = default);
 
     /// <summary>
     /// Lit un paramètre décimal depuis la table <c>Parametres</c>.
-    /// Échoue avec <see cref="Error.NotFound"/> si le paramètre est absent.
+    /// Échoue avec <see cref="Error.NotFound"/> si le paramètre est absent
+    /// à la date d'effet et avec <see cref="Error.Validation"/> si la valeur
+    /// n'est pas décimale. À utiliser pour tout paramètre métier dont
+    /// l'absence doit bloquer le calcul.
     /// </summary>
     Task<Result<decimal>> LireDecimalObligatoireAsync(string cle, string dateEffet, CancellationToken ct = default);
 }

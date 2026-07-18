@@ -40,20 +40,29 @@ public sealed class ParametreSystemeRepository : IParametreSystemeRepository
         if (valeur.IsFailure)
             return Result.Failure<ModeArrondi>(valeur.Error);
 
-        // Défaut seedé (Q9b) : dinar le plus proche si absent.
+        // Lot 1.1 : strict. Absence ou corruption = échec explicite.
+        // Le seed ReglementaireSeeder garantit la présence d'ARRONDI_MODE
+        // depuis 2007-01-01 ; une absence/corruption est un signal de
+        // mauvaise configuration à corriger, pas à masquer.
         if (valeur.Value is null)
-            return Result.Success(ModeArrondi.DinarPlusProche);
+            return Result.Failure<ModeArrondi>(Error.NotFound(
+                $"Paramètre obligatoire « ARRONDI_MODE » absent de la table Parametres à la date {dateEffet}."));
 
         var mode = ArrondiService.ParserMode(valeur.Value);
-        // En cas de valeur corrompue, on retombe sur le défaut plutôt que d'échouer
-        // tout le calcul (robustesse d'exploitation).
-        return mode.IsFailure ? Result.Success(ModeArrondi.DinarPlusProche) : Result.Success(mode.Value);
+        if (mode.IsFailure)
+            return Result.Failure<ModeArrondi>(mode.Error);
+
+        return Result.Success(mode.Value);
     }
 
-    public async Task<Result<decimal>> LireDecimalAsync(string cle, decimal defaut, string dateEffet, CancellationToken ct = default)
+    public async Task<Result<decimal>> LireDecimalOuDefautAsync(string cle, decimal defaut, string dateEffet, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cle);
 
+        // Lot 1.1 / Option B1 : helper pour paramètres NON critiques.
+        // Le nom explicite "OuDefaut" verrouille le contrat "valeur par
+        // défaut acceptée". Tout paramètre métier dont l'absence doit
+        // bloquer le calcul doit passer par LireDecimalObligatoireAsync.
         var valeur = await LireValeurAsync(cle, dateEffet, ct);
         if (valeur.IsFailure)
             return Result.Failure<decimal>(valeur.Error);
@@ -65,7 +74,7 @@ public sealed class ParametreSystemeRepository : IParametreSystemeRepository
             System.Globalization.CultureInfo.InvariantCulture, out var result))
             return Result.Success(result);
 
-        // Valeur corrompue → défaut plutôt qu'échec (robustesse d'exploitation).
+        // Valeur corrompue → défaut (helper non-critique, on ne bloque pas le calcul).
         return Result.Success(defaut);
     }
 

@@ -23,8 +23,22 @@ public sealed class RubriqueParametreLookup : IRubriqueParametreLookup
 
     public async Task<Result<decimal>> LireParametreAsync(string cle, string dateEffet, CancellationToken ct = default)
     {
+        return await LireParametreAvecOverridesAsync(cle, dateEffet, overrides: null, ct);
+    }
+
+    public async Task<Result<decimal>> LireParametreAvecOverridesAsync(
+        string cle, string dateEffet, IReadOnlyDictionary<string, decimal>? overrides, CancellationToken ct = default)
+    {
         ArgumentException.ThrowIfNullOrWhiteSpace(cle);
         ArgumentException.ThrowIfNullOrWhiteSpace(dateEffet);
+
+        // Lot 3.3 — J5N §2.3 (D-P2) : override > DB. Si la clé est dans le
+        // dictionnaire d'overrides, on retourne la valeur surchargée sans
+        // toucher la base. Sinon, lecture DB normale (cf. LireParametreAsync).
+        if (overrides is not null && overrides.TryGetValue(cle, out var vpi))
+        {
+            return Result.Success(vpi);
+        }
 
         // Lecture brute : on récupère toutes les versions en vigueur à la
         // date. Si la Cle n'est pas unique, on prend la plus récente (DateEffet

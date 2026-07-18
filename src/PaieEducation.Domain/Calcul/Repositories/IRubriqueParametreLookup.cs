@@ -29,4 +29,22 @@ public interface IRubriqueParametreLookup
     /// <see cref="Error.NotFound"/> si aucune version n'est en vigueur.
     /// </returns>
     Task<Result<decimal>> LireParametreAsync(string cle, string dateEffet, CancellationToken ct = default);
+
+    /// <summary>
+    /// Variante « what-if » pour simulation d'évolution réglementaire (D8,
+    /// ADR-0007) : surcharge un ou plusieurs paramètres par
+    /// <paramref name="overrides"/> sans modifier la base. Si une clé
+    /// demandée est présente dans <paramref name="overrides"/>, la valeur
+    /// surchargée est retournée ; sinon, la lecture DB normale est utilisée.
+    /// Cf. J5N §2.3 (D-P1/D-P2) — Lot 3.3, extension du simulateur aux
+    /// paramètres <c>RubriqueParametres</c>. La limitation V1 (clé non unique
+    /// toutes rubriques confondues, `RubriqueId` non propagé) reste — ce
+    /// lot ajoute juste l'override, pas la résolution multi-rubrique.
+    /// </summary>
+    /// <param name="overrides">
+    /// Dictionnaire <c>Cle → nouvelle valeur</c>. <c>null</c> ou vide = pas
+    /// d'override (équivalent à <see cref="LireParametreAsync"/>).
+    /// </param>
+    Task<Result<decimal>> LireParametreAvecOverridesAsync(
+        string cle, string dateEffet, IReadOnlyDictionary<string, decimal>? overrides, CancellationToken ct = default);
 }

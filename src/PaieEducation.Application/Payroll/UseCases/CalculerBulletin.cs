@@ -25,12 +25,20 @@ namespace PaieEducation.Application.Payroll.UseCases;
 public sealed class CalculerBulletin
 {
     /// <summary>Demande de calcul d'un bulletin pour un agent à une date de paie.</summary>
+    /// <param name="VpiOverride">
+    /// Option « what-if » pour la simulation d'évolution réglementaire (D8,
+    /// ADR-0007) : surcharge la VPI par une valeur hypothétique sans modifier
+    /// la base. <c>null</c> = lecture DB normale (cas par défaut). Cf. J5L
+    /// §3.2 — D-S2. Tous les autres paramètres (<c>INDICE_MIN</c>,
+    /// <c>INDICE_ECH</c>) restent lus depuis la base.
+    /// </param>
     public sealed record Demande(
         string AgentId,
         string DatePaie,
         IReadOnlyDictionary<string, decimal>? SourcesValeur = null,
         IReadOnlyDictionary<string, string>? ClesBareme = null,
-        ProfilFiscal Profil = ProfilFiscal.Standard);
+        ProfilFiscal Profil = ProfilFiscal.Standard,
+        decimal? VpiOverride = null);
 
     private readonly IAgentCarriereRepository _agents;
     private readonly IVariableRepository _variables;
@@ -77,7 +85,13 @@ public sealed class CalculerBulletin
         if (agent.IsFailure)
             return Result.Failure<(PaieEducation.Domain.Calcul.Pipeline.PayrollInput, Bulletin)>(agent.Error);
 
-        var variables = await _variables.ResoudreAsync(agent.Value, demande.DatePaie, ct);
+        // D8 / ADR-0007 : variante « what-if » pour la simulation d'évolution
+        // réglementaire. VpiOverride != null ⇒ on appelle la variante du
+        // repository qui utilise la VPI hypothétique au lieu de la lecture DB.
+        // VpiOverride == null ⇒ chemin nominal (lecture DB).
+        Result<IReadOnlyDictionary<string, decimal>> variables = demande.VpiOverride is { } vpiSimulee
+            ? await _variables.ResoudreAvecVPIAsync(agent.Value, demande.DatePaie, vpiSimulee, ct)
+            : await _variables.ResoudreAsync(agent.Value, demande.DatePaie, ct);
         if (variables.IsFailure)
             return Result.Failure<(PaieEducation.Domain.Calcul.Pipeline.PayrollInput, Bulletin)>(variables.Error);
 

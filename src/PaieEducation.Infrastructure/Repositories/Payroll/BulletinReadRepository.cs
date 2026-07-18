@@ -38,4 +38,25 @@ public sealed class BulletinReadRepository : IBulletinReadRepository
         var snapshot = JsonSerializer.Deserialize<BulletinSnapshot>(snapshotJson, BulletinSnapshotJson.Options);
         return Result.Success(snapshot!);
     }
+
+    public async Task<Result<int>> CompterPourPeriodeAsync(
+        string periodeDebut, string? periodeFin, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(periodeDebut);
+
+        // D8 / ADR-0007 : utilisé par le simulateur d'impact pour compter les
+        // bulletins validés dans la période rétroactive touchée par une
+        // évolution. periodeFin == null = période ouverte (jusqu'à aujourd'hui).
+        // Pas de filtre AgentId : on veut le total période, toutes rubriques
+        // confondues. Si l'appelant veut un décompte par agent, il appelle
+        // ConsulterAsync(agentId, datePaie) pour chaque bulletin et compte.
+        const string sql = """
+            SELECT COUNT(*) FROM Bulletins
+            WHERE DatePaie >= @periodeDebut
+              AND (@periodeFin IS NULL OR DatePaie <= @periodeFin);
+            """;
+        var count = await _connection.QuerySingleAsync<long>(
+            new CommandDefinition(sql, new { periodeDebut, periodeFin }, cancellationToken: ct));
+        return Result.Success((int)count);
+    }
 }

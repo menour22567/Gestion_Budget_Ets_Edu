@@ -37,6 +37,47 @@ public sealed class VariableRepository : IVariableRepository
         ArgumentNullException.ThrowIfNull(agent);
         ArgumentException.ThrowIfNullOrWhiteSpace(datePaie);
 
+        // L'ordre de validation (Categorie, puis INDICE_MIN, puis INDICE_ECH,
+        // puis VPI) est celui de l'original — le test unitaire
+        // « AgentContext_sans_categorie_ou_echelon_echoue_explicitement »
+        // s'appuie sur cet ordre. Categorie manquante ⇒ message Categorie
+        // (pas VPI). Le chargement de la VPI est délégué à Resoudre() pour
+        // mutualiser l'ordre avec ResoudreAvecVPIAsync().
+        var vpi = await ChargerValeurPointAsync(datePaie, ct);
+        return await Resoudre(agent, datePaie, vpi, ct);
+    }
+
+    public async Task<Result<IReadOnlyDictionary<string, decimal>>> ResoudreAvecVPIAsync(
+        AgentContext agent, string datePaie, decimal vpiOverride, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(agent);
+        ArgumentException.ThrowIfNullOrWhiteSpace(datePaie);
+        if (vpiOverride <= 0m)
+            return Result.Failure<IReadOnlyDictionary<string, decimal>>(
+                Error.Validation($"La VPI simulée doit être strictement positive (reçu : {vpiOverride})."));
+
+        // D8 / ADR-0007 : variante « what-if » pour la simulation d'évolution
+        // réglementaire. La VPI hypothétique remplace la lecture DB ; tous les
+        // autres paramètres restent résolus depuis la base (point-in-time
+        // habituel). Cf. J5L §3.2 — D-S2 (méthode séparée, pas paramètre
+        // optionnel sur ResoudreAsync) pour porter la sémantique « simulation »
+        // dans le nom.
+        return await Resoudre(agent, datePaie, vpiOverride, ct);
+    }
+
+    /// <summary>
+    /// Logique commune de résolution, factorisée entre le chemin « réel » et
+    /// le chemin « simulation » (D8). Toutes les lectures DB (sauf la VPI)
+    /// passent par ce helper pour ne pas dupliquer la résolution
+    /// <c>INDICE_MIN</c>/<c>INDICE_ECH</c> et le calcul <c>TBASE</c>/<c>TRT</c>.
+    /// </summary>
+    /// <param name="vpi">VPI à utiliser. <c>null</c> = la lecture DB a échoué
+    /// (cas de <see cref="ResoudreAsync"/>) ; on renvoie alors l'erreur VPI
+    /// <b>après</b> les checks Categorie/Echelon, pour préserver l'ordre de
+    /// validation hérité.</param>
+    private async Task<Result<IReadOnlyDictionary<string, decimal>>> Resoudre(
+        AgentContext agent, string datePaie, decimal? vpi, CancellationToken ct)
+    {
         if (agent.Categorie is null || agent.Echelon is null)
             return Result.Failure<IReadOnlyDictionary<string, decimal>>(
                 Error.Validation("Categorie et Echelon sont requis sur l'AgentContext pour résoudre les variables de base."));
@@ -54,19 +95,19 @@ public sealed class VariableRepository : IVariableRepository
             return Result.Failure<IReadOnlyDictionary<string, decimal>>(
                 Error.NotFound($"Aucun indice d'échelon en vigueur pour l'échelon {echelon} à la date {datePaie}."));
 
-        var vpi = await ChargerValeurPointAsync(datePaie, ct);
         if (vpi is null)
             return Result.Failure<IReadOnlyDictionary<string, decimal>>(
                 Error.NotFound($"Aucune valeur du point indiciaire en vigueur à la date {datePaie}."));
 
-        var tbase = indiceMin.Value * vpi.Value;
-        var trt = (indiceMin.Value + indiceEch.Value) * vpi.Value;
+        var vpiVal = vpi.Value;
+        var tbase = indiceMin.Value * vpiVal;
+        var trt = (indiceMin.Value + indiceEch.Value) * vpiVal;
 
         return Result.Success<IReadOnlyDictionary<string, decimal>>(new Dictionary<string, decimal>
         {
             [VariablesCles.IndiceMin] = indiceMin.Value,
             [VariablesCles.IndiceEchelon] = indiceEch.Value,
-            [VariablesCles.ValeurPointIndiciaire] = vpi.Value,
+            [VariablesCles.ValeurPointIndiciaire] = vpiVal,
             [VariablesCles.TraitementBase] = tbase,
             [VariablesCles.TraitementBrut] = trt,
             [VariablesCles.Echelon] = echelon,

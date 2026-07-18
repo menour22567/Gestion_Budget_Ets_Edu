@@ -1,0 +1,320 @@
+{
+  "version": "1.0",
+  "sourceGlobale": "J2.c/J3 — seed réglementaire (catalogue Plan d'Action Phase 1-2)",
+  "rubriques": [
+    {
+      "id": "IEP_FONC",
+      "libelle": "Indemnité d'expérience professionnelle (fonctionnaires)",
+      "nature": "GAIN",
+      "baseCalcul": "INDICE_ECHELON",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 200,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "IE × VPI — composante échelon du traitement (Art. 5 Décret 07-304)",
+      "estAffectableManuellement": false,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "IEP_CONT",
+      "libelle": "Indemnité d'expérience professionnelle (contractuels)",
+      "nature": "GAIN",
+      "baseCalcul": "TBASE",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 201,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "TBASE × min(ANC_PUB × 1,4 % + ANC_PRIV × 0,7 % ; 60 %) (Art. 16 Décret 07-304)",
+      "estAffectableManuellement": false,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "EXP_PEDAG",
+      "libelle": "Indemnité d'expérience pédagogique",
+      "nature": "GAIN",
+      "baseCalcul": "TBASE_ECHELON",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 210,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "4 % × TBASE × n° échelon — corps EN hors Intendance/Laboratoire (Art. 9 Décret 10-78 ; Art. 3 Décret 12-403 ; Art. 9 Décret 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "PAPP",
+      "libelle": "Prime d'amélioration des performances pédagogiques (PAPP)",
+      "nature": "GAIN",
+      "baseCalcul": "TRAITEMENT",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": "TRIMESTRIELLE",
+      "ordreCalcul": 220,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "0–40 % du traitement selon notation (Art. 3 Décret 10-78 ; Art. 3 Décret 12-403 ; Art. 3 Décret 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "QUALIF",
+      "libelle": "Indemnité de qualification",
+      "nature": "GAIN",
+      "baseCalcul": "TRAITEMENT",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 206,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "TRT × (40 % si CAT ≤ 12 ; 45 % si CAT ≥ 13) — barème par catégorie (Art. 7 Décret 11-373, rétroactif 2008 ; Art. 7 Décret 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "DOC_PEDAG",
+      "libelle": "Indemnité de documentation pédagogique",
+      "nature": "GAIN",
+      "baseCalcul": "FORFAIT",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 207,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "Forfait par catégorie : 2 000 DA (≤10) / 2 500 DA (11-12) / 3 000 DA (≥13) (Art. 8 Décret 10-78 ; Art. 5 Décret 11-373 ; Art. 8 Décret 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "ISSRP_45",
+      "libelle": "Soutien scolaire et remédiation pédagogique 45 % (2025+)",
+      "nature": "GAIN",
+      "baseCalcul": "TRAITEMENT",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 230,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "Taux 45 % pour enseignants, direction, inspection, censeurs (Décret 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "ISSRP_30",
+      "libelle": "Soutien scolaire et remédiation pédagogique 30 % (2025+)",
+      "nature": "GAIN",
+      "baseCalcul": "TRAITEMENT",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 231,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "Taux 30 % pour éducateurs non-enseignants, orientation, alimentation (Décret 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "ISSRP_15",
+      "libelle": "Soutien scolaire et remédiation pédagogique 15 %",
+      "nature": "GAIN",
+      "baseCalcul": "TRAITEMENT",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 232,
+      "estImposable": true,
+      "estCotisable": true,
+      "description": "Taux 15 % (historique 2008-2024 ou intendance 2025+) (Décrets 11-373, 25-55)",
+      "estAffectableManuellement": true,
+      "occurrencesMultiples": false
+    },
+    {
+      "id": "IRG",
+      "libelle": "Impôt sur le revenu global (IRG)",
+      "nature": "IMPOT",
+      "baseCalcul": "ASSIETTE_IMPOSABLE",
+      "periodicite": "MENSUELLE",
+      "periodiciteVersement": null,
+      "ordreCalcul": 600,
+      "estImposable": false,
+      "estCotisable": false,
+      "description": "Barèmes 2008 & 2022 + 4 règles de période (avant 2020-06, 2020-06, 2021, 2022+)",
+      "estAffectableManuellement": false,
+      "occurrencesMultiples": false
+    }
+  ],
+  "baremes": [
+    {
+      "id": "RB-QUALIF-CAT-LE12",
+      "rubriqueId": "QUALIF",
+      "dimension": "CATEGORIE",
+      "borneInf": "1",
+      "borneSup": "12",
+      "typeValeur": "TAUX",
+      "valeur": "0.40",
+      "dateEffet": "2008-01-01",
+      "source": "Art. 7 D.ex. 11-373 (rétroactif 2008) ; Art. 7 D.ex. 25-55"
+    },
+    {
+      "id": "RB-QUALIF-CAT-GE13",
+      "rubriqueId": "QUALIF",
+      "dimension": "CATEGORIE",
+      "borneInf": "13",
+      "borneSup": null,
+      "typeValeur": "TAUX",
+      "valeur": "0.45",
+      "dateEffet": "2008-01-01",
+      "source": "Art. 7 D.ex. 11-373 (rétroactif 2008) ; Art. 7 D.ex. 25-55"
+    },
+    {
+      "id": "RB-DOCPEDAG-CAT-LE10",
+      "rubriqueId": "DOC_PEDAG",
+      "dimension": "CATEGORIE",
+      "borneInf": "1",
+      "borneSup": "10",
+      "typeValeur": "MONTANT",
+      "valeur": "2000",
+      "dateEffet": "2008-01-01",
+      "source": "Art. 8 D.ex. 10-78 ; Art. 5 D.ex. 11-373 ; Art. 8 D.ex. 25-55"
+    },
+    {
+      "id": "RB-DOCPEDAG-CAT-11-12",
+      "rubriqueId": "DOC_PEDAG",
+      "dimension": "CATEGORIE",
+      "borneInf": "11",
+      "borneSup": "12",
+      "typeValeur": "MONTANT",
+      "valeur": "2500",
+      "dateEffet": "2008-01-01",
+      "source": "Art. 8 D.ex. 10-78 ; Art. 5 D.ex. 11-373 ; Art. 8 D.ex. 25-55"
+    },
+    {
+      "id": "RB-DOCPEDAG-CAT-GE13",
+      "rubriqueId": "DOC_PEDAG",
+      "dimension": "CATEGORIE",
+      "borneInf": "13",
+      "borneSup": null,
+      "typeValeur": "MONTANT",
+      "valeur": "3000",
+      "dateEffet": "2008-01-01",
+      "source": "Art. 8 D.ex. 10-78 ; Art. 5 D.ex. 11-373 ; Art. 8 D.ex. 25-55"
+    }
+  ],
+  "cotisations": [
+    {
+      "id": "SS-2007-01-01",
+      "code": "SS",
+      "libelle": "Sécurité sociale (part ouvrière)",
+      "type": "OBLIGATOIRE_SALARIALE",
+      "taux": 0.09,
+      "assietteRef": "ASSIETTE_COTISABLE",
+      "estRetenue": true,
+      "dateEffet": "2007-01-01",
+      "source": "Loi 07-308 — art. 16"
+    },
+    {
+      "id": "MUTUELLE-2007-01-01",
+      "code": "MUTUELLE",
+      "libelle": "Cotisation mutuelle (facultative)",
+      "type": "FACULTATIVE",
+      "taux": null,
+      "assietteRef": "MONTANT_FIXE",
+      "estRetenue": true,
+      "dateEffet": "2007-01-01",
+      "source": "Régime interne Éducation"
+    },
+    {
+      "id": "OEUVRES-2007-01-01",
+      "code": "OEUVRES_SOCIALES",
+      "libelle": "Œuvres sociales (facultative)",
+      "type": "FACULTATIVE",
+      "taux": null,
+      "assietteRef": "MONTANT_FIXE",
+      "estRetenue": true,
+      "dateEffet": "2007-01-01",
+      "source": "Décret 82-304 — art. 8"
+    }
+  ],
+  "parametres": [
+    {
+      "id": "P-ARRONDI-MODE",
+      "cle": "ARRONDI_MODE",
+      "valeur": "DINAR_PLUS_PROCHE",
+      "type": "TEXT",
+      "description": "Mode d'arrondi par défaut (Q9b) — DINAR_PLUS_PROCHE | DIZAINE | CENTIME",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-ARRONDI-PRECISION",
+      "cle": "ARRONDI_PRECISION",
+      "valeur": "1",
+      "type": "INT",
+      "description": "Précision d'arrondi (DA) — défaut 1 (au dinar)",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-VALEUR-POINT-DEFAUT",
+      "cle": "VALEUR_POINT_DEFAUT",
+      "valeur": "45",
+      "type": "INT",
+      "description": "Valeur du point indiciaire par défaut (DA) — avant seed de ValeurPoint",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-BASE-PAPP",
+      "cle": "BASE_PAPP",
+      "valeur": "0.40",
+      "type": "REAL",
+      "description": "BASE_PAPP — Taux de base de la PAPP (40 %) avant application de la notation (Art. 3 Décret 10-78)",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-NOTE-MAX-PAPP",
+      "cle": "NOTE_MAX_PAPP",
+      "valeur": "20",
+      "type": "INT",
+      "description": "NOTE_MAX_PAPP — Note maximale de notation PAPP (20) (J3C §2)",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-PLAFOND-LISSAGE-GENERAL",
+      "cle": "PLAFOND_LISSAGE_GENERAL",
+      "valeur": "35000",
+      "type": "INT",
+      "description": "PLAFOND_LISSAGE_GENERAL — Plafond du lissage général IRG (DA) (CALCUL IRG ALGERIE.txt)",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-SEUIL-EXO-IRG",
+      "cle": "SEUIL_EXONERATION_IRG",
+      "valeur": "30000",
+      "type": "INT",
+      "description": "Seuil d'exonération IRG par défaut (DA) — avant seed de IRGReglesPeriode",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-IEP-TAUX-PUBLIC",
+      "cle": "IEP_TAUX_PUBLIC_PCT",
+      "valeur": "1.4",
+      "type": "REAL",
+      "description": "IEP_CONT — % par année d'ancienneté de service public (Art. 16 Décret 07-304)",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-IEP-TAUX-PRIVE",
+      "cle": "IEP_TAUX_PRIVE_PCT",
+      "valeur": "0.7",
+      "type": "REAL",
+      "description": "IEP_CONT — % par année d'ancienneté de service privé (Art. 16 Décret 07-304)",
+      "dateEffet": "2007-01-01"
+    },
+    {
+      "id": "P-IEP-PLAFOND",
+      "cle": "IEP_PLAFOND_PCT",
+      "valeur": "60",
+      "type": "REAL",
+      "description": "IEP_CONT — plafond du taux composite (% du traitement de base)",
+      "dateEffet": "2007-01-01"
+    }
+  ]
+}

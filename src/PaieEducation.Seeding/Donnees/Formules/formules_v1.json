@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "dateEffet": "2008-01-01",
+  "sourceGlobale": "J3C §1-2 — catalogue des formules du pilote enseignant",
+  "rubriqueTraitement": {
+    "id": "TRAITEMENT",
+    "libelle": "Traitement mensuel de base",
+    "description": "Traitement principal (INDICE_MIN + INDICE_ECH) × valeur du point",
+    "source": "J4.c — pilote"
+  },
+  "formules": [
+    {
+      "rubriqueId": "TRAITEMENT",
+      "expression": "(INDICE_MIN + INDICE_ECH) * VPI",
+      "source": "J3C §1 — TRT = (indice min + indice échelon) × VPI"
+    },
+    {
+      "rubriqueId": "EXP_PEDAG",
+      "expression": "TBASE * 0.04 * ECH",
+      "source": "J3C §2 — 4 % × TBASE × n° échelon"
+    },
+    {
+      "rubriqueId": "PAPP",
+      "expression": "TRT * valeurSource(PAPP)",
+      "source": "J3C §2 — TRT × taux de notation (0–40 %)"
+    },
+    {
+      "rubriqueId": "QUALIF",
+      "expression": "TRT * bareme(QUALIF, CATEGORIE)",
+      "source": "J3C §2 — TRT × taux par tranche de catégorie (40 %/45 %)"
+    },
+    {
+      "rubriqueId": "DOC_PEDAG",
+      "expression": "bareme(DOC_PEDAG, CATEGORIE)",
+      "source": "J3C §2 — forfait par tranche de catégorie"
+    },
+    {
+      "rubriqueId": "ISSRP_45",
+      "expression": "TRT * 0.45",
+      "source": "J3C §2 — ISSRP 45 % (2025+)"
+    }
+  ]
+}

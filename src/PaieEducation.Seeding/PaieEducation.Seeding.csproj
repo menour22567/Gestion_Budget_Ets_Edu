@@ -19,6 +19,16 @@
          Avant : valeurs codées en dur dans IrgSeeder.cs (lignes 76-121).
          Le hash SHA256 calculé à l'insertion détecte tout drift. -->
     <EmbeddedResource Include="Donnees\IRG\baremes_irg_v1.json" />
+    <!-- Lot 1.3 final : formules de calcul (1 rubrique TRAITEMENT + 6 formules),
+         versionnées. Avant : 88 lignes de valeurs codées en dur dans
+         FormulesSeeder.cs. -->
+    <EmbeddedResource Include="Donnees\Formules\formules_v1.json" />
+    <!-- Lot 1.3 final : référentiel réglementaire (10 rubriques + 5 barèmes +
+         3 cotisations + 10 paramètres). Avant : 614 lignes dans
+         ReglementaireSeeder.cs. Les groupes DNF ISSRP (~92 grade IDs) et les
+         4 grades hors catégorie (Q-C3) restent en C# pour V1 — voir le
+         commentaire de ReglementaireSeeder. -->
+    <EmbeddedResource Include="Donnees\Reglementaire\referentiel_reglementaire_v1.json" />
   </ItemGroup>
 
   <PropertyGroup>

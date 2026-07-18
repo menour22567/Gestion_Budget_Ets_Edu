@@ -21,8 +21,19 @@ namespace PaieEducation.Seeding;
 ///         seedés séparément via la CLI <c>seed irg</c>)</item>
 /// </list>
 /// <para>Idempotent (<c>INSERT OR IGNORE</c>). Ré-exécuté plusieurs fois,
-/// il ne duplique pas les lignes. Le seeder ne fait pas de migration : la
-/// base doit être déjà migrée (V001-V007).</para>
+/// il ne duplique pas les lignes.</para>
+/// <para><b>Lot 1.3 finalisation</b> : les 4 sections « plates »
+/// (rubriques, barèmes, cotisations, paramètres) sont lues depuis
+/// <c>Donnees/Reglementaire/referentiel_reglementaire_v1.json</c>
+/// (cf. <see cref="ReglementaireJsonDataReader"/>), même pattern que
+/// les barèmes IRG (Lot 1.3α) et les formules (Lot 1.3 final).
+/// Hash SHA-256 sur chaque ligne → détection de drift.</para>
+/// <para>Deux sections restent en C# pour V1 : les groupes DNF
+/// d'éligibilité ISSRP (6 groupes × ~92 grade IDs) et les 4 grades
+/// hors catégorie (Q-C3 résolue le 16/07/2026). Le volume et le
+/// couplage avec la logique d'éligibilité justifient un format de
+/// fichier dédié (lot suivant). Une refactorisation de ces sections
+/// est <b>explicitement reportée</b> dans <c>docs/audit/PLAN_IMPLEMENTATION.md</c>.</para>
 /// </remarks>
 public sealed class ReglementaireSeeder
 {
@@ -118,6 +129,7 @@ public sealed class ReglementaireSeeder
 
         var report = new SeedReport(0);
 
+        // Sections « plates » : depuis le JSON embarqué (Lot 1.3 finalisation).
         await InsertRubriquesAsync(conn, report, ct).ConfigureAwait(false);
         await InsertGradesHorsCategorieAsync(conn, report, ct).ConfigureAwait(false);
         await InsertReglesEligibiliteAsync(conn, report, ct).ConfigureAwait(false);
@@ -129,121 +141,23 @@ public sealed class ReglementaireSeeder
     }
 
     // -------------------------------------------------------------------------
-    // Rubriques (10 au total : IEP_FONC, IEP_CONT, EXP_PEDAG, PAPP, QUALIF,
-    //            DOC_PEDAG, ISSRP_45, ISSRP_30, ISSRP_15, IRG)
+    // Rubriques (10 au total) — depuis le JSON
     // -------------------------------------------------------------------------
     private static async Task InsertRubriquesAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
     {
-        var rubriques = new (string Id, string Libelle, string Nature, string BaseCalcul,
-            string Periodicite, string? PeriodiciteVersement, int OrdreCalcul,
-            int EstImposable, int EstCotisable, string Description,
-            int EstAffectableManuellement, int OccurrencesMultiples)[]
-        {
-            // IEP_FONC — Indemnité d'expérience professionnelle des fonctionnaires
-            // (Q2-rev, 14/07/2026). Calcul : IE × VPI (indice d'échelon × valeur du
-            // point) — composante échelon du traitement : TRT = TBASE + IEP_FONC.
-            // Non affectable manuellement (V-2, J4E § 5) : composante structurelle
-            // du traitement, pas une décision d'affectation.
-            ("IEP_FONC", "Indemnité d'expérience professionnelle (fonctionnaires)",
-             "GAIN", "INDICE_ECHELON", "MENSUELLE", null, 200, 1, 1,
-             "IE × VPI — composante échelon du traitement (Art. 5 Décret 07-304)",
-             0, 0),
-
-            // IEP_CONT — Indemnité d'expérience professionnelle des contractuels
-            // (Q2-rev). Prime d'ancienneté composite : TBASE × min(ANC_PUB × 1,4 %
-            // + ANC_PRIV × 0,7 % ; 60 %). Le plafond 60 % porte sur le TAUX
-            // composite, jamais sur les années. Paramètres : IEP_TAUX_PUBLIC_PCT,
-            // IEP_TAUX_PRIVE_PCT, IEP_PLAFOND_PCT (table Parametres). Non
-            // affectable manuellement (V-2) : symétrique structurel de IEP_FONC.
-            ("IEP_CONT", "Indemnité d'expérience professionnelle (contractuels)",
-             "GAIN", "TBASE", "MENSUELLE", null, 201, 1, 1,
-             "TBASE × min(ANC_PUB × 1,4 % + ANC_PRIV × 0,7 % ; 60 %) (Art. 16 Décret 07-304)",
-             0, 0),
-
-            // EXP_PEDAG — Indemnité d'expérience pédagogique (Q2-rev). Distincte
-            // de l'IEP : corps EN hors Intendance et Laboratoire. 4 % × TBASE ×
-            // n° échelon. Bénéficiaires versionnés (direction/inspection au
-            // 29/05/2012 via ReglesEligibilite). Affectable manuellement (V-2) :
-            // indemnité conditionnée, cas d'usage type de la libre affectation.
-            ("EXP_PEDAG", "Indemnité d'expérience pédagogique",
-             "GAIN", "TBASE_ECHELON", "MENSUELLE", null, 210, 1, 1,
-             "4 % × TBASE × n° échelon — corps EN hors Intendance/Laboratoire " +
-             "(Art. 9 Décret 10-78 ; Art. 3 Décret 12-403 ; Art. 9 Décret 25-55)",
-             1, 0),
-
-            // PAPP — Prime d'amélioration des performances pédagogiques (INC-02,
-            // Q-02 du 14/07/2026). 0–40 % du traitement selon notation ; calculée
-            // mensuellement, servie trimestriellement ; imposable ET cotisable.
-            // Affectable manuellement (V-2).
-            ("PAPP", "Prime d'amélioration des performances pédagogiques (PAPP)",
-             "GAIN", "TRAITEMENT", "MENSUELLE", "TRIMESTRIELLE", 220, 1, 1,
-             "0–40 % du traitement selon notation (Art. 3 Décret 10-78 ; " +
-             "Art. 3 Décret 12-403 ; Art. 3 Décret 25-55)",
-             1, 0),
-
-            // QUALIF — Indemnité de qualification (J3C §2, J3B RM-045). Taux par
-            // tranche de catégorie (40 % / 45 %) — barème seedé séparément
-            // (InsertRubriqueBaremesAsync). Même population que EXP_PEDAG/PAPP
-            // (enseignants, éducation, orientation, alimentation, + intendance,
-            // + direction/inspection depuis 29/05/2012) : aucune éligibilité
-            // dédiée seedée ici, même simplification pilote que EXP_PEDAG/PAPP
-            // (RM-040 : pas de condition = éligible partout ; l'éligibilité par
-            // corps réelle est différée à Phase 5, cf. commentaire du repository).
-            // Flags (16/07/2026) : même caractère que EXP_PEDAG (indemnité
-            // conditionnée, pas structurelle) → affectable manuellement,
-            // extension du principe V-2 non re-soumise à validation explicite
-            // séparée — à signaler si contesté.
-            ("QUALIF", "Indemnité de qualification",
-             "GAIN", "TRAITEMENT", "MENSUELLE", null, 206, 1, 1,
-             "TRT × (40 % si CAT ≤ 12 ; 45 % si CAT ≥ 13) — barème par catégorie " +
-             "(Art. 7 Décret 11-373, rétroactif 2008 ; Art. 7 Décret 25-55)",
-             1, 0),
-
-            // DOC_PEDAG — Indemnité de documentation pédagogique (J3C §2, J3B
-            // RM-046). Forfait par tranche de catégorie — barème seedé séparément.
-            // Flags : même raisonnement que QUALIF ci-dessus.
-            ("DOC_PEDAG", "Indemnité de documentation pédagogique",
-             "GAIN", "FORFAIT", "MENSUELLE", null, 207, 1, 1,
-             "Forfait par catégorie : 2 000 DA (≤10) / 2 500 DA (11-12) / 3 000 DA (≥13) " +
-             "(Art. 8 Décret 10-78 ; Art. 5 Décret 11-373 ; Art. 8 Décret 25-55)",
-             1, 0),
-
-            // ISSRP_45 — Soutien scolaire 45 % (2025+). Affectable manuellement (V-2).
-            ("ISSRP_45", "Soutien scolaire et remédiation pédagogique 45 % (2025+)",
-             "GAIN", "TRAITEMENT", "MENSUELLE", null, 230, 1, 1,
-             "Taux 45 % pour enseignants, direction, inspection, censeurs (Décret 25-55)",
-             1, 0),
-
-            // ISSRP_30 — Soutien scolaire 30 % (2025+). Affectable manuellement (V-2).
-            ("ISSRP_30", "Soutien scolaire et remédiation pédagogique 30 % (2025+)",
-             "GAIN", "TRAITEMENT", "MENSUELLE", null, 231, 1, 1,
-             "Taux 30 % pour éducateurs non-enseignants, orientation, alimentation (Décret 25-55)",
-             1, 0),
-
-            // ISSRP_15 — Soutien scolaire 15 %.
-            // 2008-2024 : taux unique 15 % pour tous les corps EN.
-            // 2025+ : taux 15 % pour intendance / laboratoire / gestion financière.
-            // Affectable manuellement (V-2).
-            ("ISSRP_15", "Soutien scolaire et remédiation pédagogique 15 %",
-             "GAIN", "TRAITEMENT", "MENSUELLE", null, 232, 1, 1,
-             "Taux 15 % (historique 2008-2024 ou intendance 2025+) (Décrets 11-373, 25-55)",
-             1, 0),
-
-            // IRG — Impôt sur le Revenu Global (calculé via BaremeIRG 2008 + 2022
-            // et 4 règles de période, V006-V007, décision Q-01). Non affectable
-            // (D1) : pipeline exclusif, jamais une décision d'affectation.
-            ("IRG", "Impôt sur le revenu global (IRG)",
-             "IMPOT", "ASSIETTE_IMPOSABLE", "MENSUELLE", null, 600, 0, 0,
-             "Barèmes 2008 & 2022 + 4 règles de période (avant 2020-06, 2020-06, 2021, 2022+)",
-             0, 0),
-        };
-
+        var data = ReglementaireJsonDataReader.Load();
         var inserted = 0;
         using var tx = c.BeginTransaction();
-        foreach (var rub in rubriques)
+        foreach (var rub in data.Rubriques)
         {
             ct.ThrowIfCancellationRequested();
+            var hash = ReglementaireJsonDataReader.HashLigne(new
+            {
+                rub.Id, rub.Libelle, rub.Nature, rub.BaseCalcul, rub.Periodicite,
+                rub.PeriodiciteVersement, rub.OrdreCalcul, rub.EstImposable, rub.EstCotisable,
+                rub.Description, rub.EstAffectableManuellement, rub.OccurrencesMultiples,
+            });
             var sql = """
                 INSERT INTO Rubriques
                     (Id, Libelle, Nature, BaseCalcul, Periodicite, PeriodiciteVersement,
@@ -258,16 +172,17 @@ public sealed class ReglementaireSeeder
             {
                 id = rub.Id, l = rub.Libelle, n = rub.Nature, b = rub.BaseCalcul,
                 p = rub.Periodicite, pv = rub.PeriodiciteVersement ?? (object)DBNull.Value,
-                o = rub.OrdreCalcul, ei = rub.EstImposable,
-                ec = rub.EstCotisable, d = rub.Description,
+                o = rub.OrdreCalcul, ei = rub.EstImposable ? 1 : 0,
+                ec = rub.EstCotisable ? 1 : 0, d = rub.Description,
                 at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
-                h = $"h-rubrique-{rub.Id}",
-                eam = rub.EstAffectableManuellement, om = rub.OccurrencesMultiples
+                h = hash,
+                eam = rub.EstAffectableManuellement ? 1 : 0,
+                om = rub.OccurrencesMultiples ? 1 : 0
             }, tx);
             inserted += n;
         }
         tx.Commit();
-        r.Add("Rubriques", rubriques.Length, inserted);
+        r.Add("Rubriques", data.Rubriques.Count, inserted);
     }
 
     /// <summary>Une condition atomique d'un groupe DNF : (critère, opérateur, valeur).</summary>
@@ -288,15 +203,13 @@ public sealed class ReglementaireSeeder
     // Reglementation/Statuts particuliers/Liste_Grades_Fr.csv (lignes 88-90,
     // 92) — indices vérifiés ligne à ligne contre J3G/J4F.
     //
-    // Filiere/Corps réutilisent les identifiants déjà dérivés par
-    // NomenclatureSeeder pour ce même corps (IDLS, via IDLS-G147 déjà seedé
-    // par le CSV principal) — idempotent (ON CONFLICT DO NOTHING) : aucun
-    // conflit si NomenclatureSeeder tourne aussi, même identité, même source.
-    //
     // GrilleIndiciaire : pas de ligne pour la période « avant 01/03/2022 »
     // (indice = 0 dans la source — ces subdivisions hors catégorie n'avaient
     // pas d'indice avant cette date ; IndiceMin > 0 interdit de toute façon
     // la valeur 0, cf. CHECK V003).
+    //
+    // NOTE Lot 1.3 : reste en C# pour V1. Sa migration vers le JSON est
+    // explicitement reportée — voir commentaire de classe.
     // -------------------------------------------------------------------------
     private static async Task InsertGradesHorsCategorieAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
@@ -393,6 +306,11 @@ public sealed class ReglementaireSeeder
     // -------------------------------------------------------------------------
     // GroupesEligibilite + ReglesEligibilite — ISSRP en groupes DNF (grain
     // GRADE). Remplace la matrice à plat par CORPS (J4F, validée jalons A/B).
+    //
+    // NOTE Lot 1.3 : reste en C# pour V1. Sa migration vers le JSON est
+    // explicitement reportée — voir commentaire de classe. Le couplage
+    // avec les arrays de grades (~92 IDs) et la structure DNF multi-conditions
+    // demandent un format de fichier dédié.
     // -------------------------------------------------------------------------
     private static async Task InsertReglesEligibiliteAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
@@ -494,87 +412,60 @@ public sealed class ReglementaireSeeder
     }
 
     // -------------------------------------------------------------------------
-    // RubriqueBaremes — QUALIF (taux par catégorie) + DOC_PEDAG (forfait par
-    // catégorie). Une seule version par tranche (RM-104 : les taux 25/30 %
-    // rétroactivement remplacés par 11-373 ne sont jamais sélectionnés pour un
-    // calcul — inutile de les seeder).
+    // RubriqueBaremes — depuis le JSON (QUALIF + DOC_PEDAG)
     // -------------------------------------------------------------------------
     private static async Task InsertRubriqueBaremesAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
     {
-        var baremes = new (string Id, string RubriqueId, string BorneInf, string? BorneSup,
-            string TypeValeur, string Valeur, string Source)[]
-        {
-            ("RB-QUALIF-CAT-LE12", "QUALIF", "1", "12", "TAUX", "0.40",
-             "Art. 7 D.ex. 11-373 (rétroactif 2008) ; Art. 7 D.ex. 25-55"),
-            ("RB-QUALIF-CAT-GE13", "QUALIF", "13", null, "TAUX", "0.45",
-             "Art. 7 D.ex. 11-373 (rétroactif 2008) ; Art. 7 D.ex. 25-55"),
-
-            ("RB-DOCPEDAG-CAT-LE10", "DOC_PEDAG", "1", "10", "MONTANT", "2000",
-             "Art. 8 D.ex. 10-78 ; Art. 5 D.ex. 11-373 ; Art. 8 D.ex. 25-55"),
-            ("RB-DOCPEDAG-CAT-11-12", "DOC_PEDAG", "11", "12", "MONTANT", "2500",
-             "Art. 8 D.ex. 10-78 ; Art. 5 D.ex. 11-373 ; Art. 8 D.ex. 25-55"),
-            ("RB-DOCPEDAG-CAT-GE13", "DOC_PEDAG", "13", null, "MONTANT", "3000",
-             "Art. 8 D.ex. 10-78 ; Art. 5 D.ex. 11-373 ; Art. 8 D.ex. 25-55"),
-        };
-
+        var data = ReglementaireJsonDataReader.Load();
         var inserted = 0;
         using var tx = c.BeginTransaction();
-        foreach (var b in baremes)
+        foreach (var b in data.Baremes)
         {
             ct.ThrowIfCancellationRequested();
+            var hash = ReglementaireJsonDataReader.HashLigne(new
+            {
+                b.Id, b.RubriqueId, b.Dimension, b.BorneInf, b.BorneSup,
+                b.TypeValeur, b.Valeur, b.DateEffet, b.Source,
+            });
             var n = await c.ExecuteAsync("""
                 INSERT INTO RubriqueBaremes
                     (Id, RubriqueId, Dimension, BorneInf, BorneSup, TypeValeur, Valeur,
                      DateEffet, Source, Hash, CreatedAt)
                 VALUES
-                    ($id, $r, 'CATEGORIE', $bi, $bs, $tv, $v, $de, $src, $h, $at)
+                    ($id, $r, $dim, $bi, $bs, $tv, $v, $de, $src, $h, $at)
                 ON CONFLICT(Id) DO NOTHING;
                 """,
                 new
-                {
-                    id = b.Id, r = b.RubriqueId, bi = b.BorneInf,
-                    bs = b.BorneSup ?? (object)DBNull.Value, tv = b.TypeValeur, v = b.Valeur,
-                    de = IssrpPeriodeHistorique, src = b.Source, h = $"h-bareme-{b.Id}",
-                    at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
-                }, tx);
+            {
+                id = b.Id, r = b.RubriqueId, dim = b.Dimension, bi = b.BorneInf,
+                bs = b.BorneSup ?? (object)DBNull.Value, tv = b.TypeValeur, v = b.Valeur,
+                de = b.DateEffet, src = b.Source, h = hash,
+                at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
+            }, tx);
             inserted += n;
         }
         tx.Commit();
-        r.Add("RubriqueBaremes", baremes.Length, inserted);
+        r.Add("RubriqueBaremes", data.Baremes.Count, inserted);
     }
 
     // -------------------------------------------------------------------------
-    // Cotisations — Q3b : SS 9 % (part ouvrière) + Mutuelle + Œuvres sociales
+    // Cotisations — depuis le JSON (Q3b)
     // -------------------------------------------------------------------------
     private static async Task InsertCotisationsAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
     {
-        var cotisations = new (string Id, string Code, string Libelle, string Type,
-            double? Taux, string AssietteRef, int EstRetenue, string DateEffet, string Source)[]
-        {
-            // SS — Sécurité Sociale, part ouvrière (Q3b).
-            ("SS-2007-01-01", "SS",
-             "Sécurité sociale (part ouvrière)",
-             "OBLIGATOIRE_SALARIALE", 0.09, "ASSIETTE_COTISABLE", 1,
-             "2007-01-01", "Loi 07-308 — art. 16"),
-            // MUTUELLE — facultative, montant fixe par agent (Q3b).
-            ("MUTUELLE-2007-01-01", "MUTUELLE",
-             "Cotisation mutuelle (facultative)",
-             "FACULTATIVE", null, "MONTANT_FIXE", 1,
-             "2007-01-01", "Régime interne Éducation"),
-            // OEUVRES_SOCIALES — facultative, montant fixe par agent (Q3b).
-            ("OEUVRES-2007-01-01", "OEUVRES_SOCIALES",
-             "Œuvres sociales (facultative)",
-             "FACULTATIVE", null, "MONTANT_FIXE", 1,
-             "2007-01-01", "Décret 82-304 — art. 8"),
-        };
-
+        var data = ReglementaireJsonDataReader.Load();
         var inserted = 0;
         using var tx = c.BeginTransaction();
-        foreach (var cot in cotisations)
+        foreach (var cot in data.Cotisations)
         {
             ct.ThrowIfCancellationRequested();
+            var hash = ReglementaireJsonDataReader.HashLigne(new
+            {
+                cot.Id, cot.Code, cot.Libelle, cot.Type, cot.Taux, cot.AssietteRef,
+                cot.EstRetenue, cot.DateEffet, cot.Source,
+            });
             var sql = """
                 INSERT INTO Cotisations
                     (Id, Code, Libelle, TypeCotisation, Taux, AssietteRef, EstRetenue,
@@ -586,67 +477,33 @@ public sealed class ReglementaireSeeder
             var n = await c.ExecuteAsync(sql, new
             {
                 id = cot.Id, c = cot.Code, l = cot.Libelle, t = cot.Type,
-                tx = cot.Taux, ar = cot.AssietteRef, er = cot.EstRetenue,
+                tx = cot.Taux, ar = cot.AssietteRef, er = cot.EstRetenue ? 1 : 0,
                 de = cot.DateEffet, src = cot.Source,
-                h = $"h-cotisation-{cot.Code}",
+                h = hash,
                 at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
             }, tx);
             inserted += n;
         }
         tx.Commit();
-        r.Add("Cotisations", cotisations.Length, inserted);
+        r.Add("Cotisations", data.Cotisations.Count, inserted);
     }
 
     // -------------------------------------------------------------------------
-    // Paramètres système (Q9b : ARRONDI_MODE)
+    // Paramètres système — depuis le JSON (Q9b : ARRONDI_MODE, etc.)
     // -------------------------------------------------------------------------
     private static async Task InsertParametresAsync(
         SqliteConnection c, SeedReport r, CancellationToken ct)
     {
-        var parametres = new (string Id, string Cle, string Valeur, string Type,
-            string Description, string DateEffet)[]
-        {
-            // Q9b : défaut retenu "au dinar le plus proche", paramétrable.
-            ("P-ARRONDI-MODE", "ARRONDI_MODE", "DINAR_PLUS_PROCHE", "TEXT",
-             "Mode d'arrondi par défaut (Q9b) — DINAR_PLUS_PROCHE | DIZAINE | CENTIME",
-             "2007-01-01"),
-            ("P-ARRONDI-PRECISION", "ARRONDI_PRECISION", "1", "INT",
-             "Précision d'arrondi (DA) — défaut 1 (au dinar)",
-             "2007-01-01"),
-            ("P-VALEUR-POINT-DEFAUT", "VALEUR_POINT_DEFAUT", "45", "INT",
-             "Valeur du point indiciaire par défaut (DA) — avant seed de ValeurPoint",
-             "2007-01-01"),
-            ("P-BASE-PAPP", "BASE_PAPP", "0.40", "REAL",
-             "BASE_PAPP — Taux de base de la PAPP (40 %) avant application de la notation (Art. 3 Décret 10-78)",
-             "2007-01-01"),
-            ("P-NOTE-MAX-PAPP", "NOTE_MAX_PAPP", "20", "INT",
-             "NOTE_MAX_PAPP — Note maximale de notation PAPP (20) (J3C §2)",
-             "2007-01-01"),
-            ("P-PLAFOND-LISSAGE-GENERAL", "PLAFOND_LISSAGE_GENERAL", "35000", "INT",
-             "PLAFOND_LISSAGE_GENERAL — Plafond du lissage général IRG (DA) (CALCUL IRG ALGERIE.txt)",
-             "2007-01-01"),
-            ("P-SEUIL-EXO-IRG", "SEUIL_EXONERATION_IRG", "30000", "INT",
-             "Seuil d'exonération IRG par défaut (DA) — avant seed de IRGReglesPeriode",
-             "2007-01-01"),
-            // IEP_CONT (Q2-rev, 14/07/2026) : taux composite d'ancienneté des
-            // contractuels. Le plafond porte sur le TAUX (60 % du TB max),
-            // jamais sur les années de service.
-            ("P-IEP-TAUX-PUBLIC", "IEP_TAUX_PUBLIC_PCT", "1.4", "REAL",
-             "IEP_CONT — % par année d'ancienneté de service public (Art. 16 Décret 07-304)",
-             "2007-01-01"),
-            ("P-IEP-TAUX-PRIVE", "IEP_TAUX_PRIVE_PCT", "0.7", "REAL",
-             "IEP_CONT — % par année d'ancienneté de service privé (Art. 16 Décret 07-304)",
-             "2007-01-01"),
-            ("P-IEP-PLAFOND", "IEP_PLAFOND_PCT", "60", "REAL",
-             "IEP_CONT — plafond du taux composite (% du traitement de base)",
-             "2007-01-01"),
-        };
-
+        var data = ReglementaireJsonDataReader.Load();
         var inserted = 0;
         using var tx = c.BeginTransaction();
-        foreach (var p in parametres)
+        foreach (var p in data.Parametres)
         {
             ct.ThrowIfCancellationRequested();
+            var hash = ReglementaireJsonDataReader.HashLigne(new
+            {
+                p.Id, p.Cle, p.Valeur, p.Type, p.Description, p.DateEffet,
+            });
             var sql = """
                 INSERT INTO Parametres
                     (Id, Cle, Valeur, Type, Description, DateEffet, Source, Hash, CreatedAt)
@@ -657,12 +514,12 @@ public sealed class ReglementaireSeeder
             var n = await c.ExecuteAsync(sql, new
             {
                 id = p.Id, c = p.Cle, v = p.Valeur, t = p.Type, d = p.Description, de = p.DateEffet,
-                h = $"h-parametre-{p.Cle}",
+                h = hash,
                 at = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture)
             }, tx);
             inserted += n;
         }
         tx.Commit();
-        r.Add("Parametres", parametres.Length, inserted);
+        r.Add("Parametres", data.Parametres.Count, inserted);
     }
 }

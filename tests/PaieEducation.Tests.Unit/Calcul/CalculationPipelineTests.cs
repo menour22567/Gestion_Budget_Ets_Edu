@@ -70,7 +70,8 @@ public class CalculationPipelineTests
             new CotisationCalcul(new CotisationDef("SS", ReferenceAssiette.AssietteCotisable, 0.09m, null), EstSalariale: true),
         },
         Profil: ProfilFiscal.Standard,
-        RegleIrg: Irg2022());
+        RegleIrg: Irg2022(),
+        Dependances: Array.Empty<DependanceArete>());
 
     [Fact]
     public void Bulletin_enseignant_PEM_complet()

@@ -2,6 +2,7 @@ using PaieEducation.Domain.Calcul.Audit;
 using PaieEducation.Domain.Calcul.Explicabilite;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Rappels;
+using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Services;
@@ -43,7 +44,8 @@ public class RappelCalculatorTests
         Criteres: new Dictionary<string, CritereEligibilite>(),
         Cotisations: Array.Empty<CotisationCalcul>(),
         Profil: PaieEducation.Domain.Calcul.Irg.ProfilFiscal.Standard,
-        RegleIrg: null);
+        RegleIrg: null,
+        Dependances: Array.Empty<DependanceArete>());
 
     [Fact]
     public void Montants_identiques_ne_produisent_aucun_rappel()

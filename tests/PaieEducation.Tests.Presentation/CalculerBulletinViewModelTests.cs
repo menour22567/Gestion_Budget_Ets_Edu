@@ -52,7 +52,8 @@ public class CalculerBulletinViewModelTests
             new Dictionary<string, decimal>(), new Dictionary<string, decimal>(), new Dictionary<string, string>(),
             Array.Empty<RubriqueCalcul>(), Array.Empty<BaremeValue>(), Array.Empty<ConditionEligibilite>(),
             new Dictionary<string, CritereEligibilite>(), Array.Empty<CotisationCalcul>(),
-            ProfilFiscal.Standard, RegleIrg: null);
+            ProfilFiscal.Standard, RegleIrg: null,
+            Array.Empty<DependanceArete>());
 
         var payroll = new Mock<IPayrollReadRepository>();
         payroll.Setup(p => p.ChargerAsync(

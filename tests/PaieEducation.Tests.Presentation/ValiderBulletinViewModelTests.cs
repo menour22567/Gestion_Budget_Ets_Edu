@@ -48,7 +48,10 @@ public class ValiderBulletinViewModelTests
             new Dictionary<string, decimal>(), new Dictionary<string, decimal>(), new Dictionary<string, string>(),
             Array.Empty<RubriqueCalcul>(), Array.Empty<BaremeValue>(), Array.Empty<ConditionEligibilite>(),
             new Dictionary<string, CritereEligibilite>(), Array.Empty<CotisationCalcul>(),
-            ProfilFiscal.Standard, RegleIrg: null);
+            ProfilFiscal.Standard, RegleIrg: null,
+            // Lot 2.1 : dépendances vides — les tests ViewModel n'exercent pas
+            // l'ordre topologique.
+            Array.Empty<DependanceArete>());
 
         var payroll = new Mock<IPayrollReadRepository>();
         payroll.Setup(p => p.ChargerAsync(

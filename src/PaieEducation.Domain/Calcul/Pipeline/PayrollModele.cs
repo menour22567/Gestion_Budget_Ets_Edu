@@ -43,6 +43,15 @@ public sealed record CotisationCalcul(CotisationDef Def, bool EstSalariale);
 /// par la couche Infrastructure (<c>PayrollReadRepository</c>) ; le pipeline est
 /// pur et ne lit jamais la base.
 /// </summary>
+/// <remarks>
+/// <see cref="Dependances"/> porte les arêtes actives du graphe DAG de calcul
+/// (table <c>RubriqueDependances</c>) à la date de paie. Le pipeline les
+/// consomme pour ordonner les rubriques (tri topologique) — Lot 2.1. Une
+/// dépendance expirée (<c>DateFin &lt; DatePaie</c>) n'est jamais chargée :
+/// elle est sans effet à la date considérée. Une dépendance vers une rubrique
+/// hors univers (pas dans <see cref="Rubriques"/>) provoque un échec de
+/// validation explicite (voir <see cref="DependencyResolver"/>).
+/// </remarks>
 public sealed record PayrollInput(
     AgentContext Agent,
     string DatePaie,
@@ -55,7 +64,8 @@ public sealed record PayrollInput(
     IReadOnlyDictionary<string, CritereEligibilite> Criteres,
     IReadOnlyList<CotisationCalcul> Cotisations,
     ProfilFiscal Profil,
-    IrgReglePeriode? RegleIrg);
+    IrgReglePeriode? RegleIrg,
+    IReadOnlyList<DependanceArete> Dependances);
 
 /// <summary>Ligne d'un bulletin — un montant calculé, tracé par son explication (RM-105).</summary>
 public sealed record BulletinLigne(

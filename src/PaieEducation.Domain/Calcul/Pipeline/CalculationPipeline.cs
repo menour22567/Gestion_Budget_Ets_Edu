@@ -41,8 +41,12 @@ public sealed class CalculationPipeline
 
         var gains = input.Rubriques.Where(r => r.Nature == NatureRubrique.Gain)
             .OrderBy(r => r.Ordre).ThenBy(r => r.Id, StringComparer.Ordinal).ToList();
+        // Lot 2.1 : les arêtes actives à la date de paie sont chargées par
+        // PayrollReadRepository. Une liste vide (cas du pilote actuel, aucune
+        // RubriqueDependances semée) préserve l'ordre naturel
+        // (Ordre, Id) — pas de régression sur les snapshots existants.
         var ordre = _dependances.Ordonner(
-            gains.Select(g => g.Id).ToList(), Array.Empty<DependanceArete>());
+            gains.Select(g => g.Id).ToList(), input.Dependances);
         if (ordre.IsFailure)
             return Result.Failure<Bulletin>(ordre.Error);
 

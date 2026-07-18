@@ -5,6 +5,7 @@ using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Repositories;
+using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.ValueObjects;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
@@ -52,6 +53,13 @@ public sealed class PayrollReadRepository : IPayrollReadRepository
         var conditions = await ChargerConditionsAsync(datePaie, ct);
         var criteres = await ChargerCriteresAsync(ct);
         var cotisations = await ChargerCotisationsAsync(datePaie, ct);
+        // Lot 2.1 — arêtes actives du DAG à la date de paie. Une dépendance
+        // expirée (DateFin < datePaie) n'est jamais chargée : elle n'a pas
+        // d'effet à la date considérée. Une dépendance vers une rubrique
+        // hors univers (pas dans la liste ci-dessus) sera détectée par le
+        // DependencyResolver (échec Validation explicite) — pas besoin
+        // d'un filtrage en amont.
+        var dependances = await ChargerDependancesAsync(datePaie, ct);
 
         var regleIrg = await ChargerRegleIrgAsync(datePaie, ct);
         if (regleIrg.IsFailure)
@@ -59,7 +67,8 @@ public sealed class PayrollReadRepository : IPayrollReadRepository
 
         return Result.Success(new PayrollInput(
             agent, datePaie, variablesBase, sourcesValeur, clesBareme,
-            rubriques, baremes, conditions, criteres, cotisations, profil, regleIrg.Value));
+            rubriques, baremes, conditions, criteres, cotisations, profil, regleIrg.Value,
+            dependances));
     }
 
     // ---- Rubriques GAIN ayant une formule active à la date ----
@@ -143,6 +152,28 @@ public sealed class PayrollReadRepository : IPayrollReadRepository
             EstSalariale: r.TypeCotisation == "OBLIGATOIRE_SALARIALE")).ToList();
     }
 
+    // ---- Dépendances entre rubriques (Lot 2.1) ----
+
+    /// <summary>
+    /// Charge les arêtes actives du graphe DAG de calcul à la date de paie.
+    /// Filtre point-in-time : <c>DateEffet &lt;= date</c> et
+    /// <c>(DateFin IS NULL OR DateFin &gt;= date)</c>. Une arête expirée
+    /// (par exemple, dépendance abandonnée lors d'une refonte) est silencieusement
+    /// omise — le pipeline retombe sur l'ordre naturel <c>(OrdreCalcul, Id)</c>.
+    /// </summary>
+    private async Task<IReadOnlyList<DependanceArete>> ChargerDependancesAsync(string date, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT RubriqueId, DependDeId
+            FROM RubriqueDependances
+            WHERE DateEffet <= @date AND (DateFin IS NULL OR DateFin >= @date)
+            ORDER BY RubriqueId, DependDeId;
+            """;
+        var rows = await _connection.QueryAsync<DependanceRow>(
+            new CommandDefinition(sql, new { date }, cancellationToken: ct));
+        return rows.Select(r => new DependanceArete(r.RubriqueId, r.DependDeId)).ToList();
+    }
+
     private async Task<Result<IrgReglePeriode?>> ChargerRegleIrgAsync(string date, CancellationToken ct)
     {
         const string sqlRegle = """
@@ -187,6 +218,7 @@ public sealed class PayrollReadRepository : IPayrollReadRepository
     private sealed record ConditionRow(string Id, string RubriqueId, string CritereId, string? GroupeId, string Operateur, string Valeur, string DateEffet, string? DateFin);
     private sealed record CritereRow(string Id, string Libelle, string TypeValeur, string SourceResolution);
     private sealed record CotisationRow(string Code, string AssietteRef, double? Taux, string TypeCotisation);
+    private sealed record DependanceRow(string RubriqueId, string DependDeId);
     private sealed record IrgRegleRow(string Code, string BaremeId, long ExonerationSeuil, double AbattementTaux, long AbattementMin, long AbattementMax, string CoefGeneral, string ConstGeneral, string CoefSpecial, string ConstSpecial, long PlafondSpecial);
     private sealed record IrgTrancheRow(long BorneInf, long? BorneSup, double Taux);
 

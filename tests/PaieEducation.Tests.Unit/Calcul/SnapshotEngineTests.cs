@@ -56,7 +56,8 @@ public class SnapshotEngineTests
         Criteres: new Dictionary<string, CritereEligibilite>(),
         Cotisations: Array.Empty<CotisationCalcul>(),
         Profil: ProfilFiscal.Standard,
-        RegleIrg: Irg2022());
+        RegleIrg: Irg2022(),
+        Dependances: Array.Empty<DependanceArete>());
 
     [Fact]
     public void Capturer_regroupe_input_et_resultat_sans_les_modifier()

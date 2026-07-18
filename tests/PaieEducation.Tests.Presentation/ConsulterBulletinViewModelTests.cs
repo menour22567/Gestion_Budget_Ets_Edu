@@ -5,6 +5,7 @@ using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Repositories;
+using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
@@ -37,7 +38,8 @@ public class ConsulterBulletinViewModelTests
             new Dictionary<string, decimal>(), new Dictionary<string, decimal>(), new Dictionary<string, string>(),
             Array.Empty<RubriqueCalcul>(), Array.Empty<BaremeValue>(), Array.Empty<ConditionEligibilite>(),
             new Dictionary<string, CritereEligibilite>(), Array.Empty<CotisationCalcul>(),
-            ProfilFiscal.Standard, RegleIrg: null);
+            ProfilFiscal.Standard, RegleIrg: null,
+            Array.Empty<DependanceArete>());
         var bulletin = new Bulletin(
             Lignes: Array.Empty<BulletinLigne>(), TotalGains: new Money(75325m), AssietteCotisable: new Money(75325m),
             AssietteImposable: new Money(68546m), TotalRetenues: new Money(6779m), Irg: new Money(10807m), Net: new Money(57739m),

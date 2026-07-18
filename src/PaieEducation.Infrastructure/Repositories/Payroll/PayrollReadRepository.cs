@@ -45,11 +45,35 @@ public sealed class PayrollReadRepository : IPayrollReadRepository
         ProfilFiscal profil,
         CancellationToken ct = default)
     {
+        return await ChargerAvecBaremesOverrideAsync(agent, datePaie, variablesBase, sourcesValeur, clesBareme,
+            profil, baremesOverride: null, ct);
+    }
+
+    public async Task<Result<PayrollInput>> ChargerAvecBaremesOverrideAsync(
+        AgentContext agent,
+        string datePaie,
+        IReadOnlyDictionary<string, decimal> variablesBase,
+        IReadOnlyDictionary<string, decimal> sourcesValeur,
+        IReadOnlyDictionary<string, string> clesBareme,
+        ProfilFiscal profil,
+        IReadOnlyList<BaremeValue>? baremesOverride,
+        CancellationToken ct = default)
+    {
         ArgumentNullException.ThrowIfNull(agent);
         ArgumentNullException.ThrowIfNull(variablesBase);
 
         var rubriques = await ChargerRubriquesGainAsync(datePaie, ct);
-        var baremes = await ChargerBaremesAsync(rubriques.Select(r => r.Id).ToList(), ct);
+        var baremesDb = await ChargerBaremesAsync(rubriques.Select(r => r.Id).ToList(), ct);
+
+        // Agrégation DB + overrides (Lot 3.2). Les overrides sont insérés en
+        // tête de liste : en cas d'égalité (RubriqueId, Dimension, BorneInf,
+        // période couvrante), la première occurrence gagne → override > DB.
+        // Cf. J5M §3 (D-B4) « premier override gagne ». Règle pragmatique,
+        // testable, documentée.
+        IReadOnlyList<BaremeValue> baremes = baremesOverride is { Count: > 0 }
+            ? baremesOverride.Concat(baremesDb).ToList()
+            : baremesDb;
+
         var conditions = await ChargerConditionsAsync(datePaie, ct);
         var criteres = await ChargerCriteresAsync(ct);
         var cotisations = await ChargerCotisationsAsync(datePaie, ct);

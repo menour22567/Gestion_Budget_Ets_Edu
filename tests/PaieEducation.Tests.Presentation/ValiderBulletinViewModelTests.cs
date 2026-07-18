@@ -54,10 +54,12 @@ public class ValiderBulletinViewModelTests
             Array.Empty<DependanceArete>());
 
         var payroll = new Mock<IPayrollReadRepository>();
-        payroll.Setup(p => p.ChargerAsync(
+        payroll.Setup(p => p.ChargerAvecBaremesOverrideAsync(
                 It.IsAny<AgentContext>(), "2025-06-01",
                 It.IsAny<IReadOnlyDictionary<string, decimal>>(), It.IsAny<IReadOnlyDictionary<string, decimal>>(),
-                It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<ProfilFiscal>(), It.IsAny<CancellationToken>()))
+                It.IsAny<IReadOnlyDictionary<string, string>>(), It.IsAny<ProfilFiscal>(),
+                It.IsAny<IReadOnlyList<PaieEducation.Domain.Workbench.ValueObjects.BaremeValue>?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(payrollInput));
 
         var bulletins = new Mock<IBulletinRepository>();

@@ -149,6 +149,58 @@ public class SimulerImpactReelTests
         Assert.Contains("continuité", r.Error.Message);
     }
 
+    [Fact]
+    public void BaremesOverride_seul_sans_NouvelleValeurPoint_declenche_le_chemin_full_et_n_ecrit_rien()
+    {
+        // Lot 3.2 (J5M §3 D-B1/D-B5) : BaremesOverride != null déclenche
+        // le chemin full, même si NouvelleValeurPoint est null. C'est le
+        // scénario « et si je change le forfait DOC_PEDAG ? ».
+        // L'agent n'est pas trouvable (mock strict retourne NotFound) → le
+        // simulateur l'ignore silencieusement et continue (NbAgents=0).
+        var agents = new Mock<IAgentCarriereRepository>(MockBehavior.Strict);
+        agents.Setup(a => a.ResoudreAsync("A-INEXISTANT", "2026-01-01", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<AgentContext>(Error.NotFound("Agent introuvable : 'A-INEXISTANT'.")));
+        var useCase = SimulerFullAvec(agents);
+        var conditions = new[]
+        {
+            ConditionEligibilite.Creer("C-IMP", "DOC_PEDAG", "CORPS",
+                Operateur.Egal, "PDLP", null,
+                PeriodeReglementaire.Creer("2026-01-01", null))
+        };
+        var criteres = new Dictionary<string, CritereEligibilite>
+        {
+            ["CORPS"] = CritereEligibilite.Creer("CORPS", "Corps",
+                TypeValeurCritere.Enum, SourceResolution.Carriere)
+        };
+        var baremeOverride = new[]
+        {
+            BaremeValue.Creer(
+                rubriqueId: "DOC_PEDAG",
+                dimension: BaremeDimension.Categorie,
+                borneInf: "13", borneSup: "13",
+                typeValeur: BaremeTypeValeur.Montant,
+                valeur: "3000",
+                periode: PeriodeReglementaire.Creer("2026-01-01", null))
+        };
+
+        var demande = new SimulerEvolutionReglementaire.Demande(
+            RubriqueId: "DOC_PEDAG",
+            Description: "DOC_PEDAG cat.13 2000 → 3000",
+            NouvellePeriode: PeriodeReglementaire.Creer("2026-01-01", null),
+            PeriodesExistantes: Array.Empty<PeriodeReglementaire>(),
+            ConditionsApres: conditions,
+            Criteres: criteres,
+            NouvelleValeurPoint: null,   // <-- pas de VPI, juste barème
+            AgentIdsPourImpact: new[] { "A-INEXISTANT" },
+            DateCalcul: "2026-01-01",
+            BaremesOverride: baremeOverride);
+
+        var r = useCase.Executer(demande);
+        Assert.True(r.IsSuccess, r.IsFailure ? r.Error.Message : null);
+        Assert.Equal(0, r.Value.NbAgents);
+        Assert.Equal(0m, r.Value.DeltaMinMensuel);  // aucun agent éligible → 0
+    }
+
     /// <summary>
     /// Construit un simulateur « full » avec stubs réels (classes sealed,
     /// non mockables). Les 3 ports de domaine (Agents / Bulletins / Clock)
@@ -160,7 +212,11 @@ public class SimulerImpactReelTests
     /// </summary>
     private static SimulerEvolutionReglementaire SimulerFull()
     {
-        var agents = new Mock<IAgentCarriereRepository>(MockBehavior.Strict);
+        return SimulerFullAvec(new Mock<IAgentCarriereRepository>(MockBehavior.Strict));
+    }
+
+    private static SimulerEvolutionReglementaire SimulerFullAvec(Mock<IAgentCarriereRepository> agents)
+    {
         var bulletins = new Mock<IBulletinReadRepository>(MockBehavior.Strict);
         var clock = new Mock<IClock>(MockBehavior.Strict);
         var variables = new Mock<IVariableRepository>(MockBehavior.Strict);

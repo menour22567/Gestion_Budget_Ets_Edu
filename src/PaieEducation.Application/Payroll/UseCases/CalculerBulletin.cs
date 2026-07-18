@@ -2,6 +2,7 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.Services;
+using PaieEducation.Domain.Workbench.ValueObjects;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
 using PaieEducation.Application.Payroll.Services;
@@ -32,13 +33,23 @@ public sealed class CalculerBulletin
     /// §3.2 — D-S2. Tous les autres paramètres (<c>INDICE_MIN</c>,
     /// <c>INDICE_ECH</c>) restent lus depuis la base.
     /// </param>
+    /// <param name="BaremesOverride">
+    /// Option « what-if » pour la simulation d'évolution réglementaire (Lot
+    /// 3.2 — J5M) : surcharge une partie des barèmes (table
+    /// <c>RubriqueBaremes</c>) par des <see cref="BaremeValue"/>
+    /// hypothétiques. <c>null</c> = pas d'override (cas par défaut, équivalent
+    /// à <c>ChargerAsync</c>). Les barèmes surchargés battent la DB (premier
+    /// gagne) ; les barèmes non surchargés restent lus normalement. Cf. J5M
+    /// §3 — D-B1/D-B4.
+    /// </param>
     public sealed record Demande(
         string AgentId,
         string DatePaie,
         IReadOnlyDictionary<string, decimal>? SourcesValeur = null,
         IReadOnlyDictionary<string, string>? ClesBareme = null,
         ProfilFiscal Profil = ProfilFiscal.Standard,
-        decimal? VpiOverride = null);
+        decimal? VpiOverride = null,
+        IReadOnlyList<BaremeValue>? BaremesOverride = null);
 
     private readonly IAgentCarriereRepository _agents;
     private readonly IVariableRepository _variables;
@@ -112,9 +123,9 @@ public sealed class CalculerBulletin
             _entrees.ResoudreSourcesValeur(agent.Value, demande.DatePaie, basePapp.Value, noteMax.Value),
             demande.SourcesValeur);
 
-        var input = await _payroll.ChargerAsync(
+        var input = await _payroll.ChargerAvecBaremesOverrideAsync(
             agent.Value, demande.DatePaie, variables.Value, sourcesValeur, clesBareme,
-            demande.Profil, ct);
+            demande.Profil, demande.BaremesOverride, ct);
         if (input.IsFailure)
             return Result.Failure<(PaieEducation.Domain.Calcul.Pipeline.PayrollInput, Bulletin)>(input.Error);
 

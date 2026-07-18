@@ -82,6 +82,15 @@ public sealed class SimulerEvolutionReglementaire
     /// <c>NouvellePeriode.DateEffet &lt; DateCalcul</c> ⇒ bulletins validés
     /// entre la date d'effet et aujourd'hui = candidats au rappel (D9).
     /// </param>
+    /// <param name="BaremesOverride">
+    /// Option « what-if » pour la simulation d'évolution de barème (Lot 3.2 —
+    /// J5M) : surcharge un ou plusieurs barèmes (`RubriqueBaremes`) par des
+    /// <see cref="BaremeValue"/> hypothétiques sans modifier la base.
+    /// <c>null</c> = pas d'override (cas par défaut). Les barèmes surchargés
+    /// battent la DB (premier gagne — règle D-B4) ; les autres restent lus
+    /// normalement. Couvre les patterns P4 (forfait catégorie), P5 (forfait
+    /// type établissement), P6 (% par grade), P12 (IFC). Cf. J5M §3.
+    /// </param>
     public sealed record Demande(
         string RubriqueId,
         string Description,
@@ -92,7 +101,8 @@ public sealed class SimulerEvolutionReglementaire
         IReadOnlyDictionary<string, CritereEligibilite>? Criteres = null,
         decimal? NouvelleValeurPoint = null,
         IReadOnlyList<string>? AgentIdsPourImpact = null,
-        string? DateCalcul = null);
+        string? DateCalcul = null,
+        IReadOnlyList<BaremeValue>? BaremesOverride = null);
 
     private readonly RegleEligibiliteEvaluator _evaluator = new(new CritereEligibiliteResolver());
     private readonly CalculerBulletin? _calcul;
@@ -147,10 +157,15 @@ public sealed class SimulerEvolutionReglementaire
                 Error.Validation($"Évolution refusée (continuité temporelle) : {validation.Error.Message}"));
         }
 
-        // 2. Chemin full (impact réel) — exige NouvelleValeurPoint + 4 deps.
-        if (demande.NouvelleValeurPoint is { } vpiSimulee)
+        // 2. Chemin full (impact réel) — déclenché si l'un des overrides est
+        // fourni : NouvelleValeurPoint (Lot 3.1) ou BaremesOverride (Lot
+        // 3.2). Permet de tester « et si la VPI change ? » et « et si le
+        // forfait DOC_PEDAG change ? » avec le même calcul de delta net.
+        if (demande.NouvelleValeurPoint is { } vpiSimulee
+            || demande.BaremesOverride is { Count: > 0 })
         {
-            return ExecuterCheminFull(demande, vpiSimulee);
+            return ExecuterCheminFull(demande,
+                demande.NouvelleValeurPoint);
         }
 
         // 3. Chemin lite — backward compat avec les 7 tests unitaires existants.
@@ -191,9 +206,16 @@ public sealed class SimulerEvolutionReglementaire
     /// BulletinsAvertis pour la rétroactivité. C'est le calcul promis par
     /// ADR-0007 D8 et illustré par le mockup J3I §7.2.
     /// </summary>
-    private Result<RapportImpact> ExecuterCheminFull(Demande demande, decimal vpiSimulee)
+    /// <param name="vpiSimulee">
+    /// VPI hypothétique si <see cref="Demande.NouvelleValeurPoint"/> est
+    /// fourni (Lot 3.1) ; <c>null</c> si seul un override barème est
+    /// demandé (Lot 3.2). Le test d'override est « ce qui a changé » : on
+    /// calcule la passe simule avec TOUS les overrides fournis
+    /// (VPI + barème(s)) et la passe baseline sans aucun override.
+    /// </param>
+    private Result<RapportImpact> ExecuterCheminFull(Demande demande, decimal? vpiSimulee)
     {
-        if (vpiSimulee <= 0m)
+        if (vpiSimulee is <= 0m)
             return Result.Failure<RapportImpact>(
                 Error.Validation($"NouvelleValeurPoint doit être strictement positive (reçu : {vpiSimulee})."));
 
@@ -242,14 +264,18 @@ public sealed class SimulerEvolutionReglementaire
             if (!eligibilite.EstEligible) continue;
             nbAgentsEligibles++;
 
-            // c) Calcul du bulletin avec la VPI actuelle (lecture DB).
+            // c) Calcul du bulletin **baseline** (lecture DB pure — pas
+            //    d'override, c'est la référence avant évolution).
             var baseline = _calcul.ExecuterAsync(new CalculerBulletin.Demande(
                 AgentId: agentId, DatePaie: datePaie)).GetAwaiter().GetResult();
             if (baseline.IsFailure) continue;
 
-            // d) Calcul du bulletin avec la VPI hypothétique (override).
+            // d) Calcul du bulletin **simulé** (tous les overrides fournis
+            //    dans la Demande sont appliqués : VPI + barèmes).
             var simule = _calcul.ExecuterAsync(new CalculerBulletin.Demande(
-                AgentId: agentId, DatePaie: datePaie, VpiOverride: vpiSimulee))
+                AgentId: agentId, DatePaie: datePaie,
+                VpiOverride: vpiSimulee,
+                BaremesOverride: demande.BaremesOverride))
                 .GetAwaiter().GetResult();
             if (simule.IsFailure) continue;
 

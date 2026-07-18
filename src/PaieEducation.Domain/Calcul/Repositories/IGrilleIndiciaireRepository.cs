@@ -1,4 +1,6 @@
 using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Domain.Calcul.Repositories;
 
@@ -21,19 +23,20 @@ public interface IGrilleIndiciaireRepository
     /// <summary>Définit une nouvelle valeur du point indiciaire à compter de <paramref name="dateEffet"/>.</summary>
     /// <returns>L'Id (code métier) de la ligne créée.</returns>
     Task<Result<string>> DefinirValeurPointAsync(
-        decimal valeur, string dateEffet, string version, string? source, DateTimeOffset creeLe, CancellationToken ct = default);
+        decimal valeur, string dateEffet, string version, string? source, DateTimeOffset creeLe,
+        CancellationToken ct = default, IUnitOfWork? uow = null);
 
     /// <summary>Définit un nouvel indice minimum de grille pour une catégorie à compter de <paramref name="dateEffet"/>.</summary>
     /// <returns>L'Id (code métier) de la ligne créée.</returns>
     Task<Result<string>> DefinirIndiceMinAsync(
         string categorieId, int indiceMin, string dateEffet, string version, string? source, DateTimeOffset creeLe,
-        CancellationToken ct = default);
+        CancellationToken ct = default, IUnitOfWork? uow = null);
 
     /// <summary>Définit un nouvel indice d'échelon à compter de <paramref name="dateEffet"/>.</summary>
     /// <returns>L'Id (code métier) de la ligne créée.</returns>
     Task<Result<string>> DefinirIndiceEchelonAsync(
         string echelonId, int indice, string dateEffet, string version, string? source, DateTimeOffset creeLe,
-        CancellationToken ct = default);
+        CancellationToken ct = default, IUnitOfWork? uow = null);
 
     /// <summary>
     /// Clone la valeur du point indiciaire en vigueur vers une nouvelle version
@@ -44,5 +47,6 @@ public interface IGrilleIndiciaireRepository
     /// </summary>
     /// <returns>L'Id (code métier) de la ligne créée.</returns>
     Task<Result<string>> DupliquerValeurPointAsync(
-        string nouvelleDateEffet, string version, string? source, DateTimeOffset creeLe, CancellationToken ct = default);
+        string nouvelleDateEffet, string version, string? source, DateTimeOffset creeLe,
+        CancellationToken ct = default, IUnitOfWork? uow = null);
 }

@@ -1,4 +1,6 @@
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Repositories;
 using PaieEducation.Shared.Time;
 
@@ -30,6 +32,6 @@ public sealed class SuspendreAffectation
         ArgumentNullException.ThrowIfNull(demande);
         Guard.AgainstNullOrWhiteSpace(demande.AgentRubriqueId);
 
-        return await _agentRubriques.ChangerStatutAsync(demande.AgentRubriqueId, "SUSPENDUE", _clock.UtcNow, ct);
+        return await _agentRubriques.ChangerStatutAsync(demande.AgentRubriqueId, StatutAffectation.Suspendue, _clock.UtcNow, ct);
     }
 }

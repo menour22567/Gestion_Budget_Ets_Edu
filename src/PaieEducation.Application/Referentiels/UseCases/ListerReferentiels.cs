@@ -1,6 +1,7 @@
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.ValueObjects;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Application.Referentiels.UseCases;
 

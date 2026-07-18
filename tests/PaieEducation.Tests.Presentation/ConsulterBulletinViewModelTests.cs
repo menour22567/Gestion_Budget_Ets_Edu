@@ -6,11 +6,14 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.Snapshot;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Domain.Workbench.ValueObjects;
+using PaieEducation.Shared.Money;
 using PaieEducation.Presentation.Dialogs;
 using PaieEducation.Presentation.Payroll;
+using PaieEducation.Reporting.UseCases;
 
 namespace PaieEducation.Tests.Presentation;
 
@@ -36,8 +39,8 @@ public class ConsulterBulletinViewModelTests
             new Dictionary<string, CritereEligibilite>(), Array.Empty<CotisationCalcul>(),
             ProfilFiscal.Standard, RegleIrg: null);
         var bulletin = new Bulletin(
-            Lignes: Array.Empty<BulletinLigne>(), TotalGains: 75325m, AssietteCotisable: 75325m,
-            AssietteImposable: 68546m, TotalRetenues: 6779m, Irg: 10807m, Net: 57739m,
+            Lignes: Array.Empty<BulletinLigne>(), TotalGains: new Money(75325m), AssietteCotisable: new Money(75325m),
+            AssietteImposable: new Money(68546m), TotalRetenues: new Money(6779m), Irg: new Money(10807m), Net: new Money(57739m),
             Audit: new JournalAudit(Array.Empty<EtapeAudit>()));
         return new BulletinSnapshot(input, bulletin, "2025-06-05T10:00:00.0000000Z");
     }
@@ -51,7 +54,7 @@ public class ConsulterBulletinViewModelTests
 
         var consulterBulletin = new ConsulterBulletin(bulletins.Object);
         var dialogs = new Mock<IDialogService>();
-        var vm = new ConsulterBulletinViewModel(consulterBulletin, dialogs.Object)
+        var vm = new ConsulterBulletinViewModel(consulterBulletin, new Mock<IExporterBulletin>().Object, dialogs.Object)
         {
             AgentId = "A-1",
             DatePaie = "2025-06-01",
@@ -62,6 +65,8 @@ public class ConsulterBulletinViewModelTests
         Assert.False(vm.EnCours);
         Assert.NotNull(vm.Resultat);
         Assert.Contains("57", vm.Resultat);
+        Assert.NotNull(vm.Bulletin);
+        Assert.True(vm.HasBulletin);
         dialogs.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Never);
     }
 
@@ -74,7 +79,7 @@ public class ConsulterBulletinViewModelTests
 
         var consulterBulletin = new ConsulterBulletin(bulletins.Object);
         var dialogs = new Mock<IDialogService>();
-        var vm = new ConsulterBulletinViewModel(consulterBulletin, dialogs.Object)
+        var vm = new ConsulterBulletinViewModel(consulterBulletin, new Mock<IExporterBulletin>().Object, dialogs.Object)
         {
             AgentId = "A-1",
             DatePaie = "2025-06-01",
@@ -84,6 +89,8 @@ public class ConsulterBulletinViewModelTests
 
         Assert.False(vm.EnCours);
         Assert.Null(vm.Resultat);
+        Assert.Null(vm.Bulletin);
+        Assert.False(vm.HasBulletin);
         dialogs.Verify(d => d.ShowErrorAsync(It.Is<string>(m => m.Contains("bulletin"))), Times.Once);
     }
 }

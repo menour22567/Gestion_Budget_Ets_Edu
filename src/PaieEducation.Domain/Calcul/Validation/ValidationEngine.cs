@@ -1,5 +1,7 @@
 using PaieEducation.Domain.Calcul.Pipeline;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Money;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Domain.Calcul.Validation;
 
@@ -17,7 +19,7 @@ public sealed class ValidationEngine
 
         foreach (var ligne in b.Lignes)
         {
-            if (ligne.Montant < 0)
+            if (ligne.Montant < Money.Zero)
             {
                 return Result.Failure<Bulletin>(Error.Validation(
                     $"Montant négatif non justifié sur la ligne « {ligne.RubriqueId} » : {ligne.Montant}."));
@@ -34,7 +36,7 @@ public sealed class ValidationEngine
             return Result.Failure<Bulletin>(Error.Validation(
                 $"Assiette imposable ({b.AssietteImposable}) supérieure au total des gains ({b.TotalGains})."));
         }
-        if (b.Irg < 0)
+        if (b.Irg < Money.Zero)
         {
             return Result.Failure<Bulletin>(Error.Validation($"IRG négatif : {b.Irg}."));
         }

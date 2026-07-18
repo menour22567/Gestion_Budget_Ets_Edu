@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 using PaieEducation.Persistence.Migrations;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Tools;
 

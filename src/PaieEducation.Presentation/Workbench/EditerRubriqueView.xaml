@@ -1,0 +1,100 @@
+<UserControl x:Class="PaieEducation.Presentation.Workbench.EditerRubriqueView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="640">
+    <DockPanel Margin="24">
+        <TextBlock Text="Éditer une rubrique" FontSize="20" FontWeight="Bold" Margin="0,0,0,16" DockPanel.Dock="Top"/>
+
+        <TabControl>
+            <!-- Identité -->
+            <TabItem Header="Identité">
+                <StackPanel Margin="12" MaxWidth="520" HorizontalAlignment="Left">
+                    <TextBlock Text="Code rubrique (ex. ISSRP_45)"/>
+                    <TextBox Text="{Binding RubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Libellé"/>
+                    <TextBox Text="{Binding Libelle, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Nature"/>
+                            <ComboBox ItemsSource="{Binding Natures}" SelectedItem="{Binding Nature}" Width="160"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Base de calcul"/>
+                            <ComboBox ItemsSource="{Binding BasesCalcul}" SelectedItem="{Binding BaseCalcul}" Width="200"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Périodicité (calcul)"/>
+                            <ComboBox ItemsSource="{Binding Periodicites}" SelectedItem="{Binding Periodicite}" Width="200"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Périodicité (versement, opt.)"/>
+                            <TextBox Text="{Binding PeriodiciteVersement, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Ordre de calcul"/>
+                            <TextBox Text="{Binding OrdreCalcul, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Source valeur (code, opt.)"/>
+                            <TextBox Text="{Binding SourceValeurId, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <CheckBox Content="Imposable" IsChecked="{Binding EstImposable}" Margin="0,0,16,0"/>
+                        <CheckBox Content="Cotisable" IsChecked="{Binding EstCotisable}" Margin="0,0,16,0"/>
+                        <CheckBox Content="Affectable manuellement" IsChecked="{Binding EstAffectableManuellement}" Margin="0,0,16,0"/>
+                        <CheckBox Content="Occurrences multiples" IsChecked="{Binding OccurrencesMultiples}"/>
+                    </StackPanel>
+                    <TextBlock Text="Description"/>
+                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Source (référence réglementaire, opt.)"/>
+                    <TextBox Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Enregistrer" Command="{Binding DefinirIdentiteCommand}" Width="140" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding IdentiteResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Formule -->
+            <TabItem Header="Formule">
+                <StackPanel Margin="12" MaxWidth="560" HorizontalAlignment="Left">
+                    <TextBlock Text="Code rubrique"/>
+                    <TextBox Text="{Binding FormuleRubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Expression (ex. TBASE * 0.45)"/>
+                    <TextBox Text="{Binding FormuleExpression, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding FormuleDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Valider la syntaxe" Command="{Binding ValiderFormuleCommand}" Width="160" Margin="0,0,12,0"/>
+                        <TextBlock Text="{Binding FormuleValidation}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Content="Enregistrer la formule" Command="{Binding DefinirFormuleCommand}" Width="200" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding FormuleResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Paramètre -->
+            <TabItem Header="Paramètre">
+                <StackPanel Margin="12" MaxWidth="520" HorizontalAlignment="Left">
+                    <TextBlock Text="Code rubrique"/>
+                    <TextBox Text="{Binding ParametreRubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Clé (ex. TAUX, SEUIL)"/>
+                    <TextBox Text="{Binding ParametreCle, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Valeur"/>
+                    <TextBox Text="{Binding ParametreValeur, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding ParametreDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Source (opt.)"/>
+                    <TextBox Text="{Binding ParametreSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Enregistrer le paramètre" Command="{Binding DefinirParametreCommand}" Width="220" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding ParametreResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</UserControl>

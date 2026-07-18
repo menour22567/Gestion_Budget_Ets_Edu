@@ -1,5 +1,5 @@
-using PaieEducation.Tools.Seeding;
-using PaieEducation.Tools.Seeding.Models;
+using PaieEducation.Seeding;
+using PaieEducation.Seeding.Models;
 
 namespace PaieEducation.Tests.Tools;
 
@@ -10,7 +10,7 @@ namespace PaieEducation.Tests.Tools;
 /// </summary>
 public class CsvCascadeParserTests
 {
-    private static async Task<IReadOnlyList<PaieEducation.Tools.Seeding.Models.CascadeRow>> Parse(string csv)
+    private static async Task<IReadOnlyList<PaieEducation.Seeding.Models.CascadeRow>> Parse(string csv)
     {
         var parser = new CsvCascadeParser();
         using var sr = new StringReader(csv);

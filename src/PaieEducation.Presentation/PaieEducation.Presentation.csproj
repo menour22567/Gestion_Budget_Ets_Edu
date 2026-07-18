@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PaieEducation.Application\PaieEducation.Application.csproj" />
+    <ProjectReference Include="..\PaieEducation.Reporting\PaieEducation.Reporting.csproj" />
     <ProjectReference Include="..\PaieEducation.Shared\PaieEducation.Shared.csproj" />
   </ItemGroup>
 

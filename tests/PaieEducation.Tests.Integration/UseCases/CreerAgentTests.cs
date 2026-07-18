@@ -30,6 +30,12 @@ public class CreerAgentTests
             INSERT INTO Grades (Id, Libelle, CorpsId, Ordre, CreatedAt, Hash) VALUES ('PEM-G1', 'Grade 1', 'PEM', 1, '2026-01-01T00:00:00Z', 'h');
             INSERT INTO Categories (Id, Niveau, Libelle, CreatedAt, Hash) VALUES ('13', 13, 'Catégorie 13', '2026-01-01T00:00:00Z', 'h');
             INSERT INTO Echelons (Id, Numero, Libelle, CreatedAt, Hash) VALUES ('5', 5, 'Échelon 5', '2026-01-01T00:00:00Z', 'h');
+            INSERT INTO TypesSexe (Id, Libelle, CreatedAt, Hash) VALUES ('M', 'Masculin', '2026-01-01T00:00:00Z', 'h');
+            INSERT INTO TypesSexe (Id, Libelle, CreatedAt, Hash) VALUES ('F', 'Féminin', '2026-01-01T00:00:00Z', 'h');
+            INSERT INTO SituationsFamiliales (Id, Libelle, CreatedAt, Hash) VALUES ('CELIBATAIRE', 'Célibataire', '2026-01-01T00:00:00Z', 'h');
+            INSERT INTO SituationsFamiliales (Id, Libelle, CreatedAt, Hash) VALUES ('MARIE', 'Marié(e)', '2026-01-01T00:00:00Z', 'h');
+            INSERT INTO TypesContrat (Id, Libelle, CreatedAt, Hash) VALUES ('STATUTAIRE', 'Statutaire', '2026-01-01T00:00:00Z', 'h');
+            INSERT INTO TypesContrat (Id, Libelle, CreatedAt, Hash) VALUES ('CONTRACTUEL', 'Contractuel', '2026-01-01T00:00:00Z', 'h');
             """);
     }
 
@@ -44,7 +50,7 @@ public class CreerAgentTests
         using var scope = SchemaTestSupport.CreateMigrated();
         SeedReferentiel(scope.Conn);
 
-        var useCase = new CreerAgent(new AgentRepository(scope.Conn), new HorlogeFixe(DateTimeOffset.UtcNow));
+        var useCase = new CreerAgent(new AgentRepository(scope.Conn), new AgentReadRepository(scope.Conn), new HorlogeFixe(DateTimeOffset.UtcNow));
         var creation = await useCase.ExecuterAsync(Demande());
         Assert.True(creation.IsSuccess, creation.IsFailure ? creation.Error.Message : null);
 
@@ -62,7 +68,7 @@ public class CreerAgentTests
         using var scope = SchemaTestSupport.CreateMigrated();
         SeedReferentiel(scope.Conn);
 
-        var useCase = new CreerAgent(new AgentRepository(scope.Conn), new HorlogeFixe(DateTimeOffset.UtcNow));
+        var useCase = new CreerAgent(new AgentRepository(scope.Conn), new AgentReadRepository(scope.Conn), new HorlogeFixe(DateTimeOffset.UtcNow));
         var result = await useCase.ExecuterAsync(Demande(sexe: "X"));
 
         Assert.True(result.IsFailure);

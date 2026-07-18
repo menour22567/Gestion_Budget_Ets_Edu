@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using PaieEducation.Domain.Common;
 using PaieEducation.Domain.Workbench.ValueObjects;
 
 namespace PaieEducation.Infrastructure.Repositories.Workbench;
@@ -23,7 +24,7 @@ namespace PaieEducation.Infrastructure.Repositories.Workbench;
 /// la valeur mémorisée.
 /// </para>
 /// </remarks>
-public sealed class WorkbenchReadCache
+public sealed class WorkbenchReadCache : ICacheInvalidator
 {
     private readonly WorkbenchReadRepository _inner;
     private volatile ConcurrentDictionary<string, Lazy<Task<object>>> _entrees =

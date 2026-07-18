@@ -5,6 +5,7 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Domain.Workbench.ValueObjects;
+using PaieEducation.Shared.Money;
 
 namespace PaieEducation.Domain.Calcul.Pipeline;
 
@@ -60,7 +61,7 @@ public sealed record PayrollInput(
 public sealed record BulletinLigne(
     string RubriqueId,
     NatureRubrique Nature,
-    decimal Montant,
+    Money Montant,
     bool Imposable,
     bool Cotisable,
     ExplicationLigne Explication);
@@ -71,10 +72,10 @@ public sealed record BulletinLigne(
 /// </summary>
 public sealed record Bulletin(
     IReadOnlyList<BulletinLigne> Lignes,
-    decimal TotalGains,
-    decimal AssietteCotisable,
-    decimal AssietteImposable,
-    decimal TotalRetenues,
-    decimal Irg,
-    decimal Net,
+    Money TotalGains,
+    Money AssietteCotisable,
+    Money AssietteImposable,
+    Money TotalRetenues,
+    Money Irg,
+    Money Net,
     JournalAudit Audit);

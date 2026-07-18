@@ -6,6 +6,7 @@ using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Domain.Workbench.ValueObjects;
+using PaieEducation.Shared.Money;
 
 namespace PaieEducation.Tests.Unit.Calcul;
 
@@ -20,10 +21,11 @@ public class RappelCalculatorTests
     private static readonly JournalAudit AuditVide = new(Array.Empty<EtapeAudit>());
 
     private static BulletinLigne Ligne(string id, decimal montant)
-        => new(id, NatureRubrique.Gain, montant, true, true, ExplicationVide);
+        => new(id, NatureRubrique.Gain, new Money(montant), true, true, ExplicationVide);
 
     private static Bulletin Bulletin(params BulletinLigne[] lignes)
-        => new(lignes, lignes.Sum(l => l.Montant), 0m, 0m, 0m, 0m, lignes.Sum(l => l.Montant), AuditVide);
+        => new(lignes, new Money(lignes.Sum(l => l.Montant.Amount)), Money.Zero, Money.Zero, Money.Zero, Money.Zero,
+            new Money(lignes.Sum(l => l.Montant.Amount)), AuditVide);
 
     private static BulletinSnapshot Snapshot(Bulletin b) => new(
         Input: DummyInput(), Resultat: b, CapturesLe: "2025-01-01T00:00:00Z");
@@ -66,9 +68,9 @@ public class RappelCalculatorTests
 
         var r = Assert.Single(rappels);
         Assert.Equal("ISSRP_45", r.RubriqueId);
-        Assert.Equal(13730m, r.MontantAncien);
-        Assert.Equal(15000m, r.MontantNouveau);
-        Assert.Equal(1270m, r.Delta);
+        Assert.Equal(13730m, r.MontantAncien.Amount);
+        Assert.Equal(15000m, r.MontantNouveau.Amount);
+        Assert.Equal(1270m, r.Delta.Amount);
     }
 
     [Fact]
@@ -81,9 +83,9 @@ public class RappelCalculatorTests
 
         var r = Assert.Single(rappels);
         Assert.Equal("QUALIF", r.RubriqueId);
-        Assert.Equal(0m, r.MontantAncien);
-        Assert.Equal(13500m, r.MontantNouveau);
-        Assert.Equal(13500m, r.Delta);
+        Assert.Equal(0m, r.MontantAncien.Amount);
+        Assert.Equal(13500m, r.MontantNouveau.Amount);
+        Assert.Equal(13500m, r.Delta.Amount);
     }
 
     [Fact]
@@ -96,9 +98,9 @@ public class RappelCalculatorTests
 
         var r = Assert.Single(rappels);
         Assert.Equal("QUALIF", r.RubriqueId);
-        Assert.Equal(13500m, r.MontantAncien);
-        Assert.Equal(0m, r.MontantNouveau);
-        Assert.Equal(-13500m, r.Delta);
+        Assert.Equal(13500m, r.MontantAncien.Amount);
+        Assert.Equal(0m, r.MontantNouveau.Amount);
+        Assert.Equal(-13500m, r.Delta.Amount);
     }
 
     [Fact]

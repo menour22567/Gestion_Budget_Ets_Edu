@@ -1,7 +1,10 @@
 using System.Globalization;
 using Dapper;
 using Microsoft.Data.Sqlite;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Common;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Repositories;
 using PaieEducation.Domain.Workbench.ValueObjects;
 
@@ -14,9 +17,13 @@ namespace PaieEducation.Infrastructure.Repositories.Workbench;
 public sealed class AgentRubriqueRepository : IAgentRubriqueRepository
 {
     private readonly SqliteConnection _connection;
+    private readonly ICacheInvalidator? _cache;
 
-    public AgentRubriqueRepository(SqliteConnection connection)
-        => _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+    public AgentRubriqueRepository(SqliteConnection connection, ICacheInvalidator? cache = null)
+    {
+        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _cache = cache;
+    }
 
     public async Task<Result<string?>> SuggererAsync(
         string agentId, string rubriqueId, int occurrence, string origine, string dateEffet,
@@ -27,10 +34,10 @@ public sealed class AgentRubriqueRepository : IAgentRubriqueRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(origine);
         ArgumentException.ThrowIfNullOrWhiteSpace(dateEffet);
 
-        var existeDeja = await _connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition("""
+        var existeDeja = await _connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition($"""
             SELECT Id FROM AgentRubriques
             WHERE AgentId = @agentId AND RubriqueId = @rubriqueId AND Occurrence = @occurrence
-              AND Statut != 'SUPPRIMEE'
+              AND Statut != '{StatutAffectation.Supprimee}'
               AND DateEffet <= @dateEffet AND (DateFin IS NULL OR DateFin >= @dateEffet);
             """,
             new { agentId, rubriqueId, occurrence, dateEffet }, cancellationToken: ct));
@@ -40,12 +47,13 @@ public sealed class AgentRubriqueRepository : IAgentRubriqueRepository
         var id = Guid.NewGuid().ToString();
         var createdAt = creeLe.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
-        await _connection.ExecuteAsync(new CommandDefinition("""
+        await _connection.ExecuteAsync(new CommandDefinition($"""
             INSERT INTO AgentRubriques (Id, AgentId, RubriqueId, Occurrence, Statut, Origine, DateEffet, CreatedAt)
-            VALUES (@id, @agentId, @rubriqueId, @occurrence, 'SUGGEREE', @origine, @dateEffet, @createdAt);
+            VALUES (@id, @agentId, @rubriqueId, @occurrence, '{StatutAffectation.Suggerer}', @origine, @dateEffet, @createdAt);
             """,
             new { id, agentId, rubriqueId, occurrence, origine, dateEffet, createdAt }, cancellationToken: ct));
 
+        _cache?.Invalider();
         return Result.Success<string?>(id);
     }
 
@@ -82,15 +90,16 @@ public sealed class AgentRubriqueRepository : IAgentRubriqueRepository
             new { agentRubriqueId }, cancellationToken: ct));
         if (statutActuel is null)
             return Result.Failure<string>(Error.NotFound($"Affectation introuvable : '{agentRubriqueId}'."));
-        if (statutActuel == "SUPPRIMEE")
+        if (statutActuel == StatutAffectation.Supprimee)
             return Result.Failure<string>(Error.Conflict(
-                $"L'affectation '{agentRubriqueId}' est à l'état terminal SUPPRIMEE — créer une nouvelle ligne plutôt que la modifier."));
+                $"L'affectation '{agentRubriqueId}' est à l'état terminal {StatutAffectation.Supprimee} — créer une nouvelle ligne plutôt que la modifier."));
 
         var updatedAt = maintenant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
         await _connection.ExecuteAsync(new CommandDefinition(
             "UPDATE AgentRubriques SET Statut = @nouveauStatut, UpdatedAt = @updatedAt WHERE Id = @agentRubriqueId;",
             new { nouveauStatut, updatedAt, agentRubriqueId }, cancellationToken: ct));
 
+        _cache?.Invalider();
         return Result.Success(agentRubriqueId);
     }
 

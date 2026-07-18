@@ -47,4 +47,16 @@ public sealed partial class ShellViewModel : ObservableObject
 
     [RelayCommand]
     private void NaviguerVersWorkbench() => _navigation.NavigateTo<WorkbenchPlaceholderViewModel>();
+
+    [RelayCommand]
+    private void NaviguerVersMatriceCouverture() => _navigation.NavigateTo<MatriceCouvertureViewModel>();
+
+    [RelayCommand]
+    private void NaviguerVersAuditLog() => _navigation.NavigateTo<AuditLogViewModel>();
+
+    [RelayCommand]
+    private void NaviguerVersFicheRubrique() => _navigation.NavigateTo<FicheRubriqueViewModel>();
+
+    [RelayCommand]
+    private void NaviguerVersEditerRubrique() => _navigation.NavigateTo<EditerRubriqueViewModel>();
 }

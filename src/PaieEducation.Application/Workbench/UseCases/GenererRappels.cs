@@ -1,10 +1,9 @@
 using PaieEducation.Application.Payroll.UseCases;
-using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Repositories;
-using PaieEducation.Domain.Calcul.Services;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Shared.Time;
 
 namespace PaieEducation.Application.Workbench.UseCases;
@@ -22,29 +21,25 @@ namespace PaieEducation.Application.Workbench.UseCases;
 /// période — cette énumération n'existe pas), et persistance dans une
 /// table <c>Rappels</c> dédiée plutôt qu'en ligne d'un futur bulletin
 /// (le moteur de calcul n'a aucune notion de « rappels en attente »).
+/// Réutilise <see cref="CalculerBulletin.ResoudreAsync"/> pour l'orchestration
+/// de calcul (auto-résolution C2.2/C2.3 + arrondi paramétré C2.1).
 /// </remarks>
 public sealed class GenererRappels
 {
     private readonly IBulletinReadRepository _bulletinsLecture;
     private readonly IRappelRepository _rappels;
-    private readonly IAgentCarriereRepository _agents;
-    private readonly IVariableRepository _variables;
-    private readonly IPayrollReadRepository _payroll;
+    private readonly CalculerBulletin _calculer;
     private readonly IClock _clock;
 
     public GenererRappels(
         IBulletinReadRepository bulletinsLecture,
         IRappelRepository rappels,
-        IAgentCarriereRepository agents,
-        IVariableRepository variables,
-        IPayrollReadRepository payroll,
+        CalculerBulletin calculer,
         IClock clock)
     {
         _bulletinsLecture = bulletinsLecture ?? throw new ArgumentNullException(nameof(bulletinsLecture));
         _rappels = rappels ?? throw new ArgumentNullException(nameof(rappels));
-        _agents = agents ?? throw new ArgumentNullException(nameof(agents));
-        _variables = variables ?? throw new ArgumentNullException(nameof(variables));
-        _payroll = payroll ?? throw new ArgumentNullException(nameof(payroll));
+        _calculer = calculer ?? throw new ArgumentNullException(nameof(calculer));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
@@ -62,21 +57,13 @@ public sealed class GenererRappels
             return Result.Failure<IReadOnlyList<LigneRappel>>(Error.Conflict(
                 $"Des rappels ont déjà été générés pour l'agent '{demande.AgentId}' à la date {demande.DatePaie}."));
 
-        var agent = await _agents.ResoudreAsync(demande.AgentId, demande.DatePaie, ct);
-        if (agent.IsFailure) return Result.Failure<IReadOnlyList<LigneRappel>>(agent.Error);
+        // Orchestration de calcul partagée (auto-résolution C2.2/C2.3 + arrondi
+        // paramétré C2.1).
+        var calcule = await _calculer.ResoudreAsync(demande, ct);
+        if (calcule.IsFailure) return Result.Failure<IReadOnlyList<LigneRappel>>(calcule.Error);
+        var nouveau = calcule.Value.Bulletin;
 
-        var variables = await _variables.ResoudreAsync(agent.Value, demande.DatePaie, ct);
-        if (variables.IsFailure) return Result.Failure<IReadOnlyList<LigneRappel>>(variables.Error);
-
-        var input = await _payroll.ChargerAsync(
-            agent.Value, demande.DatePaie, variables.Value, demande.SourcesValeur, demande.ClesBareme,
-            demande.Profil, ct);
-        if (input.IsFailure) return Result.Failure<IReadOnlyList<LigneRappel>>(input.Error);
-
-        var nouveau = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche)).Calculer(input.Value);
-        if (nouveau.IsFailure) return Result.Failure<IReadOnlyList<LigneRappel>>(nouveau.Error);
-
-        var lignes = new RappelCalculator().Calculer(ancien.Value, nouveau.Value);
+        var lignes = new RappelCalculator().Calculer(ancien.Value, nouveau);
         if (lignes.Count == 0)
             return Result.Success<IReadOnlyList<LigneRappel>>([]);
 

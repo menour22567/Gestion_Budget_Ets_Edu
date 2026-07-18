@@ -3,7 +3,8 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.Snapshot;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Infrastructure.Serialization;
 
 namespace PaieEducation.Infrastructure.Repositories.Payroll;

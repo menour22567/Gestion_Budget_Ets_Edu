@@ -16,6 +16,10 @@ namespace PaieEducation.Tests.Unit.Calcul;
 /// </summary>
 public class SnapshotEngineTests
 {
+    // Valeurs par défaut (seedées dans Parametres, C8.1).
+    private const decimal SeuilExoneration = 30000m;
+    private const decimal PlafondLissageGeneral = 35000m;
+
     private static Fraction F(string s) => Fraction.Parser(s).Value;
 
     private static IrgReglePeriode Irg2022() => new(
@@ -57,7 +61,7 @@ public class SnapshotEngineTests
     [Fact]
     public void Capturer_regroupe_input_et_resultat_sans_les_modifier()
     {
-        var pipeline = new CalculationPipeline(new ArrondiService());
+        var pipeline = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral);
         var input = Input();
         var bulletin = pipeline.Calculer(input).Value;
 
@@ -71,13 +75,13 @@ public class SnapshotEngineTests
     [Fact]
     public void Rejouer_le_snapshot_reproduit_le_meme_bulletin()
     {
-        var pipeline = new CalculationPipeline(new ArrondiService());
+        var pipeline = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral);
         var input = Input();
         var bulletin = pipeline.Calculer(input).Value;
         var snapshot = new SnapshotEngine().Capturer(input, bulletin, "2025-06-05T10:00:00Z");
 
         // Nouveau pipeline (aucun état partagé) rejouant exactement l'entrée capturée.
-        var rejoue = new CalculationPipeline(new ArrondiService()).Calculer(snapshot.Input);
+        var rejoue = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral).Calculer(snapshot.Input);
 
         Assert.True(rejoue.IsSuccess);
         Assert.Equal(bulletin.Net, rejoue.Value.Net);

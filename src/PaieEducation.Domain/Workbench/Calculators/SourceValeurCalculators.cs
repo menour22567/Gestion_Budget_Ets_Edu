@@ -1,5 +1,7 @@
+using PaieEducation.Domain.Calcul.Constants;
 using PaieEducation.Domain.Workbench.Services;
-using PaieEducation.Domain.Workbench.Internal;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Domain.Workbench.Calculators;
 
@@ -9,7 +11,7 @@ namespace PaieEducation.Domain.Workbench.Calculators;
 /// </summary>
 public sealed class NotationAgentCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "NOTATION_AGENT";
+    public string CodeSource => SourceValeurCodes.NotationAgent;
     public Result<object> Calculer(AgentContext agent, string datePaie)
     {
         if (agent.Note is null)
@@ -24,7 +26,7 @@ public sealed class NotationAgentCalculator : ISourceValeurCalculator
 /// <summary>Source : <c>ANCIENNETE_PUBLIQUE</c>. Renvoie l'ancienneté publique en années.</summary>
 public sealed class AnciennetePubliqueCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "ANCIENNETE_PUBLIQUE";
+    public string CodeSource => SourceValeurCodes.AnciennetePublique;
     public Result<object> Calculer(AgentContext agent, string datePaie)
         => agent.AncienneteAnnees is null
             ? Result.Failure<object>(Error.NotFound("Ancienneté publique absente du snapshot agent."))
@@ -34,7 +36,7 @@ public sealed class AnciennetePubliqueCalculator : ISourceValeurCalculator
 /// <summary>Source : <c>ANCIENNETE_PRIVEE</c>. Stub V1 — l'attribut D3 <c>ANCIENNETE_PRIVEE_ANNEES</c> sera stocké en Phase 5 dans <c>AgentAttributs</c>.</summary>
 public sealed class AnciennetePriveeCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "ANCIENNETE_PRIVEE";
+    public string CodeSource => SourceValeurCodes.AnciennetePrivee;
     public Result<object> Calculer(AgentContext agent, string datePaie)
         // V1 : pas d'attribut agent → 0 par défaut (contrat IEP_CONT). L'attribut
         // ANCIENNETE_PRIVEE_ANNEES arrivera en Phase 5 (cf. J3J § 8.3) et sera
@@ -46,7 +48,7 @@ public sealed class AnciennetePriveeCalculator : ISourceValeurCalculator
 /// depuis la grille indiciaire (V003) est branchée en Phase 4.</summary>
 public sealed class IndiceEchelonCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "INDICE_ECHELON";
+    public string CodeSource => SourceValeurCodes.IndiceEchelon;
     public Result<object> Calculer(AgentContext agent, string datePaie)
         // Renvoyer agent.Echelon (n° 1-12) serait plausible mais FAUX : l'indice
         // de grille (ex. 578) en diffère d'un ordre de grandeur, et IEP_FONC =
@@ -59,7 +61,7 @@ public sealed class IndiceEchelonCalculator : ISourceValeurCalculator
 /// <summary>Source : <c>POINT_INDICIAIRE</c>. Renvoie la valeur du point portée par le snapshot.</summary>
 public sealed class PointIndiciaireCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "POINT_INDICIAIRE";
+    public string CodeSource => SourceValeurCodes.PointIndiciaire;
     public Result<object> Calculer(AgentContext agent, string datePaie)
         => agent.ValeurPointIndiciaire is null
             ? Result.Failure<object>(Error.NotFound("Valeur du point indiciaire absente du snapshot."))
@@ -69,7 +71,7 @@ public sealed class PointIndiciaireCalculator : ISourceValeurCalculator
 /// <summary>Source : <c>BASE_ASSIETTE</c>. Renvoie l'assiette cotisable portée par le snapshot (à défaut, l'imposable).</summary>
 public sealed class BaseAssietteCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "BASE_ASSIETTE";
+    public string CodeSource => SourceValeurCodes.BaseAssiette;
     public Result<object> Calculer(AgentContext agent, string datePaie)
     {
         if (agent.AssietteCotisable is { } cotisable) return Result.Success<object>(cotisable);
@@ -82,7 +84,7 @@ public sealed class BaseAssietteCalculator : ISourceValeurCalculator
 /// résolution depuis <c>RubriqueParametres</c> est branchée en Phase 4 (J3K § 4.2).</summary>
 public sealed class ConstanteReglementaireCalculator : ISourceValeurCalculator
 {
-    public string CodeSource => "CONSTANTE_REGLEMENTAIRE";
+    public string CodeSource => SourceValeurCodes.ConstanteReglementaire;
     public Result<object> Calculer(AgentContext agent, string datePaie)
         // Un « 0 par défaut » serait une valeur plausible mais fausse (taux,
         // plafond ou borne réglementaire). Échec explicite tant que la lecture

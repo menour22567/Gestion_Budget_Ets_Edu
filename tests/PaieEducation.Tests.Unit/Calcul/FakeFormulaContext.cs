@@ -1,5 +1,6 @@
 using PaieEducation.Domain.Calcul.Formules;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Tests.Unit.Calcul;
 

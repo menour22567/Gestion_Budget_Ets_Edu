@@ -2,7 +2,8 @@ using System.Globalization;
 using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Repositories;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Workbench.Services;
 
 namespace PaieEducation.Infrastructure.Repositories.Agents;
@@ -44,6 +45,11 @@ public sealed class AgentCarriereRepository : IAgentCarriereRepository
         var origineStatutaire = await ChargerAttributAsync(agentId, "ORIGINE_STATUTAIRE", datePaie, ct)
             ?? "INCONNU"; // abstention (ADR-0009, Q-C1) : jamais de valeur déduite.
 
+        // C2.3 — Notation agent (base PAPP, valeurSource(PAPP)). Lue depuis
+        // AgentAttributs (clé NOTATION_AGENT) ; null si absente (PAPP non dû
+        // plutôt que de fabriquer une note, ADR-0009).
+        decimal? note = await ChargerNoteAsync(agentId, datePaie, ct);
+
         var anciennete = CalculerAncienneteAnnees(agent.DateRecrutement, datePaie);
 
         return Result.Success(new AgentContext(
@@ -57,10 +63,19 @@ public sealed class AgentCarriereRepository : IAgentCarriereRepository
             TypeContrat: carriere.TypeContrat,
             TypeEtablissement: carriere.TypeEtablissement,
             OrigineStatutaire: origineStatutaire,
-            Note: null,
+            Note: note,
             ValeurPointIndiciaire: null,
             AssietteCotisable: null,
             AssietteImposable: null));
+    }
+
+    private async Task<decimal?> ChargerNoteAsync(string agentId, string date, CancellationToken ct)
+    {
+        var raw = await ChargerAttributAsync(agentId, "NOTATION_AGENT", date, ct);
+        if (raw is null) return null;
+        return decimal.TryParse(raw, System.Globalization.NumberStyles.Number,
+            System.Globalization.CultureInfo.InvariantCulture, out var n)
+            ? n : null;
     }
 
     private async Task<AgentRow?> ChargerAgentAsync(string agentId, CancellationToken ct)

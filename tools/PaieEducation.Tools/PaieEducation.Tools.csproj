@@ -5,6 +5,7 @@
     <ProjectReference Include="..\..\src\PaieEducation.Domain\PaieEducation.Domain.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Infrastructure\PaieEducation.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Persistence\PaieEducation.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Seeding\PaieEducation.Seeding.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Shared\PaieEducation.Shared.csproj" />
   </ItemGroup>
 

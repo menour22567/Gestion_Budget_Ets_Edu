@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 using PaieEducation.Infrastructure.Repositories.Workbench;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.Repositories;
 
@@ -67,5 +67,44 @@ public class WorkbenchReadRepositoryTests
         Assert.All(conditions, c => Assert.True(c.CritereId is "GRADE" or "CORPS"));
         // GE-ISSRP15-HIST (expirée, DateFin 2024-12-31) doit être incluse — pas de filtre par date.
         Assert.Contains(conditions, c => c.RubriqueId == "ISSRP_15" && c.Periode.DateFin == "2024-12-31");
+    }
+
+    [Fact]
+    public async Task ObtenirRubriqueAsync_renvoie_les_metadonnees_d_identite()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        await SeederAsync(scope.Conn);
+        var repo = new WorkbenchReadRepository(scope.Conn);
+
+        var detail = await repo.ObtenirRubriqueAsync("ISSRP_45");
+
+        Assert.NotNull(detail);
+        Assert.Equal("ISSRP_45", detail!.Id);
+        Assert.True(detail.Actif);
+    }
+
+    [Fact]
+    public async Task ObtenirRubriqueAsync_rubrique_inexistante_renvoie_null()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        await SeederAsync(scope.Conn);
+        var repo = new WorkbenchReadRepository(scope.Conn);
+
+        var detail = await repo.ObtenirRubriqueAsync("N_EXISTE_PAS");
+
+        Assert.Null(detail);
+    }
+
+    [Fact]
+    public async Task ListerBaremesRubriqueAsync_renvoie_le_bareme_de_QUALIF()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        await SeederAsync(scope.Conn);
+        var repo = new WorkbenchReadRepository(scope.Conn);
+
+        var baremes = await repo.ListerBaremesRubriqueAsync("QUALIF");
+
+        Assert.NotEmpty(baremes);
+        Assert.All(baremes, b => Assert.Equal("QUALIF", b.RubriqueId));
     }
 }

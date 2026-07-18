@@ -1,8 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Persistence.Migrations;
-using PaieEducation.Tools.Seeding;
-using PaieEducation.Tools.Seeding.Models;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tools;
 
@@ -12,15 +11,15 @@ namespace PaieEducation.Tools;
 /// </summary>
 /// <remarks>
 /// <para>Commandes :</para>
-/// <list type="bullet">
-///   <item><c>migrate --db &lt;path&gt;</c>            : applique les migrations V001-V007</item>
-///   <item><c>seed nomenclature --db &lt;path&gt; --csv &lt;path&gt;</c></item>
-///   <item><c>seed reglementaire --db &lt;path&gt;</c></item>
-///   <item><c>seed irg --db &lt;path&gt;</c></item>
-///   <item><c>seed all --db &lt;path&gt; --csv &lt;path&gt;</c> : tout enchaîner</item>
-///   <item><c>validate --db &lt;path&gt;</c>           : PRAGMA integrity_check + counts</item>
-///   <item><c>--help</c>                              : cette aide</item>
-/// </list>
+    /// <list type="bullet">
+    ///   <item><c>migrate --db &lt;path&gt;</c>            : applique les migrations V001-V013</item>
+    ///   <item><c>seed nomenclature --db &lt;path&gt;</c>  : nomenclature (CSV cascade embarqué)</item>
+    ///   <item><c>seed reglementaire --db &lt;path&gt;</c></item>
+    ///   <item><c>seed irg --db &lt;path&gt;</c></item>
+    ///   <item><c>seed all --db &lt;path&gt;</c>           : tout enchaîner</item>
+    ///   <item><c>validate --db &lt;path&gt;</c>           : PRAGMA integrity_check + counts</item>
+    ///   <item><c>--help</c>                              : cette aide</item>
+    /// </list>
 /// <para>Code de retour : 0 = succès, 1 = erreur.</para>
 /// </remarks>
 public static class Cli
@@ -91,15 +90,16 @@ public static class Cli
 
             Usage:
               PaieEducation.Tools migrate --db <path>
-              PaieEducation.Tools seed nomenclature --db <path> --csv <path>
+              PaieEducation.Tools seed nomenclature --db <path>
               PaieEducation.Tools seed reglementaire --db <path>
               PaieEducation.Tools seed irg --db <path>
-              PaieEducation.Tools seed all --db <path> --csv <path>
+              PaieEducation.Tools seed all --db <path>
               PaieEducation.Tools validate --db <path>
               PaieEducation.Tools --help
 
             Tous les fichiers sont des chemins absolus ou relatifs au CWD.
             La base SQLite est créée si elle n'existe pas (cas : --db <nouveau>).
+            Le CSV cascade de nomenclature est embarqué (aucun --csv requis).
             """);
     }
 
@@ -128,22 +128,12 @@ public static class Cli
     {
         if (!opts.TryGetValue("db", out var dbPath))
             return Fail(stderr, "--db <path> requis");
-        if (!opts.TryGetValue("csv", out var csvPath))
-            return Fail(stderr, "--csv <path> requis");
-
-        if (!File.Exists(csvPath))
-            return Fail(stderr, $"CSV introuvable : {csvPath}");
 
         var cs = $"Data Source={dbPath}";
         await ApplyMigrationsIfNeededAsync(cs, stdout, stderr).ConfigureAwait(false);
 
-        var parser = new CsvCascadeParser();
-        IReadOnlyList<CascadeRow> rows;
-        using (var reader = CsvCascadeParser.OpenCp1252(csvPath))
-        {
-            rows = await parser.ParseAsync(reader).ConfigureAwait(false);
-        }
-        await stdout.WriteLineAsync($"  → {rows.Count} lignes lues dans le CSV").ConfigureAwait(false);
+        var rows = await SeedCsvProvider.ReadEmbeddedRowsAsync().ConfigureAwait(false);
+        await stdout.WriteLineAsync($"  → {rows.Count} lignes lues dans le CSV embarqué").ConfigureAwait(false);
 
         await using var conn = new SqliteConnection(cs);
         conn.Open();
@@ -198,40 +188,20 @@ public static class Cli
     {
         if (!opts.TryGetValue("db", out var dbPath))
             return Fail(stderr, "--db <path> requis");
-        if (!opts.TryGetValue("csv", out var csvPath))
-            return Fail(stderr, "--csv <path> requis");
 
         var cs = $"Data Source={dbPath}";
 
         // 1. Migrations.
         await ApplyMigrationsIfNeededAsync(cs, stdout, stderr).ConfigureAwait(false);
 
-        // 2. Parse CSV.
-        if (!File.Exists(csvPath))
-            return Fail(stderr, $"CSV introuvable : {csvPath}");
-        var parser = new CsvCascadeParser();
-        IReadOnlyList<CascadeRow> rows;
-        using (var reader = CsvCascadeParser.OpenCp1252(csvPath))
-        {
-            rows = await parser.ParseAsync(reader).ConfigureAwait(false);
-        }
-        await stdout.WriteLineAsync($"  → {rows.Count} lignes lues dans le CSV").ConfigureAwait(false);
-
         await using var conn = new SqliteConnection(cs);
         conn.Open();
 
-        // 3. Nomenclature.
-        var rNom = await new NomenclatureSeeder().SeedAsync(conn, rows).ConfigureAwait(false);
-        PrintReport(stdout, rNom, "nomenclature");
+        // 2. Seed complet (nomenclature embarquée + réglementaire + IRG + formules).
+        var report = await new DatabaseSeeder().SeedAllAsync(conn).ConfigureAwait(false);
 
-        // 4. Réglementaire.
-        var rReg = await new ReglementaireSeeder().SeedAsync(conn).ConfigureAwait(false);
-        PrintReport(stdout, rReg, "réglementaire");
-
-        // 5. IRG.
-        var rIrg = await new IrgSeeder().SeedAsync(conn).ConfigureAwait(false);
-        PrintReport(stdout, rIrg, "IRG");
-
+        // 3. Rapport agrégé.
+        PrintReport(stdout, report, "all");
         return 0;
     }
 

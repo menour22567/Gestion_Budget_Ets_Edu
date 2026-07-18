@@ -26,6 +26,7 @@ public static class BulletinSnapshotJson
         options.Converters.Add(new BaremeValueJsonConverter());
         options.Converters.Add(new ConditionEligibiliteJsonConverter());
         options.Converters.Add(new CritereEligibiliteJsonConverter());
+        options.Converters.Add(new MoneyJsonConverter());
         return options;
     }
 }

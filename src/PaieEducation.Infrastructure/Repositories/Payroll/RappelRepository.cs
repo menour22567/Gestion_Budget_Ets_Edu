@@ -3,7 +3,8 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Repositories;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Infrastructure.Repositories.Payroll;
 
@@ -58,9 +59,9 @@ public sealed class RappelRepository : IRappelRepository
                     agentId,
                     datePaieOrigine,
                     rubriqueId = ligne.RubriqueId,
-                    montantAncien = ligne.MontantAncien,
-                    montantNouveau = ligne.MontantNouveau,
-                    delta = ligne.Delta,
+                    montantAncien = ligne.MontantAncien.Amount,
+                    montantNouveau = ligne.MontantNouveau.Amount,
+                    delta = ligne.Delta.Amount,
                     genereLe = genereLeIso,
                     createdAt = genereLeIso,
                 }, tx, cancellationToken: ct));

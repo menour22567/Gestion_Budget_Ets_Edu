@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Repositories;
 using PaieEducation.Domain.Workbench.ValueObjects;
@@ -202,6 +203,23 @@ public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
     }
 
     // -----------------------------------------------------------------------
+    // Fiche rubrique (Phase 6, tâche 4)
+    // -----------------------------------------------------------------------
+
+    public async Task<RubriqueDetail?> ObtenirRubriqueAsync(string rubriqueId, CancellationToken ct = default)
+    {
+        const string sql = """
+            SELECT Id, Libelle, Nature, BaseCalcul, Periodicite, PeriodiciteVersement,
+                   OrdreCalcul, EstImposable, EstCotisable, Description, Actif
+            FROM Rubriques
+            WHERE Id = @rub;
+            """;
+        var row = await _connection.QuerySingleOrDefaultAsync<RubriqueDetailRow>(
+            new CommandDefinition(sql, new { rub = rubriqueId }, cancellationToken: ct));
+        return row is null ? null : MapRubriqueDetail(row);
+    }
+
+    // -----------------------------------------------------------------------
     // Mappers (SQL row → Value Object)
     // -----------------------------------------------------------------------
 
@@ -232,6 +250,10 @@ public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
 
     private sealed record GradeRow(string Id, string CorpsId);
 
+    private sealed record RubriqueDetailRow(string Id, string Libelle, string Nature, string BaseCalcul,
+        string Periodicite, string? PeriodiciteVersement, long OrdreCalcul, long EstImposable, long EstCotisable,
+        string? Description, long Actif);
+
     private static SourceValeur MapSource(SourceRow r)
         => SourceValeur.Creer(r.Id, r.Libelle, r.Description);
 
@@ -251,6 +273,10 @@ public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
         => BaremeValue.Creer(r.RubriqueId, ParseDimension(r.Dimension), r.BorneInf,
             r.BorneSup, ParseTypeValeurBareme(r.TypeValeur), r.Valeur,
             PeriodeReglementaire.Creer(r.DateEffet, r.DateFin));
+
+    private static RubriqueDetail MapRubriqueDetail(RubriqueDetailRow r)
+        => new(r.Id, r.Libelle, r.Nature, r.BaseCalcul, r.Periodicite, r.PeriodiciteVersement,
+            checked((int)r.OrdreCalcul), r.EstImposable != 0, r.EstCotisable != 0, r.Description, r.Actif != 0);
 
     private static ConditionEligibilite MapCondition(ConditionRow r)
         => ConditionEligibilite.Creer(r.Id, r.RubriqueId, r.CritereId,
@@ -291,16 +317,7 @@ public sealed class WorkbenchReadRepository : IWorkbenchReadRepository
         _ => throw new InvalidOperationException($"MessageCategorie inconnue : {s}")
     };
 
-    private static BaremeDimension ParseDimension(string s) => s switch
-    {
-        "CATEGORIE" => BaremeDimension.Categorie,
-        "ECHELON" => BaremeDimension.Echelon,
-        "ANCIENNETE" => BaremeDimension.Anciennete,
-        "TYPE_ETABLISSEMENT" => BaremeDimension.TypeEtablissement,
-        "CORPS" => BaremeDimension.Corps,
-        "GRADE" => BaremeDimension.Grade,
-        _ => throw new InvalidOperationException($"BaremeDimension inconnue : {s}")
-    };
+    private static BaremeDimension ParseDimension(string s) => BaremeDimensionKeys.Parser(s);
 
     private static BaremeTypeValeur ParseTypeValeurBareme(string s) => s switch
     {

@@ -6,6 +6,7 @@ using PaieEducation.Domain.Calcul.ValueObjects;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Domain.Workbench.ValueObjects;
+using PaieEducation.Shared.Money;
 
 namespace PaieEducation.Tests.Unit.Calcul;
 
@@ -16,6 +17,10 @@ namespace PaieEducation.Tests.Unit.Calcul;
 /// </summary>
 public class CalculationPipelineTests
 {
+    // Valeurs par défaut (seedées dans Parametres, C8.1).
+    private const decimal SeuilExoneration = 30000m;
+    private const decimal PlafondLissageGeneral = 35000m;
+
     private static Fraction F(string s) => Fraction.Parser(s).Value;
 
     private static IrgReglePeriode Irg2022() => new(
@@ -70,7 +75,7 @@ public class CalculationPipelineTests
     [Fact]
     public void Bulletin_enseignant_PEM_complet()
     {
-        var pipeline = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche));
+        var pipeline = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche), SeuilExoneration, PlafondLissageGeneral);
         var r = pipeline.Calculer(Input("PEM"));
         Assert.True(r.IsSuccess, r.IsFailure ? r.Error.Message : null);
         var b = r.Value;
@@ -80,36 +85,36 @@ public class CalculationPipelineTests
         Assert.Equal(5202m, Ligne(b, "EXP_PEDAG"));
         Assert.Equal(9153m, Ligne(b, "PAPP"));
         Assert.Equal(13730m, Ligne(b, "ISSRP_45"));
-        Assert.Equal(58595m, b.TotalGains);
+        Assert.Equal(58595m, b.TotalGains.Amount);
 
         // SS 9 % sur 58595 = 5273,55 → 5274 ; imposable = 58595 − 5274 = 53321.
         Assert.Equal(5274m, Ligne(b, "SS"));
-        Assert.Equal(53321m, b.AssietteImposable);
+        Assert.Equal(53321m, b.AssietteImposable.Amount);
 
         // IRG 2022 standard sur 53321 : brut 8196,67 − abattement 1500 = 6696,67 → 6697.
-        Assert.Equal(6697m, b.Irg);
+        Assert.Equal(6697m, b.Irg.Amount);
 
         // Retenues = 5274 + 6697 = 11971 ; net = 58595 − 11971 = 46624.
-        Assert.Equal(11971m, b.TotalRetenues);
-        Assert.Equal(46624m, b.Net);
+        Assert.Equal(11971m, b.TotalRetenues.Amount);
+        Assert.Equal(46624m, b.Net.Amount);
     }
 
     [Fact]
     public void Rubrique_DNF_non_eligible_est_absente_du_bulletin()
     {
         // Corps AUTRE : ISSRP_45 (réservé PEM) inéligible → ligne absente.
-        var pipeline = new CalculationPipeline(new ArrondiService());
+        var pipeline = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral);
         var r = pipeline.Calculer(Input("AUTRE"));
         Assert.True(r.IsSuccess);
         Assert.DoesNotContain(r.Value.Lignes, l => l.RubriqueId == "ISSRP_45");
         // Gains sans ISSRP : 30510 + 5202 + 9153 = 44865.
-        Assert.Equal(44865m, r.Value.TotalGains);
+        Assert.Equal(44865m, r.Value.TotalGains.Amount);
     }
 
     [Fact]
     public void Determinisme_deux_calculs_identiques()
     {
-        var pipeline = new CalculationPipeline(new ArrondiService());
+        var pipeline = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral);
         var a = pipeline.Calculer(Input("PEM")).Value;
         var b = pipeline.Calculer(Input("PEM")).Value;
         Assert.Equal(a.Net, b.Net);
@@ -120,7 +125,7 @@ public class CalculationPipelineTests
     [Fact]
     public void Formule_referencant_une_variable_inconnue_echoue()
     {
-        var pipeline = new CalculationPipeline(new ArrondiService());
+        var pipeline = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral);
         var mauvais = Input("PEM") with
         {
             Rubriques = new[]
@@ -133,5 +138,5 @@ public class CalculationPipelineTests
     }
 
     private static decimal Ligne(Bulletin b, string id) =>
-        b.Lignes.Single(l => l.RubriqueId == id).Montant;
+        b.Lignes.Single(l => l.RubriqueId == id).Montant.Amount;
 }

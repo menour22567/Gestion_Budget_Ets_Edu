@@ -1,7 +1,9 @@
 using Dapper;
 using Microsoft.Data.Sqlite;
+using PaieEducation.Domain.Calcul.Constants;
 using PaieEducation.Domain.Calcul.Repositories;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Workbench.Services;
 
 namespace PaieEducation.Infrastructure.Repositories.Payroll;
@@ -62,13 +64,13 @@ public sealed class VariableRepository : IVariableRepository
 
         return Result.Success<IReadOnlyDictionary<string, decimal>>(new Dictionary<string, decimal>
         {
-            ["INDICE_MIN"] = indiceMin.Value,
-            ["INDICE_ECH"] = indiceEch.Value,
-            ["VPI"] = vpi.Value,
-            ["TBASE"] = tbase,
-            ["TRT"] = trt,
-            ["ECH"] = echelon,
-            ["CAT"] = categorie,
+            [VariablesCles.IndiceMin] = indiceMin.Value,
+            [VariablesCles.IndiceEchelon] = indiceEch.Value,
+            [VariablesCles.ValeurPointIndiciaire] = vpi.Value,
+            [VariablesCles.TraitementBase] = tbase,
+            [VariablesCles.TraitementBrut] = trt,
+            [VariablesCles.Echelon] = echelon,
+            [VariablesCles.Categorie] = categorie,
         });
     }
 

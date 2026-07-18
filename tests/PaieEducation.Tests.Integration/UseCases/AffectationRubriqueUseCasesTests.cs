@@ -3,7 +3,7 @@ using PaieEducation.Application.Workbench.UseCases;
 using PaieEducation.Infrastructure.Repositories.Agents;
 using PaieEducation.Infrastructure.Repositories.Workbench;
 using PaieEducation.Shared.Time;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.UseCases;
 

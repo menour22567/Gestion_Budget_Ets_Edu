@@ -20,12 +20,12 @@ public class DependencyRulesTests
     private static Assembly Load(string name) => Assembly.Load(name);
 
     [Fact]
-    public void Domain_ne_depend_d_aucun_projet_ni_techno()
+    public void Domain_ne_depend_que_de_Shared_hors_technos()
     {
         TestResult result = Types.InAssembly(Load(Domain))
             .ShouldNot()
             .HaveDependencyOnAny(
-                Application, Infrastructure, Persistence, Reporting, Presentation, Shared,
+                Application, Infrastructure, Persistence, Reporting, Presentation,
                 "Microsoft.Data.Sqlite", "Dapper", "QuestPDF", "ClosedXML",
                 "PresentationFramework", "CommunityToolkit.Mvvm")
             .GetResult();

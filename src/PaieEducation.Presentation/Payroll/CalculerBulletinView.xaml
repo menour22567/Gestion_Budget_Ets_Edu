@@ -3,32 +3,105 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d" d:DesignWidth="500">
-    <StackPanel Margin="24" MaxWidth="420" HorizontalAlignment="Left">
-        <TextBlock Text="Calculer un bulletin" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+             xmlns:payroll="clr-namespace:PaieEducation.Presentation.Payroll"
+             xmlns:controls="clr-namespace:PaieEducation.Presentation.Controls"
+             mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="640">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="720" HorizontalAlignment="Left">
+            <TextBlock Text="Calculer un bulletin" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
 
-        <TextBlock Text="Identifiant agent"/>
-        <TextBox Text="{Binding AgentId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Agent"/>
+            <ComboBox ItemsSource="{Binding Agents}"
+                      SelectedItem="{Binding AgentSelectionne, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                      DisplayMemberPath="Libelle"
+                      SelectedValuePath="Id"
+                      MinWidth="320" Margin="0,0,0,8">
+                <ComboBox.ItemContainerStyle>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ComboBox.ItemContainerStyle>
+            </ComboBox>
 
-        <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
-        <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+            <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
+            <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MinWidth="200"/>
 
-        <Button Content="Calculer" Command="{Binding CalculerCommand}"
-                Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+            <Button Content="Calculer" Command="{Binding CalculerCommand}"
+                    Width="120" HorizontalAlignment="Left" Margin="0,8,0,8"/>
 
-        <TextBlock Text="Calcul en cours…" Foreground="Gray" Margin="0,0,0,8">
-            <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                    <Setter Property="Visibility" Value="Collapsed"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding EnCours}" Value="True">
-                            <Setter Property="Visibility" Value="Visible"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
-        </TextBlock>
+            <TextBlock Text="Calcul en cours…" Foreground="Gray" Margin="0,0,0,8">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding EnCours}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
 
-        <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
-    </StackPanel>
+            <Separator Margin="0,8,0,12" Visibility="{Binding HasItems, ElementName=LignesGrid, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <TextBlock Text="Détail du bulletin" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8"
+                       Visibility="{Binding HasItems, ElementName=LignesGrid, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <controls:ERPDataGrid x:Name="LignesGrid"
+                       ItemsSource="{Binding Lignes}"
+                       Margin="0,0,0,12" MinWidth="640"
+                       Visibility="{Binding HasItems, ElementName=LignesGrid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <controls:ERPDataGrid.Columns>
+                    <DataGridTextColumn Header="Rubrique" Binding="{Binding RubriqueId}" Width="140"/>
+                    <DataGridTextColumn Header="Nature" Binding="{Binding Nature}" Width="100"/>
+                    <DataGridTextColumn Header="Montant (DA)" Binding="{Binding Montant, StringFormat=N0}" Width="120"/>
+                    <DataGridTextColumn Header="Explication" Binding="{Binding Explication}" Width="*"/>
+                </controls:ERPDataGrid.Columns>
+            </controls:ERPDataGrid>
+
+            <Grid Visibility="{Binding HasItems, ElementName=LignesGrid, Converter={StaticResource BooleanToVisibilityConverter}}"
+                  Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Total gains :" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TotalGains, StringFormat=N0 DA}" Margin="8,0,0,0"/>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Assiette cotisable :" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AssietteCotisable, StringFormat=N0 DA}" Margin="8,0,0,0"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Assiette imposable :" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AssietteImposable, StringFormat=N0 DA}" Margin="8,0,0,0"/>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Total retenues :" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TotalRetenues, StringFormat=N0 DA}" Margin="8,0,0,0"/>
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="IRG :" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Irg, StringFormat=N0 DA}" Margin="8,0,0,0"/>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="NET À PAYER :" FontWeight="Bold" FontSize="14"/>
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Net, StringFormat=N0 DA}" FontWeight="Bold" FontSize="14" Margin="8,0,0,0"/>
+            </Grid>
+
+            <Expander Header="Journal d'audit" Margin="0,8,0,0"
+                      Visibility="{Binding HasItems, ElementName=AuditList, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ListBox x:Name="AuditList" ItemsSource="{Binding Audit}" Margin="0,4,0,0" MinWidth="640"/>
+            </Expander>
+
+            <Expander Header="Arbre d'explication" Margin="0,8,0,0"
+                      Visibility="{Binding HasItems, ElementName=LignesGrid, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <controls:ExplainabilityPanel Bulletin="{Binding Bulletin}" Margin="0,4,0,0" MinWidth="640"/>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

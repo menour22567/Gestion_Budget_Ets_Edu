@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Domain.Calcul.Formules;
 

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\tools\PaieEducation.Tools\PaieEducation.Tools.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Persistence\PaieEducation.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Seeding\PaieEducation.Seeding.csproj" />
   </ItemGroup>
 
 </Project>

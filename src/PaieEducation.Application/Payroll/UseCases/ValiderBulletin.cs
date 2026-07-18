@@ -1,9 +1,9 @@
 using System.Globalization;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Repositories;
-using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Shared.Time;
 
 namespace PaieEducation.Application.Payroll.UseCases;
@@ -14,30 +14,24 @@ namespace PaieEducation.Application.Payroll.UseCases;
 /// prérequis d'ADR-0008 pour tout futur rappel.
 /// </summary>
 /// <remarks>
-/// Même orchestration de lecture que <see cref="CalculerBulletin"/>
-/// (dupliquée plutôt que factorisée : celui-ci ne renvoie que
-/// <see cref="Bulletin"/>, pas le <c>PayrollInput</c> nécessaire au
-/// snapshot). Réutilise <see cref="CalculerBulletin.Demande"/> tel quel.
-/// N'écrit rien si un bulletin existe déjà pour cet agent à cette date
-/// (<see cref="IBulletinRepository.ValiderAsync"/> échoue explicitement —
-/// ADR-0008, un bulletin validé n'est jamais réécrit). Hors périmètre : la
-/// transition d'état des <c>Periodes</c> et le rejet sur période clôturée.
+/// Réutilise l'orchestration de <see cref="CalculerBulletin.ResoudreAsync"/>
+/// (auto-résolution des entrées C2.2/C2.3 + arrondi paramétré C2.1) pour
+/// obtenir à la fois le <c>PayrollInput</c> (nécessaire au snapshot) et le
+/// <see cref="Bulletin"/>. N'écrit rien si un bulletin existe déjà pour cet
+/// agent à cette date (<see cref="IBulletinRepository.ValiderAsync"/> échoue
+/// explicitement — ADR-0008, un bulletin validé n'est jamais réécrit). Hors
+/// périmètre : la transition d'état des <c>Periodes</c> et le rejet sur
+/// période clôturée.
 /// </remarks>
 public sealed class ValiderBulletin
 {
-    private readonly IAgentCarriereRepository _agents;
-    private readonly IVariableRepository _variables;
-    private readonly IPayrollReadRepository _payroll;
+    private readonly CalculerBulletin _calculer;
     private readonly IBulletinRepository _bulletins;
     private readonly IClock _clock;
 
-    public ValiderBulletin(
-        IAgentCarriereRepository agents, IVariableRepository variables, IPayrollReadRepository payroll,
-        IBulletinRepository bulletins, IClock clock)
+    public ValiderBulletin(CalculerBulletin calculer, IBulletinRepository bulletins, IClock clock)
     {
-        _agents = agents ?? throw new ArgumentNullException(nameof(agents));
-        _variables = variables ?? throw new ArgumentNullException(nameof(variables));
-        _payroll = payroll ?? throw new ArgumentNullException(nameof(payroll));
+        _calculer = calculer ?? throw new ArgumentNullException(nameof(calculer));
         _bulletins = bulletins ?? throw new ArgumentNullException(nameof(bulletins));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
@@ -46,27 +40,15 @@ public sealed class ValiderBulletin
     {
         ArgumentNullException.ThrowIfNull(demande);
 
-        var agent = await _agents.ResoudreAsync(demande.AgentId, demande.DatePaie, ct);
-        if (agent.IsFailure)
-            return Result.Failure<string>(agent.Error);
+        var calcule = await _calculer.ResoudreAsync(demande, ct);
+        if (calcule.IsFailure)
+            return Result.Failure<string>(calcule.Error);
 
-        var variables = await _variables.ResoudreAsync(agent.Value, demande.DatePaie, ct);
-        if (variables.IsFailure)
-            return Result.Failure<string>(variables.Error);
-
-        var input = await _payroll.ChargerAsync(
-            agent.Value, demande.DatePaie, variables.Value, demande.SourcesValeur, demande.ClesBareme,
-            demande.Profil, ct);
-        if (input.IsFailure)
-            return Result.Failure<string>(input.Error);
-
-        var bulletin = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche)).Calculer(input.Value);
-        if (bulletin.IsFailure)
-            return Result.Failure<string>(bulletin.Error);
+        var (input, bulletin) = calcule.Value;
 
         var maintenant = _clock.UtcNow;
         var horodatage = maintenant.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
-        var snapshot = new SnapshotEngine().Capturer(input.Value, bulletin.Value, horodatage);
+        var snapshot = new SnapshotEngine().Capturer(input, bulletin, horodatage);
 
         return await _bulletins.ValiderAsync(demande.AgentId, snapshot, maintenant, ct);
     }

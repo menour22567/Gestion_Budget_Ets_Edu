@@ -12,12 +12,6 @@ namespace PaieEducation.Tests.Tools;
 /// </summary>
 public class CliTests
 {
-    private const string SampleCsv = """
-        Num_Ord;Type_Contrat;Type_Filiere;Type_Secteur;Type_Personnel;Corps_Filiere;Grades;Categorie;"A";"B";"C";"D"
-        1;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Adjoints de l'Education;Adjoint de l'Education;7;348;398;473;548
-        2;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs d'Education;Professeur d'education;12;537;587;662;737
-        """;
-
     private static (int code, string stdout, string stderr) Run(params string[] args)
     {
         var so = new StringBuilder(); var se = new StringBuilder();
@@ -86,24 +80,17 @@ public class CliTests
     public void Seed_nomenclature_insere_les_tables_de_nomenclature()
     {
         using var db = new TempSqliteDb();
-        var csv = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid():N}.csv");
-        File.WriteAllText(csv, SampleCsv, Encoding.UTF8);
-        try
-        {
-            var (code, stdout, stderr) = Run("seed", "nomenclature", "--db", db.Path, "--csv", csv);
-            Assert.Equal(0, code);
-            Assert.Empty(stderr);
-            Assert.Contains("Seed nomenclature", stdout);
+        var (code, stdout, stderr) = Run("seed", "nomenclature", "--db", db.Path);
+        Assert.Equal(0, code);
+        Assert.Empty(stderr);
+        Assert.Contains("Seed nomenclature", stdout);
 
-            using var conn = new SqliteConnection(db.ConnectionString);
-            conn.Open();
-            Assert.Equal(2L, Count(conn, "Filieres"));
-            Assert.Equal(2L, Count(conn, "Grades"));
-        }
-        finally
-        {
-            TryDelete(csv);
-        }
+        using var conn = new SqliteConnection(db.ConnectionString);
+        conn.Open();
+        // Le CSV cascade embarqué porte 185 grades + 1 filière INSPECTION
+        // (ajoutée par ReglementaireSeeder). On vérifie l'insertion effective.
+        Assert.True(Count(conn, "Grades") >= 180L, $"Grades = {Count(conn, "Grades")}");
+        Assert.True(Count(conn, "Filieres") >= 1L);
     }
 
     // -------------------------------------------------------------------------
@@ -121,7 +108,7 @@ public class CliTests
         conn.Open();
         Assert.Equal(10L, Count(conn, "Rubriques"));
         Assert.Equal(3L, Count(conn, "Cotisations"));
-        Assert.Equal(7L, Count(conn, "Parametres"));
+        Assert.Equal(10L, Count(conn, "Parametres"));
     }
 
     // -------------------------------------------------------------------------
@@ -150,32 +137,20 @@ public class CliTests
     public void Seed_all_insere_tout_en_une_passe()
     {
         using var db = new TempSqliteDb();
-        var csv = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid():N}.csv");
-        File.WriteAllText(csv, SampleCsv, Encoding.UTF8);
-        try
-        {
-            var (code, stdout, stderr) = Run("seed", "all", "--db", db.Path, "--csv", csv);
-            Assert.Equal(0, code);
-            Assert.Empty(stderr);
-            Assert.Contains("Seed nomenclature", stdout);
-            Assert.Contains("Seed réglementaire", stdout);
-            Assert.Contains("Seed IRG", stdout);
+        var (code, stdout, stderr) = Run("seed", "all", "--db", db.Path);
+        Assert.Equal(0, code);
+        Assert.Empty(stderr);
+        Assert.Contains("Seed all", stdout);
 
-            using var conn = new SqliteConnection(db.ConnectionString);
-            conn.Open();
-            // V010 (flags d'affectation, J4.e) ajoutée le 16/07/2026 : 10
-            // migrations au total. Le test reste robuste à l'ajout futur.
-            Assert.True(Count(conn, "SchemaVersions") >= 10L);
-            // 2 filières du CSV échantillon (ADMIN, ENSEIGNANT) + 1 ajoutée par
-            // le seed supplémentaire Q-C3 (INSPECTION, ReglementaireSeeder).
-            Assert.Equal(3L, Count(conn, "Filieres"));
-            Assert.Equal(10L, Count(conn, "Rubriques"));
-            Assert.Equal(4L, Count(conn, "IRGReglesPeriode"));
-        }
-        finally
-        {
-            TryDelete(csv);
-        }
+        using var conn = new SqliteConnection(db.ConnectionString);
+        conn.Open();
+        // V013 (rappels) ; robuste à l'ajout futur.
+        Assert.True(Count(conn, "SchemaVersions") >= 13L);
+        // Nomenclature (CSV cascade embarqué) + filière INSPECTION (Q-C3).
+        Assert.True(Count(conn, "Filieres") >= 1L);
+        // 10 rubriques réglementaires + TRAITEMENT (ajoutée par FormulesSeeder).
+        Assert.Equal(11L, Count(conn, "Rubriques"));
+        Assert.Equal(4L, Count(conn, "IRGReglesPeriode"));
     }
 
     // -------------------------------------------------------------------------
@@ -197,29 +172,16 @@ public class CliTests
     public void Validate_apres_seed_all_retourne_0_et_affiche_les_counts()
     {
         using var db = new TempSqliteDb();
-        var csv = Path.Combine(Path.GetTempPath(), $"test-{Guid.NewGuid():N}.csv");
-        File.WriteAllText(csv, SampleCsv, Encoding.UTF8);
-        try
-        {
-            Run("seed", "all", "--db", db.Path, "--csv", csv);
-            var (code, stdout, _) = Run("validate", "--db", db.Path);
-            Assert.Equal(0, code);
-            Assert.Contains("PRAGMA integrity_check : ok", stdout);
-            Assert.Contains("PRAGMA foreign_key_check : OK", stdout);
-            Assert.Contains("Base OK", stdout);
-            Assert.Contains("Rubriques", stdout);
-        }
-        finally
-        {
-            TryDelete(csv);
-        }
+        Run("seed", "all", "--db", db.Path);
+        var (code, stdout, _) = Run("validate", "--db", db.Path);
+        Assert.Equal(0, code);
+        Assert.Contains("PRAGMA integrity_check : ok", stdout);
+        Assert.Contains("PRAGMA foreign_key_check : OK", stdout);
+        Assert.Contains("Base OK", stdout);
+        Assert.Contains("Rubriques", stdout);
     }
 
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
-    private static void TryDelete(string p)
-    {
-        try { if (File.Exists(p)) File.Delete(p); } catch { }
-    }
 }

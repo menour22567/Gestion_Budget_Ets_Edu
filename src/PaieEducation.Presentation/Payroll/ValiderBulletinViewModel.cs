@@ -15,17 +15,12 @@ namespace PaieEducation.Presentation.Payroll;
 /// <see cref="IDialogService.ShowErrorAsync"/>), jamais silencieusement.
 /// </summary>
 /// <remarks>
-/// Mêmes valeurs fixes que <see cref="CalculerBulletinViewModel"/> pour
-/// <c>ClesBareme</c>/<c>SourcesValeur</c> — même dette connue, pas de
-/// formulaire de paramétrage complet dans cette tranche.
+/// C2.1/C2.2/C2.3 — aucune valeur hardcodée : le use case auto-résout les
+/// clés de barème et sources de valeur depuis le dossier agent, et le mode
+/// d'arrondi depuis Parametres.
 /// </remarks>
 public sealed partial class ValiderBulletinViewModel : ObservableObject
 {
-    private static readonly IReadOnlyDictionary<string, decimal> SourcesValeur =
-        new Dictionary<string, decimal> { ["PAPP"] = 0.30m };
-    private static readonly IReadOnlyDictionary<string, string> ClesBareme =
-        new Dictionary<string, string> { ["CATEGORIE"] = "13" };
-
     private readonly ValiderBulletin _validerBulletin;
     private readonly IDialogService _dialogs;
 
@@ -54,7 +49,9 @@ public sealed partial class ValiderBulletinViewModel : ObservableObject
         Resultat = null;
         try
         {
-            var demande = new CalculerBulletin.Demande(AgentId, DatePaie, SourcesValeur, ClesBareme, ProfilFiscal.Standard);
+            // C2.2/C2.3 — aucune entrée fournie : le use case auto-résout
+            // les clés de barème et les sources de valeur depuis le dossier agent.
+            var demande = new CalculerBulletin.Demande(AgentId, DatePaie, null, null, ProfilFiscal.Standard);
             var result = await _validerBulletin.ExecuterAsync(demande);
             if (result.IsFailure)
             {

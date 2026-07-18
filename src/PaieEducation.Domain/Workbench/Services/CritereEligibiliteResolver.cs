@@ -1,3 +1,4 @@
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.ValueObjects;
 
@@ -26,16 +27,16 @@ public sealed class CritereEligibiliteResolver
 
         return critere.Id switch
         {
-            "FILIERE"            => agent.Filiere,
-            "CORPS"              => agent.Corps,
-            "GRADE"              => agent.Grade,
-            "CATEGORIE"          => agent.Categorie,
-            "FONCTION"           => agent.Fonction,
-            "TYPE_CONTRAT"       => agent.TypeContrat,
-            "ECHELON"            => agent.Echelon,
-            "ANCIENNETE"         => agent.AncienneteAnnees,
-            "TYPE_ETABLISSEMENT" => agent.TypeEtablissement,
-            "ORIGINE_STATUTAIRE" => agent.OrigineStatutaire,
+            CritereIds.Filiere            => agent.Filiere,
+            CritereIds.Corps              => agent.Corps,
+            CritereIds.Grade              => agent.Grade,
+            CritereIds.Categorie          => agent.Categorie,
+            CritereIds.Fonction           => agent.Fonction,
+            CritereIds.TypeContrat        => agent.TypeContrat,
+            CritereIds.Echelon            => agent.Echelon,
+            CritereIds.Anciennete         => agent.AncienneteAnnees,
+            CritereIds.TypeEtablissement  => agent.TypeEtablissement,
+            CritereIds.OrigineStatutaire  => agent.OrigineStatutaire,
             _ => null   // critère inconnu : le moteur le signalera dans le diagnostic
         };
     }

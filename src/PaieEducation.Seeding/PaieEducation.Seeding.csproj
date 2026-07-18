@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PaieEducation.Domain\PaieEducation.Domain.csproj" />
+    <ProjectReference Include="..\PaieEducation.Shared\PaieEducation.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Jeu de données nomenclature : CSV cascade (185 grades) embarqué en
+         ressource, plus de chemin CSV externe (C1.1). -->
+    <EmbeddedResource Include="Data\Cascade_Corps_Grades_30526.csv" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

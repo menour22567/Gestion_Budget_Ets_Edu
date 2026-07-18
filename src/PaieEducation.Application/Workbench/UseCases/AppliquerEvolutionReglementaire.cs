@@ -1,6 +1,9 @@
 using System.Text.Json;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Repositories;
 using PaieEducation.Shared.Time;
 
@@ -72,12 +75,14 @@ public sealed class AppliquerEvolutionReglementaire
     private readonly IGrilleIndiciaireRepository _grille;
     private readonly IAuditLogRepository _auditLog;
     private readonly IClock _clock;
+    private readonly IUnitOfWork _uow;
 
-    public AppliquerEvolutionReglementaire(IGrilleIndiciaireRepository grille, IAuditLogRepository auditLog, IClock clock)
+    public AppliquerEvolutionReglementaire(IGrilleIndiciaireRepository grille, IAuditLogRepository auditLog, IClock clock, IUnitOfWork uow)
     {
         _grille = grille ?? throw new ArgumentNullException(nameof(grille));
         _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _uow = uow ?? throw new ArgumentNullException(nameof(uow));
     }
 
     public async Task<Result<string>> ExecuterAsync(Demande demande, CancellationToken ct = default)
@@ -104,22 +109,34 @@ public sealed class AppliquerEvolutionReglementaire
                 "Le dry-run est obligatoire (RapportImpact requis) — ou passer BypassDryRun avec une raison documentée."));
         }
 
+        await _uow.BeginAsync(ct);
+
         var ecriture = demande.Strategie == StrategieVersionning.ClotureEtNouvelleVersion
             ? await _grille.DefinirValeurPointAsync(
-                demande.NouvelleValeur!.Value, demande.DateEffet, demande.Version, demande.Source, _clock.UtcNow, ct)
-            : await _grille.DupliquerValeurPointAsync(demande.DateEffet, demande.Version, demande.Source, _clock.UtcNow, ct);
+                demande.NouvelleValeur!.Value, demande.DateEffet, demande.Version, demande.Source, _clock.UtcNow, ct, _uow)
+            : await _grille.DupliquerValeurPointAsync(demande.DateEffet, demande.Version, demande.Source, _clock.UtcNow, ct, _uow);
 
         if (ecriture.IsFailure)
+        {
+            await _uow.RollbackAsync(ct);
             return ecriture;
+        }
 
         var payload = JsonSerializer.Serialize(new AuditPayload(
             demande.Description, demande.Strategie.ToString(), demande.DateEffet, demande.Version, demande.Source,
             demande.NouvelleValeur, demande.RapportImpact, demande.BypassDryRun, demande.RaisonBypass));
 
-        var action = demande.BypassDryRun ? "APPLIQUER_EVOLUTION_BYPASS" : "APPLIQUER_EVOLUTION";
+        var action = demande.BypassDryRun ? AuditActions.AppliquerEvolutionBypass : AuditActions.AppliquerEvolution;
         var audit = await _auditLog.EnregistrerAsync(
-            demande.Actor, action, "ValeurPoint", ecriture.Value, payload, demande.Description, _clock.UtcNow, ct);
+            demande.Actor, action, AuditEntityTypes.ValeurPoint, ecriture.Value, payload, demande.Description, _clock.UtcNow, ct, _uow);
 
-        return audit.IsFailure ? Result.Failure<string>(audit.Error) : ecriture;
+        if (audit.IsFailure)
+        {
+            await _uow.RollbackAsync(ct);
+            return Result.Failure<string>(audit.Error);
+        }
+
+        await _uow.CommitAsync(ct);
+        return ecriture;
     }
 }

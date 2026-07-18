@@ -3,7 +3,54 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d">
-    <TextBlock Text="Workbench réglementaire — à venir (Phase 6, tâche 4)"
-               Margin="24" FontStyle="Italic" Foreground="Gray"/>
+             xmlns:workbench="clr-namespace:PaieEducation.Presentation.Workbench"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance workbench:WorkbenchPlaceholderViewModel}">
+    <StackPanel Margin="24" Orientation="Vertical">
+        <TextBlock Text="Workbench réglementaire" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <TextBlock Text="Centre de réglementation paramétrable. Choisissez un écran :"
+                   Margin="0,0,0,16" Foreground="Gray"/>
+
+        <UniformGrid Columns="2" Width="520" HorizontalAlignment="Left">
+            <Button Command="{Binding AllerVersMatriceCouvertureCommand}"
+                    Height="64" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                <StackPanel>
+                    <TextBlock Text="Matrice de couverture" FontWeight="SemiBold"/>
+                    <TextBlock Text="Corps × rubriques : éligibilité et périodes" FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Button>
+
+            <Button Command="{Binding AllerVersFicheRubriqueCommand}"
+                    Height="64" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                <StackPanel>
+                    <TextBlock Text="Fiche rubrique" FontWeight="SemiBold"/>
+                    <TextBlock Text="Consultation identité / barème / éligibilité" FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Button>
+
+            <Button Command="{Binding AllerVersEditerRubriqueCommand}"
+                    Height="64" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                <StackPanel>
+                    <TextBlock Text="Éditer une rubrique" FontWeight="SemiBold"/>
+                    <TextBlock Text="Création / formule / paramètre versionné" FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Button>
+
+            <Button Command="{Binding AllerVersSuggererRubriquesCommand}"
+                    Height="64" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                <StackPanel>
+                    <TextBlock Text="Suggérer des rubriques" FontWeight="SemiBold"/>
+                    <TextBlock Text="Affectation assistée d'un agent" FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Button>
+
+            <Button Command="{Binding AllerVersAuditLogCommand}"
+                    Height="64" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                <StackPanel>
+                    <TextBlock Text="Audit &amp; traçabilité" FontWeight="SemiBold"/>
+                    <TextBlock Text="Journal des évolutions réglementaires" FontSize="11" Foreground="Gray"/>
+                </StackPanel>
+            </Button>
+        </UniformGrid>
+    </StackPanel>
 </UserControl>

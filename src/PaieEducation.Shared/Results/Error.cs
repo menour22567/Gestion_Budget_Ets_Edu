@@ -21,6 +21,15 @@ public sealed record Error(string Code, string Message)
     /// <summary>Échec technique ou inattendu.</summary>
     public static Error Failure(string message) => new("failure", message);
 
+    /// <summary>Erreur de syntaxe d'une formule (lexer/parser).</summary>
+    public static Error Syntaxe(string message) => new("syntaxe", message);
+
+    /// <summary>Erreur d'évaluation (variable inconnue, division par zéro, ...).</summary>
+    public static Error Evaluation(string message) => new("evaluation", message);
+
+    /// <summary>Cycle détecté dans le graphe de dépendances des rubriques.</summary>
+    public static Error Cycle(string message) => new("cycle", message);
+
     /// <inheritdoc />
     public override string ToString() => $"[{Code}] {Message}";
 }

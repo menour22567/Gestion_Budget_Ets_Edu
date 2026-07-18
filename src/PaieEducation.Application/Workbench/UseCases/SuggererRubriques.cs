@@ -1,5 +1,6 @@
 using PaieEducation.Domain.Calcul.Repositories;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Workbench.Repositories;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Shared.Time;

@@ -5,7 +5,7 @@ using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Infrastructure.Repositories.Payroll;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.Repositories;
 
@@ -15,6 +15,10 @@ namespace PaieEducation.Tests.Integration.Repositories;
 /// </summary>
 public class BulletinRepositoryTests
 {
+    // Valeurs par défaut (seedées dans Parametres, C8.1).
+    private const decimal SeuilExoneration = 30000m;
+    private const decimal PlafondLissageGeneral = 35000m;
+
     private static readonly Dictionary<string, decimal> VariablesBase = new()
     {
         ["INDICE_MIN"] = 578m, ["INDICE_ECH"] = 100m, ["VPI"] = 45m,
@@ -43,7 +47,7 @@ public class BulletinRepositoryTests
             Enseignant(), "2025-06-01", VariablesBase,
             new Dictionary<string, decimal> { ["PAPP"] = 0.30m },
             new Dictionary<string, string> { ["CATEGORIE"] = "13" }, ProfilFiscal.Standard);
-        var bulletin = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche)).Calculer(input.Value);
+        var bulletin = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche), SeuilExoneration, PlafondLissageGeneral).Calculer(input.Value);
         return new SnapshotEngine().Capturer(input.Value, bulletin.Value, "2025-06-05T10:00:00.0000000Z");
     }
 

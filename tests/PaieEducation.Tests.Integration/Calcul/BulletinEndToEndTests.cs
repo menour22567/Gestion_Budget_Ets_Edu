@@ -5,7 +5,7 @@ using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Infrastructure.Repositories.Agents;
 using PaieEducation.Infrastructure.Repositories.Payroll;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.Calcul;
 
@@ -24,6 +24,10 @@ namespace PaieEducation.Tests.Integration.Calcul;
 /// </summary>
 public class BulletinEndToEndTests
 {
+    // Valeurs par défaut (seedées dans Parametres, C8.1).
+    private const decimal SeuilExoneration = 30000m;
+    private const decimal PlafondLissageGeneral = 35000m;
+
     // Variables de base du pilote (résolues de la grille en Phase 5 ; fournies ici).
     private static readonly Dictionary<string, decimal> VariablesBase = new()
     {
@@ -44,7 +48,7 @@ public class BulletinEndToEndTests
         await new FormulesSeeder().SeedAsync(conn);
     }
 
-    private static async Task<PaieEducation.Domain.Common.Result<PayrollInput>> Charger(
+    private static async Task<PaieEducation.Shared.Results.Result<PayrollInput>> Charger(
         PayrollReadRepository repo, string grade)
         => await repo.ChargerAsync(
             Enseignant(grade), "2025-06-01", VariablesBase,
@@ -72,7 +76,7 @@ public class BulletinEndToEndTests
         Assert.NotNull(input.Value.RegleIrg);
         Assert.Equal("IRG-PER-2022", input.Value.RegleIrg!.Code);
 
-        var pipeline = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche));
+        var pipeline = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche), SeuilExoneration, PlafondLissageGeneral);
         var bulletin = pipeline.Calculer(input.Value);
         Assert.True(bulletin.IsSuccess, bulletin.IsFailure ? bulletin.Error.Message : null);
         var b = bulletin.Value;
@@ -85,11 +89,11 @@ public class BulletinEndToEndTests
         Assert.Equal(13730m, Ligne(b, "QUALIF"));
         // DOC_PEDAG : CAT=13 ≥ 13 → forfait 3 000 DA (barème lu en base, pas codé en dur).
         Assert.Equal(3000m, Ligne(b, "DOC_PEDAG"));
-        Assert.Equal(75325m, b.TotalGains);
+        Assert.Equal(75325m, b.TotalGains.Amount);
         Assert.Equal(6779m, Ligne(b, "SS"));
-        Assert.Equal(68546m, b.AssietteImposable);
-        Assert.Equal(10807m, b.Irg);
-        Assert.Equal(57739m, b.Net);
+        Assert.Equal(68546m, b.AssietteImposable.Amount);
+        Assert.Equal(10807m, b.Irg.Amount);
+        Assert.Equal(57739m, b.Net.Amount);
 
         // J4.d — Audit Engine : une étape par rubrique calculée, dans l'ordre du
         // pipeline, lu depuis la base (rien codé en dur).
@@ -124,9 +128,9 @@ public class BulletinEndToEndTests
         var input = await Charger(repo, "A-G048");
         Assert.True(input.IsSuccess);
 
-        var b = new CalculationPipeline(new ArrondiService()).Calculer(input.Value).Value;
+        var b = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral).Calculer(input.Value).Value;
         Assert.DoesNotContain(b.Lignes, l => l.RubriqueId == "ISSRP_45");
-        Assert.Equal(61595m, b.TotalGains);   // 30510 + 5202 + 9153 + 13730 (QUALIF) + 3000 (DOC_PEDAG)
+        Assert.Equal(61595m, b.TotalGains.Amount);   // 30510 + 5202 + 9153 + 13730 (QUALIF) + 3000 (DOC_PEDAG)
     }
 
     [Fact]
@@ -141,7 +145,7 @@ public class BulletinEndToEndTests
         var input = await Charger(repo, "SDL-G007");
         Assert.True(input.IsSuccess);
 
-        var b = new CalculationPipeline(new ArrondiService()).Calculer(input.Value).Value;
+        var b = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral).Calculer(input.Value).Value;
         Assert.Contains(b.Lignes, l => l.RubriqueId == "ISSRP_45");
         Assert.DoesNotContain(b.Lignes, l => l.RubriqueId == "ISSRP_30");
     }
@@ -177,12 +181,12 @@ public class BulletinEndToEndTests
             new Dictionary<string, string> { ["CATEGORIE"] = "13" }, ProfilFiscal.Standard);
         Assert.True(input.IsSuccess, input.IsFailure ? input.Error.Message : null);
 
-        var bulletin = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche)).Calculer(input.Value);
+        var bulletin = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche), SeuilExoneration, PlafondLissageGeneral).Calculer(input.Value);
         Assert.True(bulletin.IsSuccess, bulletin.IsFailure ? bulletin.Error.Message : null);
 
         // Identique au bulletin du test « depuis la base » (même grade PDLP-G105,
         // même CATEGORIE/ECHELON) — seule la provenance de l'agent change.
-        Assert.Equal(57739m, bulletin.Value.Net);
+        Assert.Equal(57739m, bulletin.Value.Net.Amount);
     }
 
     private static void SeedAgentReel(SqliteConnection conn)
@@ -205,7 +209,7 @@ public class BulletinEndToEndTests
             """);
     }
 
-    private static decimal Ligne(Bulletin b, string id) => b.Lignes.Single(l => l.RubriqueId == id).Montant;
+    private static decimal Ligne(Bulletin b, string id) => b.Lignes.Single(l => l.RubriqueId == id).Montant.Amount;
 
     private static void Exec(SqliteConnection c, string sql)
     {

@@ -4,7 +4,7 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Infrastructure.Repositories.Agents;
 using PaieEducation.Infrastructure.Repositories.Payroll;
 using PaieEducation.Shared.Time;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.UseCases;
 
@@ -56,9 +56,16 @@ public class ValiderBulletinTests
         cmd.ExecuteNonQuery();
     }
 
-    private static ValiderBulletin BuildUseCase(SqliteConnection conn) => new(
-        new AgentCarriereRepository(conn), new VariableRepository(conn), new PayrollReadRepository(conn),
-        new BulletinRepository(conn), new HorlogeFixe(new DateTimeOffset(2026, 7, 16, 10, 0, 0, TimeSpan.Zero)));
+    private static ValiderBulletin BuildUseCase(SqliteConnection conn)
+    {
+        var calculer = new CalculerBulletin(
+            new AgentCarriereRepository(conn), new VariableRepository(conn),
+            new PayrollReadRepository(conn), new ParametreSystemeRepository(conn),
+            SourceValeurResolverFactory.ResolverReel());
+        return new ValiderBulletin(
+            calculer, new BulletinRepository(conn),
+            new HorlogeFixe(new DateTimeOffset(2026, 7, 16, 10, 0, 0, TimeSpan.Zero)));
+    }
 
     private static CalculerBulletin.Demande Demande() => new(
         AgentId: "A-PILOTE", DatePaie: "2025-06-01",

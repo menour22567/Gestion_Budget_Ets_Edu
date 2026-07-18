@@ -38,4 +38,20 @@
         <workbench:WorkbenchPlaceholderView />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type workbench:MatriceCouvertureViewModel}">
+        <workbench:MatriceCouvertureView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type workbench:AuditLogViewModel}">
+        <workbench:AuditLogView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type workbench:FicheRubriqueViewModel}">
+        <workbench:FicheRubriqueView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type workbench:EditerRubriqueViewModel}">
+        <workbench:EditerRubriqueView />
+    </DataTemplate>
+
 </ResourceDictionary>

@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
 using PaieEducation.Application.Workbench.UseCases;
 using PaieEducation.Infrastructure.Repositories.Workbench;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.UseCases;
 

@@ -1,5 +1,6 @@
 using System.Globalization;
 using PaieEducation.Domain.Calcul.Audit;
+using PaieEducation.Domain.Calcul.Constants;
 using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Explicabilite;
 using PaieEducation.Domain.Calcul.Formules;
@@ -7,24 +8,20 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.ValueObjects;
 using PaieEducation.Domain.Calcul.Validation;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Guards;
+using PaieEducation.Shared.Money;
+using PaieEducation.Shared.Results;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Domain.Workbench.ValueObjects;
 
 namespace PaieEducation.Domain.Calcul.Pipeline;
 
-/// <summary>
-/// Orchestre le calcul d'un bulletin à partir d'un <see cref="PayrollInput"/>
-/// résolu : ordre de calcul (DAG) → éligibilité DNF → évaluation des formules
-/// (lues en base) → assiettes → cotisations → IRG → totaux → net → contrôles
-/// finaux (RM-081). Pur, déterministe (ADR-0005) : aucune I/O, tout arrondi
-/// passe par <see cref="ArrondiService"/> (RM-120).
-/// </summary>
 public sealed class CalculationPipeline
 {
     private readonly FormulaEvaluator _evaluateur = new();
-    private readonly IrgCalculator _irg = new();
+    private readonly IrgCalculator _irg;
     private readonly ContributionCalculator _cotisation = new();
     private readonly BaremeResolver _bareme = new();
     private readonly RegleEligibiliteEvaluator _eligibilite = new(new CritereEligibiliteResolver());
@@ -32,17 +29,16 @@ public sealed class CalculationPipeline
     private readonly ValidationEngine _validation = new();
     private readonly ArrondiService _arrondi;
 
-    public CalculationPipeline(ArrondiService arrondi)
-        => _arrondi = arrondi ?? throw new ArgumentNullException(nameof(arrondi));
+    public CalculationPipeline(ArrondiService arrondi, decimal seuilExoneration, decimal plafondLissageGeneral)
+    {
+        _arrondi = arrondi ?? throw new ArgumentNullException(nameof(arrondi));
+        _irg = new IrgCalculator(seuilExoneration, plafondLissageGeneral);
+    }
 
-    /// <summary>Calcule le bulletin. Renvoie le premier échec rencontré (formule, IRG, ...).</summary>
     public Result<Bulletin> Calculer(PayrollInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
 
-        // Ordre de calcul : les gains d'abord, ordonnés par OrdreCalcul (pas de
-        // dépendances inter-rubriques dans le pilote → ordre stable). Le
-        // DependencyResolver valide l'absence de cycle même sans arête.
         var gains = input.Rubriques.Where(r => r.Nature == NatureRubrique.Gain)
             .OrderBy(r => r.Ordre).ThenBy(r => r.Id, StringComparer.Ordinal).ToList();
         var ordre = _dependances.Ordonner(
@@ -50,8 +46,6 @@ public sealed class CalculationPipeline
         if (ordre.IsFailure)
             return Result.Failure<Bulletin>(ordre.Error);
 
-        // Variables mutables : les résultats des rubriques déjà calculées
-        // deviennent disponibles pour les suivantes (référence par code).
         var variables = new Dictionary<string, decimal>(input.Variables, StringComparer.Ordinal);
         var contexte = new PipelineContext(variables, input.SourcesValeur, input.ClesBareme,
             input.Baremes, input.DatePaie, _bareme);
@@ -66,7 +60,6 @@ public sealed class CalculationPipeline
             var rub = indexGain[id];
             rang++;
 
-            // Éligibilité (DNF) : une rubrique sans condition est due à tous.
             var eval = _eligibilite.Evaluer(rub.Id, input.Agent, input.DatePaie, input.Conditions, input.Criteres);
             if (!eval.EstEligible)
             {
@@ -81,25 +74,33 @@ public sealed class CalculationPipeline
             contexte.PurgerLectures();
             var montant = _evaluateur.Evaluer(rub.Expression, contexte);
             if (montant.IsFailure)
+            {
+                if (contexte.SourceAbsente)
+                {
+                    etapes.Add(new EtapeAudit(rub.Id, rang, false,
+                        ResultatEligibilite.Abstention(contexte.SourceAbsenteRubrique!), null));
+                    continue;
+                }
                 return Result.Failure<Bulletin>(
                     Error.Evaluation($"Rubrique « {rub.Id} » : {montant.Error.Message}"));
+            }
             var lectures = contexte.PurgerLectures();
 
             var arrondi = _arrondi.Arrondir(montant.Value);
-            variables[rub.Id] = arrondi;   // disponible pour les rubriques suivantes
-            lignes.Add(new BulletinLigne(rub.Id, NatureRubrique.Gain, arrondi,
+            variables[rub.Id] = arrondi;
+            var montantMoney = new Money(arrondi);
+            lignes.Add(new BulletinLigne(rub.Id, NatureRubrique.Gain, montantMoney,
                 rub.EstImposable, rub.EstCotisable, new ExplicationLigne(rub.Expression, lectures)));
             etapes.Add(new EtapeAudit(rub.Id, rang, Eligible: true, eval, arrondi));
         }
 
-        var totalGains = lignes.Where(l => l.Nature == NatureRubrique.Gain).Sum(l => l.Montant);
-        var assietteCotisable = lignes.Where(l => l is { Nature: NatureRubrique.Gain, Cotisable: true }).Sum(l => l.Montant);
-        var gainsImposables = lignes.Where(l => l is { Nature: NatureRubrique.Gain, Imposable: true }).Sum(l => l.Montant);
+        var totalGains = new Money(lignes.Where(l => l.Nature == NatureRubrique.Gain).Sum(l => l.Montant.Amount));
+        var assietteCotisable = new Money(lignes
+            .Where(l => l is { Nature: NatureRubrique.Gain, Cotisable: true }).Sum(l => l.Montant.Amount));
+        var gainsImposables = new Money(lignes
+            .Where(l => l is { Nature: NatureRubrique.Gain, Imposable: true }).Sum(l => l.Montant.Amount));
 
-        // Cotisations : salariales retenues sur le net ET déductibles de l'imposable.
-        // Toujours appliquées si présentes en entrée (aucun DNF ne les conditionne dans
-        // le pilote actuel) — éligibilité de convention pour le journal d'audit.
-        decimal cotisationsSalariales = 0m;
+        Money cotisationsSalariales = Money.Zero;
         rang = 0;
         foreach (var cot in input.Cotisations)
         {
@@ -110,35 +111,34 @@ public sealed class CalculationPipeline
                 return Result.Failure<Bulletin>(montantCot.Error);
 
             var arrondi = _arrondi.Arrondir(montantCot.Value);
+            var montantMoney = new Money(arrondi);
             var explication = new ExplicationLigne(
                 $"{cot.Def.Code} sur assiette", new[] { new VariableUtilisee("Assiette", assiette) });
-            lignes.Add(new BulletinLigne(cot.Def.Code, NatureRubrique.Cotisation, arrondi,
+            lignes.Add(new BulletinLigne(cot.Def.Code, NatureRubrique.Cotisation, montantMoney,
                 Imposable: false, Cotisable: false, explication));
             etapes.Add(new EtapeAudit(cot.Def.Code, rang, Eligible: true, ResultatEligibilite.Eligible(), arrondi));
             if (cot.EstSalariale)
-                cotisationsSalariales += arrondi;
+                cotisationsSalariales += montantMoney;
         }
 
-        // Assiette imposable = Σ gains imposables − cotisations salariales déductibles (J3C §10).
-        var assietteImposable = Math.Max(0m, gainsImposables - cotisationsSalariales);
+        var assietteImposable = new Money(Math.Max(0m, gainsImposables.Amount - cotisationsSalariales.Amount));
 
-        // IRG sur l'assiette imposable.
-        decimal irg = 0m;
+        Money irg = Money.Zero;
         if (input.RegleIrg is { } regleIrg)
         {
-            var resultatIrg = _irg.Calculer(assietteImposable, input.Profil, regleIrg);
+            var resultatIrg = _irg.Calculer(assietteImposable.Amount, input.Profil, regleIrg);
             if (resultatIrg.IsFailure)
                 return Result.Failure<Bulletin>(resultatIrg.Error);
-            irg = _arrondi.Arrondir(resultatIrg.Value.Final);
+            irg = new Money(_arrondi.Arrondir(resultatIrg.Value.Final));
             var explicationIrg = new ExplicationLigne(
                 "IRG", Array.Empty<VariableUtilisee>(), resultatIrg.Value);
             lignes.Add(new BulletinLigne("IRG", NatureRubrique.Impot, irg,
                 Imposable: false, Cotisable: false, explicationIrg));
-            etapes.Add(new EtapeAudit("IRG", ++rang, Eligible: true, ResultatEligibilite.Eligible(), irg));
+            etapes.Add(new EtapeAudit("IRG", ++rang, Eligible: true, ResultatEligibilite.Eligible(), irg.Amount));
         }
 
         var totalRetenues = cotisationsSalariales + irg
-            + lignes.Where(l => l.Nature == NatureRubrique.Retenue).Sum(l => l.Montant);
+            + new Money(lignes.Where(l => l.Nature == NatureRubrique.Retenue).Sum(l => l.Montant.Amount));
         var net = _arrondi.Arrondir(totalGains - totalRetenues);
 
         var bulletin = new Bulletin(
@@ -149,17 +149,16 @@ public sealed class CalculationPipeline
     }
 
     private static decimal AssiettePour(
-        ReferenceAssiette reference, decimal cotisable, decimal imposable, IReadOnlyDictionary<string, decimal> vars)
+        ReferenceAssiette reference, Money cotisable, Money imposable, IReadOnlyDictionary<string, decimal> vars)
         => reference switch
         {
-            ReferenceAssiette.AssietteCotisable => cotisable,
-            ReferenceAssiette.AssietteImposable => imposable,
-            ReferenceAssiette.TraitementBase => vars.GetValueOrDefault("TBASE"),
-            ReferenceAssiette.TraitementBrut => vars.GetValueOrDefault("TRT"),
-            _ => 0m   // MontantFixe : assiette ignorée par le calculateur
+            ReferenceAssiette.AssietteCotisable => cotisable.Amount,
+            ReferenceAssiette.AssietteImposable => imposable.Amount,
+            ReferenceAssiette.TraitementBase => vars.GetValueOrDefault(VariablesCles.TraitementBase),
+            ReferenceAssiette.TraitementBrut => vars.GetValueOrDefault(VariablesCles.TraitementBrut),
+            _ => 0m
         };
 
-    /// <summary>Contexte de formule adossé au bundle d'entrée + résultats courants.</summary>
     private sealed class PipelineContext : IFormulaContext
     {
         private readonly IReadOnlyDictionary<string, decimal> _variables;
@@ -169,6 +168,7 @@ public sealed class CalculationPipeline
         private readonly string _datePaie;
         private readonly BaremeResolver _resolver;
         private readonly List<VariableUtilisee> _lectures = new();
+        private string? _sourceAbsenteRubrique;
 
         public PipelineContext(
             IReadOnlyDictionary<string, decimal> variables,
@@ -186,11 +186,6 @@ public sealed class CalculationPipeline
             _resolver = resolver;
         }
 
-        /// <summary>
-        /// Renvoie les variables lues par <see cref="ResoudreVariable"/> depuis le
-        /// dernier appel, puis vide le tampon (Explainability Engine, RM-105) —
-        /// un appel par rubrique évaluée, encadrant <c>FormulaEvaluator.Evaluer</c>.
-        /// </summary>
         public IReadOnlyList<VariableUtilisee> PurgerLectures()
         {
             var copie = _lectures.ToList();
@@ -206,10 +201,16 @@ public sealed class CalculationPipeline
             return Result.Success(v);
         }
 
-        public Result<decimal> ResoudreSource(string rubrique) =>
-            _sources.TryGetValue(rubrique, out var v)
-                ? Result.Success(v)
-                : Result.Failure<decimal>(Error.NotFound($"Source de valeur absente : {rubrique}"));
+        public bool SourceAbsente => _sourceAbsenteRubrique is not null;
+        public string? SourceAbsenteRubrique => _sourceAbsenteRubrique;
+
+        public Result<decimal> ResoudreSource(string rubrique)
+        {
+            if (_sources.TryGetValue(rubrique, out var v))
+                return Result.Success(v);
+            _sourceAbsenteRubrique = rubrique;
+            return Result.Failure<decimal>(Error.NotFound($"Source de valeur absente : {rubrique}"));
+        }
 
         public Result<decimal> ResoudreBareme(string rubrique, string dimension)
         {
@@ -225,16 +226,7 @@ public sealed class CalculationPipeline
             return ParserValeurBareme(trouve.Valeur);
         }
 
-        private static string NormaliserDimension(string d) => d.ToUpperInvariant() switch
-        {
-            "CATEGORIE" => "Categorie",
-            "ECHELON" => "Echelon",
-            "ANCIENNETE" => "Anciennete",
-            "TYPE_ETABLISSEMENT" => "TypeEtablissement",
-            "CORPS" => "Corps",
-            "GRADE" => "Grade",
-            _ => d
-        };
+        private static string NormaliserDimension(string d) => BaremeDimensionKeys.Normaliser(d.ToUpperInvariant());
 
         private static Result<decimal> ParserValeurBareme(string valeur)
         {

@@ -41,4 +41,10 @@ public interface IWorkbenchReadRepository
     /// une règle active d'une règle expirée, pas seulement l'état courant).
     /// </summary>
     Task<IReadOnlyList<ConditionEligibilite>> ListerConditionsCorpsGradeAsync(CancellationToken ct = default);
+
+    /// <summary>Métadonnées d'identité de la rubrique, ou <c>null</c> si elle n'existe pas — pour la fiche rubrique (Phase 6, tâche 4).</summary>
+    Task<RubriqueDetail?> ObtenirRubriqueAsync(string rubriqueId, CancellationToken ct = default);
+
+    /// <summary>Tous les barèmes d'une rubrique, indépendamment de la dimension — pour la fiche rubrique (Phase 6, tâche 4).</summary>
+    Task<IReadOnlyList<BaremeValue>> ListerBaremesRubriqueAsync(string rubriqueId, CancellationToken ct = default);
 }

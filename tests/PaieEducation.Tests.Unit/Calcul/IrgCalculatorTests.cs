@@ -9,6 +9,10 @@ namespace PaieEducation.Tests.Unit.Calcul;
 /// </summary>
 public class IrgCalculatorTests
 {
+    // Valeurs par défaut (seedées dans Parametres, C8.1).
+    private const decimal SeuilExoneration = 30000m;
+    private const decimal PlafondLissageGeneral = 35000m;
+
     private static readonly IrgTranche[] Bareme2008 =
     {
         new(0, 10000, 0.00m),
@@ -78,7 +82,7 @@ public class IrgCalculatorTests
     [Fact]
     public void Exoneration_revenu_sous_30000_donne_zero()
     {
-        var r = new IrgCalculator().Calculer(28000m, ProfilFiscal.Standard, Periode2022());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(28000m, ProfilFiscal.Standard, Periode2022());
         Assert.True(r.IsSuccess);
         Assert.Equal(0m, r.Value.Final);
         Assert.Equal("exoneration", r.Value.EtapeAppliquee);
@@ -88,7 +92,7 @@ public class IrgCalculatorTests
     public void Standard_hors_bande_applique_abattement_plafonne()
     {
         // 54 800 : brut 8596, abattement 40 %=3438,4 → plafonné 1500 → 7096.
-        var r = new IrgCalculator().Calculer(54800m, ProfilFiscal.Standard, Periode2022());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(54800m, ProfilFiscal.Standard, Periode2022());
         Assert.True(r.IsSuccess);
         Assert.Equal(8596m, r.Value.Brut);
         Assert.Equal(1500m, r.Value.Abattement);
@@ -102,7 +106,7 @@ public class IrgCalculatorTests
         // 2020, SI = 32 000 : brut 2008 = (30000-10000)×0,20 + (32000-30000)×0,30
         //   = 4000 + 600 = 4600 ; abattement 40 %=1840 → plafonné 1500 → apres = 3100.
         // Lissage général : 3100 × 8/3 − 20000/3 = 24800/3 − 20000/3 = 4800/3 = 1600.
-        var r = new IrgCalculator().Calculer(32000m, ProfilFiscal.Standard, Periode2020());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(32000m, ProfilFiscal.Standard, Periode2020());
         Assert.True(r.IsSuccess);
         Assert.Equal("lissage_general", r.Value.EtapeAppliquee);
         Assert.Equal(1600m, Math.Round(r.Value.Final, 2));
@@ -115,7 +119,7 @@ public class IrgCalculatorTests
         // brut 2008 = 4000 + (38000-30000)×0,30 = 4000+2400 = 6400 ;
         // abattement plafonné 1500 → apres = 4900.
         // Lissage spécial : 4900 × 5/3 − 12500/3 = 24500/3 − 12500/3 = 12000/3 = 4000.
-        var r = new IrgCalculator().Calculer(38000m, ProfilFiscal.HandicapeOuRetraiteRG, Periode2020());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(38000m, ProfilFiscal.HandicapeOuRetraiteRG, Periode2020());
         Assert.True(r.IsSuccess);
         Assert.Equal("lissage_special", r.Value.EtapeAppliquee);
         Assert.Equal(4000m, Math.Round(r.Value.Final, 2));
@@ -126,7 +130,7 @@ public class IrgCalculatorTests
     {
         // Même SI = 38 000 mais profil standard : hors bande générale (>35000) →
         // étape standard (pas de lissage).
-        var r = new IrgCalculator().Calculer(38000m, ProfilFiscal.Standard, Periode2020());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(38000m, ProfilFiscal.Standard, Periode2020());
         Assert.True(r.IsSuccess);
         Assert.Equal("standard", r.Value.EtapeAppliquee);
     }
@@ -136,7 +140,7 @@ public class IrgCalculatorTests
     {
         // SI = 32 000 avant 2020-06 : pas d'exonération (seuil 0), lissage identité.
         // brut = 4600 ; abattement plafonné 1500 → 3100.
-        var r = new IrgCalculator().Calculer(32000m, ProfilFiscal.Standard, PeriodeAvant2020());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(32000m, ProfilFiscal.Standard, PeriodeAvant2020());
         Assert.True(r.IsSuccess);
         Assert.Equal("standard", r.Value.EtapeAppliquee);
         Assert.Equal(3100m, r.Value.Final);
@@ -147,7 +151,7 @@ public class IrgCalculatorTests
     {
         // brut faible : abattement = max(40%, 1000). SI=30500 (2020), brut 2008 =
         // 4000 + 500×0,30 = 4150 ; 40 %=1660 → dans [1000;1500] → plafonné 1500.
-        var r = new IrgCalculator().Calculer(30500m, ProfilFiscal.Standard, Periode2020());
+        var r = new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(30500m, ProfilFiscal.Standard, Periode2020());
         Assert.True(r.IsSuccess);
         Assert.Equal(1500m, r.Value.Abattement);
     }
@@ -155,6 +159,6 @@ public class IrgCalculatorTests
     [Fact]
     public void Revenu_negatif_echoue()
     {
-        Assert.True(new IrgCalculator().Calculer(-1m, ProfilFiscal.Standard, Periode2022()).IsFailure);
+        Assert.True(new IrgCalculator(SeuilExoneration, PlafondLissageGeneral).Calculer(-1m, ProfilFiscal.Standard, Periode2022()).IsFailure);
     }
 }

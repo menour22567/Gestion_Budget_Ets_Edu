@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PaieEducation.Domain\PaieEducation.Domain.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Application\PaieEducation.Application.csproj" />
+    <ProjectReference Include="..\..\src\PaieEducation.Reporting\PaieEducation.Reporting.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Presentation\PaieEducation.Presentation.csproj" />
     <ProjectReference Include="..\..\src\PaieEducation.Shared\PaieEducation.Shared.csproj" />
   </ItemGroup>

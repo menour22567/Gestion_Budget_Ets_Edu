@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using PaieEducation.Application.Agents.UseCases;
+using PaieEducation.Application.Payroll.Services;
 using PaieEducation.Application.Payroll.UseCases;
 using PaieEducation.Application.Referentiels.UseCases;
 using PaieEducation.Application.Workbench.UseCases;
@@ -17,6 +18,7 @@ public static class ApplicationServiceCollectionExtensions
     {
         services.AddTransient<CreerAgent>();
         services.AddTransient<CalculerBulletin>();
+        services.AddTransient<CalculEntreeResolver>();
         services.AddTransient<ValiderBulletin>();
         services.AddTransient<ConsulterBulletin>();
         services.AddTransient<DefinirValeurPoint>();
@@ -33,6 +35,11 @@ public static class ApplicationServiceCollectionExtensions
         services.AddTransient<GenererRappels>();
         services.AddTransient<DupliquerVersion>();
         services.AddTransient<AppliquerEvolutionReglementaire>();
+        services.AddTransient<ListerAuditLog>();
+        services.AddTransient<ConsulterFicheRubrique>();
+        services.AddTransient<DefinirRubrique>();
+        services.AddTransient<DefinirFormuleRubrique>();
+        services.AddTransient<DefinirParametreRubrique>();
 
         return services;
     }

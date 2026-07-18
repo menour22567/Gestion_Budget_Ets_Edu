@@ -7,7 +7,7 @@ using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Infrastructure.Repositories.Payroll;
 using PaieEducation.Infrastructure.Serialization;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.Serialization;
 
@@ -19,6 +19,10 @@ namespace PaieEducation.Tests.Integration.Serialization;
 /// </summary>
 public class BulletinSnapshotJsonConvertersTests
 {
+    // Valeurs par défaut (seedées dans Parametres, C8.1).
+    private const decimal SeuilExoneration = 30000m;
+    private const decimal PlafondLissageGeneral = 35000m;
+
     private static readonly Dictionary<string, decimal> VariablesBase = new()
     {
         ["INDICE_MIN"] = 578m, ["INDICE_ECH"] = 100m, ["VPI"] = 45m,
@@ -46,10 +50,10 @@ public class BulletinSnapshotJsonConvertersTests
             new Dictionary<string, string> { ["CATEGORIE"] = "13" }, ProfilFiscal.Standard);
         Assert.True(input.IsSuccess, input.IsFailure ? input.Error.Message : null);
 
-        var pipeline = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche));
+        var pipeline = new CalculationPipeline(new ArrondiService(ModeArrondi.DinarPlusProche), SeuilExoneration, PlafondLissageGeneral);
         var bulletin = pipeline.Calculer(input.Value);
         Assert.True(bulletin.IsSuccess, bulletin.IsFailure ? bulletin.Error.Message : null);
-        Assert.Equal(57739m, bulletin.Value.Net);
+        Assert.Equal(57739m, bulletin.Value.Net.Amount);
 
         var snapshot = new SnapshotEngine().Capturer(input.Value, bulletin.Value, "2025-06-05T10:00:00.0000000Z");
 
@@ -62,10 +66,10 @@ public class BulletinSnapshotJsonConvertersTests
         // le snapshot, jamais contre une réévaluation indépendante.
         var rejoue = pipeline.Calculer(deserialise!.Input);
         Assert.True(rejoue.IsSuccess, rejoue.IsFailure ? rejoue.Error.Message : null);
-        Assert.Equal(57739m, rejoue.Value.Net);
-        Assert.Equal(bulletin.Value.Net, rejoue.Value.Net);
-        Assert.Equal(bulletin.Value.TotalGains, rejoue.Value.TotalGains);
-        Assert.Equal(bulletin.Value.Irg, rejoue.Value.Irg);
-        Assert.Equal(deserialise.Resultat.Net, rejoue.Value.Net);
+        Assert.Equal(57739m, rejoue.Value.Net.Amount);
+        Assert.Equal(bulletin.Value.Net.Amount, rejoue.Value.Net.Amount);
+        Assert.Equal(bulletin.Value.TotalGains.Amount, rejoue.Value.TotalGains.Amount);
+        Assert.Equal(bulletin.Value.Irg.Amount, rejoue.Value.Irg.Amount);
+        Assert.Equal(deserialise.Resultat.Net.Amount, rejoue.Value.Net.Amount);
     }
 }

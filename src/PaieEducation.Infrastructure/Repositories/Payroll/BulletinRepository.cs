@@ -4,7 +4,8 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.Snapshot;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Infrastructure.Serialization;
 
 namespace PaieEducation.Infrastructure.Repositories.Payroll;
@@ -50,10 +51,10 @@ public sealed class BulletinRepository : IBulletinRepository
                 bulletinId,
                 agentId,
                 datePaie,
-                net = snapshot.Resultat.Net,
-                totalGains = snapshot.Resultat.TotalGains,
-                assietteImposable = snapshot.Resultat.AssietteImposable,
-                irg = snapshot.Resultat.Irg,
+                net = snapshot.Resultat.Net.Amount,
+                totalGains = snapshot.Resultat.TotalGains.Amount,
+                assietteImposable = snapshot.Resultat.AssietteImposable.Amount,
+                irg = snapshot.Resultat.Irg.Amount,
                 snapshotJson,
                 valideLe = createdAt,
                 createdAt,

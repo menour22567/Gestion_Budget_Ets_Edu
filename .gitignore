@@ -68,3 +68,7 @@ $RECYCLE.BIN/
 /Exports/
 /Logs/
 /Temp/
+
+# Outils locaux dev (AI assistant, etc.)
+/.kilo/
+/.agents/

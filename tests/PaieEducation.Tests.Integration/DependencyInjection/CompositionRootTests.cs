@@ -10,7 +10,7 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Infrastructure.DependencyInjection;
 using PaieEducation.Shared.Time;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.DependencyInjection;
 
@@ -74,7 +74,7 @@ public class CompositionRootTests
         var result = await useCase.ExecuterAsync(demande);
 
         Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
-        Assert.Equal(57739m, result.Value.Net);
+        Assert.Equal(57739m, result.Value.Net.Amount);
     }
 
     [Fact]
@@ -97,6 +97,7 @@ public class CompositionRootTests
         Assert.NotNull(sp.GetRequiredService<IBulletinRepository>());
         Assert.NotNull(sp.GetRequiredService<IBulletinReadRepository>());
         Assert.NotNull(sp.GetRequiredService<IGrilleIndiciaireRepository>());
+        Assert.NotNull(sp.GetRequiredService<IRubriqueRepository>());
 
         Assert.NotNull(sp.GetRequiredService<CreerAgent>());
         Assert.NotNull(sp.GetRequiredService<CalculerBulletin>());
@@ -105,6 +106,9 @@ public class CompositionRootTests
         Assert.NotNull(sp.GetRequiredService<DefinirValeurPoint>());
         Assert.NotNull(sp.GetRequiredService<DefinirIndiceMinGrille>());
         Assert.NotNull(sp.GetRequiredService<DefinirIndiceEchelon>());
+        Assert.NotNull(sp.GetRequiredService<DefinirRubrique>());
+        Assert.NotNull(sp.GetRequiredService<DefinirFormuleRubrique>());
+        Assert.NotNull(sp.GetRequiredService<DefinirParametreRubrique>());
         Assert.NotNull(sp.GetRequiredService<SimulerEvolutionReglementaire>());
     }
 }

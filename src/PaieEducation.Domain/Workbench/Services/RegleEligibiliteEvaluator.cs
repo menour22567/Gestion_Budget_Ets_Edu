@@ -221,6 +221,20 @@ public sealed record ResultatEligibilite(
     public static ResultatEligibilite Eligible() => new(true, Array.Empty<ExplicationGroupe>());
 
     /// <summary>
+    /// Abstention (ADR-0009) : rubrique non due faute de donnée requise (ex. source
+    /// de valeur absente). Non éligible, mais jamais une erreur bloquante — le calcul
+    /// poursuit et la rubrique ne produit aucun montant.
+    /// </summary>
+    public static ResultatEligibilite Abstention(string rubrique)
+        => new(false, new[] { new ExplicationGroupe(
+            null, false, new[]
+            {
+                new ExplicationCondition(
+                    $"ABSTENTION-{rubrique}", "SOURCE_VALEUR", Operateur.Egal, rubrique,
+                    null, false, $"Source de valeur absente : {rubrique}"),
+            }) });
+
+    /// <summary>
     /// Vue à plat des conditions non satisfaites, tous groupes confondus
     /// (diagnostic rapide ; l'explication structurée reste <see cref="Groupes"/>).
     /// </summary>

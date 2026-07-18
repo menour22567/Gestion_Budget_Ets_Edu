@@ -1,4 +1,6 @@
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Money;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Domain.Calcul.Services;
 
@@ -54,4 +56,6 @@ public sealed class ArrondiService
         ModeArrondi.Centime => Math.Round(montant, 2, MidpointRounding.AwayFromZero),
         _ => montant
     };
+
+    public Money Arrondir(Money montant) => new(Arrondir(montant.Amount), montant.Currency);
 }

@@ -3,6 +3,7 @@ using PaieEducation.Domain.Calcul.Explicabilite;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Validation;
 using PaieEducation.Domain.Workbench.Services;
+using PaieEducation.Shared.Money;
 
 namespace PaieEducation.Tests.Unit.Calcul;
 
@@ -16,12 +17,13 @@ public class ValidationEngineTests
     private static readonly JournalAudit AuditVide = new(Array.Empty<EtapeAudit>());
 
     private static BulletinLigne Ligne(string id, NatureRubrique nature, decimal montant, bool imposable = true, bool cotisable = true)
-        => new(id, nature, montant, imposable, cotisable, ExplicationVide);
+        => new(id, nature, new Money(montant), imposable, cotisable, ExplicationVide);
 
     private static Bulletin BulletinEquilibre(IReadOnlyList<BulletinLigne> lignes,
         decimal totalGains, decimal assietteCotisable, decimal assietteImposable,
         decimal totalRetenues, decimal irg, decimal net)
-        => new(lignes, totalGains, assietteCotisable, assietteImposable, totalRetenues, irg, net, AuditVide);
+        => new(lignes, new Money(totalGains), new Money(assietteCotisable), new Money(assietteImposable),
+            new Money(totalRetenues), new Money(irg), new Money(net), AuditVide);
 
     [Fact]
     public void Bulletin_equilibre_et_coherent_est_valide()

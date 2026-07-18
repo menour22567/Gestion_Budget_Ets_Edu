@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Infrastructure.Repositories.Payroll;
+using PaieEducation.Shared.Money;
 
 namespace PaieEducation.Tests.Integration.Repositories;
 
@@ -37,8 +38,8 @@ public class RappelRepositoryTests
 
         var lignes = new List<LigneRappel>
         {
-            new("QUALIF", MontantAncien: 2000m, MontantNouveau: 2500m, Delta: 500m),
-            new("PAPP", MontantAncien: 1000m, MontantNouveau: 900m, Delta: -100m),
+            new("QUALIF", MontantAncien: new Money(2000m), MontantNouveau: new Money(2500m), Delta: new Money(500m)),
+            new("PAPP", MontantAncien: new Money(1000m), MontantNouveau: new Money(900m), Delta: new Money(-100m)),
         };
 
         var enregistre = await repo.EnregistrerAsync(

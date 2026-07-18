@@ -1,6 +1,7 @@
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Workbench.Services;
 
 namespace PaieEducation.Domain.Calcul.Repositories;

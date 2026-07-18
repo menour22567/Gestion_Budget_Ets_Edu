@@ -695,20 +695,111 @@ pour un vrai usage de conformité (« qui a bypassé, quand, pourquoi »).
      manquants (Fonction/Établissement — absents de `NouvelAgent`, donc
      jamais bloquants jusqu'ici) restent à faire.
 4. **Workbench réglementaire — arborescence complète** (D7, J3I §5) :
-   - `Rubriques` (catalogue) → fiches par rubrique avec onglets : Identité, **Formule** (FormulaEditor avec coloration + auto-complétion + simulation sur agent témoin), **Paramètres** (clé/valeur typé, P2/P9), **Barème** (P4/P5/P6/P12, éditeur de tranches avec garde-fous), **Éligibilité** (P7/P8, éditeur de groupes DNF), **Audit** (L-U6, timeline + recherche)
+   - `Rubriques` (catalogue) → fiches par rubrique avec onglets : Identité, **Formule** (FormulaEditor avec coloration + auto-complétion + simulation sur agent témoin), **Paramètres** (clé/valeur typé, P2/P9), **Barème** (P4/P5/P6/P12, éditeur de tranches avec garde-fous), **Éligibilité** (P7/P8, éditeur de groupes DNF), **Audit** (L-U6, timeline + recherche).
+     **Fiche rubrique en lecture seule (Identité + Barème + Éligibilité) : ✅
+     FAIT (17/07/2026)**, 11e écran réel. `FicheRubriqueViewModel`/`View`
+     (`Presentation/Workbench/`, `TabControl` à 3 onglets, patron déjà
+     établi 4x) — `ConsulterFicheRubrique` (nouveau use case) agrège
+     Identité (nouvelle méthode `IWorkbenchReadRepository.ObtenirRubriqueAsync`,
+     nouveau DTO `RubriqueDetail`), Barème (`ListerBaremesRubriqueAsync`, déjà
+     implémenté en Infrastructure depuis Phase 5 mais jamais promu sur le
+     port — 1 ligne d'interface ajoutée, zéro nouvelle requête SQL) et
+     Éligibilité (`ListerConditionsParRubriqueAsync`/`ListerGroupesParRubriqueAsync`,
+     déjà sur le port et déjà consommées en production par `SuggererRubriques`
+     — zéro nouveau code Infra/Domain). **Couvre de facto l'item « IFC
+     (P12) »** : IFC n'est pas une entité à part, seulement une rubrique
+     dont le barème est catégoriel (`RubriqueBaremes`, dimension
+     `CATEGORIE`) — consultable ici comme n'importe quelle autre rubrique,
+     inutile de construire un écran dédié. Saisie de `RubriqueId` en texte
+     libre (pas de sélecteur `ComboBox` — construire un use case de liste
+     des rubriques pour un sélecteur sortait du périmètre de cette
+     tranche). Onglets Formule et édition (Barème/Éligibilité en
+     écriture) restent hors périmètre — aucun chemin d'écriture pour les
+     barèmes/conditions ISSRP n'existe (tâches 5-7). 7 nouveaux tests (3
+     repository, 2 use case, 2 ViewModel). Vérifié par `dotnet run` réel.
+     445 tests verts (438 + 7).
    - `Cotisations` (P9, P10) → taux, assiettes, composition, mutuelles
    - `Fiscalité (IRG)` (P11) → barèmes (4 ou 6 tranches), règles de période (lissages en fractions exactes), profils spéciaux
-   - `Carrière & grilles` → valeur du point, grille indiciaire, IFC (P12)
+   - `Carrière & grilles` → valeur du point, grille indiciaire, IFC (P12). **Valeur
+     du point/grille indiciaire déjà couverts** par l'écran Grille indiciaire
+     (Phase 6, tâche 3) ; **IFC couvert** par la fiche rubrique ci-dessus.
    - `Simulation` (D8) → sandbox : choisir une rubrique + une modification + un échantillon d'agents → voir le delta
    - `Évolution réglementaire` → assistant 6 étapes (J3I §7) avec dry-run obligatoire
-   - `Audit & traçabilité` → vue globale `AuditLog` filtrable (qui/quand/source)
-   - `Matrice de couverture` (D11) → vue tabulaire `corps × rubriques` avec code couleur
+   - `Audit & traçabilité` → vue globale `AuditLog` filtrable (qui/quand/source).
+     **Version liste triable : ✅ FAIT (17/07/2026)**, 10e écran réel.
+     `AuditLogViewModel`/`View` (`Presentation/Workbench/`), 3e entrée du
+     sous-menu Workbench réglementaire. Premier chemin de **lecture**
+     d'`AuditLog` (V001) — jusqu'ici seule l'écriture existait
+     (`AppliquerEvolutionReglementaire`, tâche 5 Phase 5). Nouvelle
+     méthode `IAuditLogRepository.ListerAsync` (500 entrées les plus
+     récentes, `ORDER BY OccurredAt DESC LIMIT 500` — pas de pagination
+     réelle, plafond simple assumé) + use case mince `ListerAuditLog`
+     (même patron que `ListerAffectationsAgent`). Même patron de
+     chargement au montage que les sélecteurs référentiels
+     (`ChargerCommand` en fire-and-forget dans le constructeur) ; même
+     décision de rendu que la matrice de couverture (`DataGrid` plat,
+     tri natif, pas de filtre de recherche explicite — « filtrable » du
+     mockup reste un filtre implicite via le tri des colonnes, pas une
+     barre de recherche dédiée). 5 nouveaux tests (2 repository, 1 use
+     case, 2 ViewModel). Vérifié par `dotnet run` réel. 438 tests verts
+     (433 + 5).
+   - `Matrice de couverture` (D11) → vue tabulaire `corps × rubriques` avec code couleur.
+     **Version liste plate : ✅ FAIT (17/07/2026)**, cf. tâche 9 ci-dessous.
 5. **FormulaEditor** (L-U2) : coloration syntaxique, auto-complétion, validation à la saisie, simulation sur agent témoin, comparaison avant/après
 6. **Éditeur de barème** (L-U1) : table des tranches, garde-fous de continuité (pas de chevauchement, pas de trou, une seule ouverte par clé), prévisualisation d'impact
 7. **Éditeur de groupes DNF** (L-M2, L-U3) : graphe visuel « groupe → conditions ET, groupes OU »
 8. **Assistant d'évolution réglementaire** (D8, J3I §7) : 6 étapes, dry-run bloquant, rapport d'impact, export PDF
-9. **Vues matricielles** (L-U9, L-U10, D11) : grille de couverture avec code couleur, drill-down vers la règle ou la fiche rubrique
-10. Workspace Framework, validation temps réel, chargements async.
+9. **Vues matricielles** (L-U9, L-U10, D11) : grille de couverture avec code couleur, drill-down vers la règle ou la fiche rubrique.
+   - **Matrice de couverture (liste plate) : ✅ FAIT (17/07/2026)**, 9e
+     écran réel. `MatriceCouvertureViewModel`/`View`
+     (`Presentation/Workbench/`), appelle `ListerMatriceCouverture`
+     (déjà livré, Phase 5, D11) — aucun nouveau use case Application.
+     **Décision de rendu tranchée avec l'utilisateur** : `DataGrid` plat
+     à colonnes statiques (Corps/Rubrique/Couverte/Active, tri natif par
+     en-tête) plutôt qu'une vraie grille pivotée visuelle avec code
+     couleur — construire cette dernière en WPF strict-MVVM (sans
+     code-behind) aurait exigé un patron neuf d'`ItemsControl` imbriqués
+     jamais utilisé dans le projet, avec un risque de binding
+     invérifiable visuellement (limite d'environnement). Pas de code
+     couleur (la 4e nuance « Gris » du mockup J3I §5.5 reste non
+     définie côté backend, cf. tâche 5 Phase 5) ; pas de drill-down vers
+     la fiche rubrique (n'existe pas encore, tâche 4). `_Workbench
+     réglementaire` devient un sous-menu (`Vue d'ensemble`/`Matrice de
+     couverture`) au lieu d'un lien direct vers le placeholder. 2
+     nouveaux tests de ViewModel. Vérifié par `dotnet run` réel. 433
+     tests verts (431 + 2). **Grille pivotée visuelle avec code couleur
+     et drill-down restent hors périmètre** — dette explicite si le
+     besoin visuel réapparaît une fois la fiche rubrique (tâche 4)
+     construite.
+    - **Hub de navigation Workbench + boucle édition→fiche (17/07/2026) :**
+      le placeholder « Vue d'ensemble » (`WorkbenchPlaceholderView`/`ViewModel`)
+      devient un **vrai hub de navigation** (UniformGrid de boutons) routant
+      vers Matrice de couverture / Fiche rubrique / Éditer une rubrique /
+      Suggérer des rubriques / Audit & traçabilité via `INavigationService`
+      (plus de texte « à venir »). `EditerRubriqueViewModel` reçoit
+      `INavigationService` et **navigue automatiquement vers la Fiche
+      rubrique après un enregistrement d'identité réussi** (boucle
+      écriture→lecture fermée). Câblage DI (Application + Presentation),
+      Shell menu et `ViewTemplates.xaml` déjà complets pour tous les écrans
+      Workbench (vérifié : solution build 0 warning). Test
+      `EditerRubriqueViewModelTests` mis à jour pour injecter le mock
+      `INavigationService`. 466 tests verts au total (Unit 152 + Intégration
+      234 + Presentation 33 + Tools 47), build 0 warning.
+      **Régression corrigée (hors périmètre C4.1, liée au refactoring
+      « Seeding ») :** les 2 tests `CalculerBulletinTests` échouaient sur
+      `SQLite Error 1: 'near "Ecole": syntax error'`. Cause réelle = (a)
+      échappement SQL incorrect dans le helper `Exec` (`l\'Ecole` backslash
+      au lieu de `l''Ecole` apostrophe doublée) — `Microsoft.Data.Sqlite`
+      accepte le multi-`INSERT` en une commande, mais rejetait l'apostrophe
+      backslash ; (b) le moteur `CalculationPipeline` levait une erreur
+      fatale quand la source `valeurSource(PAPP)` était absente, au lieu
+      d'appliquer l'abstention ADR-0009 (PAPP sans notation → rubrique
+      sautée, calcul non bloqué). Correctif : échappement SQL corrigé +
+      ajout de `ResultatEligibilite.Abstention(rubrique)` et saut de la
+      rubrique dans `CalculationPipeline` quand une source de valeur est
+      absente (les autres erreurs de formule — variable inconnue — restent
+      fatales, conformément à `CalculationPipelineTests`).
+ 10. Workspace Framework, validation temps réel, chargements async.
 
 **Livrables.** Application utilisable de bout en bout pour le corps pilote — incluant le Workbench réglementaire complet permettant l'édition de toute rubrique, tout paramètre, toute règle d'éligibilité, sans recompilation.
 **Critères d'acceptation.** MVVM strict (aucune logique métier en code-behind) ; navigation centralisée ; l'utilisateur peut **éditer les paramètres réglementaires** sans recompilation ; **toute modification passe par le Workbench** (D8) ; perfs UI conformes (écran rubrique < 200 ms, simulation 200 agents < 2 s).
@@ -773,6 +864,46 @@ pour un vrai usage de conformité (« qui a bypassé, quand, pourquoi »).
 
 ## Phase 10 — Extension aux autres corps (itératif)
 Réutiliser le moteur et le référentiel pour : corps communs (10-134), ouvriers/conducteurs/appariteurs (10-135), contractuels (10-136 ; IEP plafonnée 60 % art. 24 07-308), paramédicaux (11-200/24-425), personnels d'éducation/direction/inspection/intendance/laboratoire. Chaque corps = **ajout de données/paramètres + rubriques**, sans modification du moteur (Open/Closed).
+
+---
+
+**17/07/2026 — Chantier C4.1 (Écriture rubriques & formules) terminé.** Couvre
+la création/édition d'une rubrique (`DefinirRubrique`), la définition d'une
+version de formule (`DefinirFormuleRubrique`, validée par `FormulaParser` avant
+persistance — formule invalide rejetée avec message clair, jamais d'exception
+qui fuit) et la définition d'un paramètre versionné (`DefinirParametreRubrique`).
+Tous ces éléments existaient déjà côté Domain/Application/Infrastructure
+(ports `IRubriqueRepository`/`RubriqueRepository`, DI Application câblée) ; il
+restait à **boucher la boucle UI** et à **verrouiller par les tests** :
+
+- **Écran « Éditer une rubrique »** (`EditerRubriqueView` + `EditerRubriqueViewModel`,
+  `Presentation/Workbench/`) : 3 onglets Identité / Formule / Paramètre,
+  validation de la syntaxe de formule côté ViewModel (bouton « Valider la
+  syntaxe » + blocage à la soumission si invalide), messages erreur via
+  `IDialogService` (aucune exception qui fuit). Câblé : DI Presentation
+  (`AddTransient<EditerRubriqueViewModel>`), menu Shell « Workbench réglementaire
+  → Éditer une rubrique », `ViewTemplates.xaml`.
+- **Tests** : `RubriqueRepositoryTests` (7, écriture rubrique/formule/paramètre
+  versionnés, refus de formule invalide, refus de cycle DAG),
+  `RubriquesUseCasesTests` (4, use cases C4.1), `EditerRubriqueViewModelTests`
+  (7, ViewModel réel, ports mockés) ; `CompositionRootTests` étendu à la
+  résolution `IRubriqueRepository` + 3 use cases C4.1. **24 nouveaux tests
+  verts.**
+- **Validation C4.1** : un administrateur peut créer/éditer une rubrique, sa
+  formule et ses paramètres depuis l'UI ; la formule invalide est refusée avec
+  message clair ; le recalcul de paie consomme ces données (même référentiel
+  que le moteur). Build `dotnet build` **0 warning**, `dotnet test` →
+  **C4.1 vert (24/24)**.
+
+**Régression HORS périmètre C4.1 (signalée, non corrigée ici) :** les 2 tests
+`CalculerBulletinTests` (`Executer_calcule_le_bulletin_complet_avec_auto_resolution_C2_C3`,
+`Executer_agent_sans_notation_papp_abstention_ADR009`) sont rouges à cause d'un
+`SQLite Error 1: 'near "Ecole": syntax error'` dans leur helper `Exec`
+(multi-`INSERT` en une seule `ExecuteNonQuery`). Cette régression provient du
+**refactoring « Seeding » en cours** dans le worktree (`tools/PaieEducation.Tools/Seeding/*`
+→ `src/PaieEducation.Seeding/`, `CalculerBulletin` gagit `ParametreSystemeRepository`)
+— aucun lien avec C4.1 (ni mes fichiers, ni mes modifications). À traiter dans
+la branche de ce refactoring, pas dans C4.1.
 
 ---
 

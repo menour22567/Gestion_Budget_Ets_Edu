@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:PaieEducation.Presentation.Controls"
              mc:Ignorable="d" d:DesignWidth="500">
     <StackPanel Margin="24" MaxWidth="420" HorizontalAlignment="Left">
         <TextBlock Text="Grille indiciaire" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
@@ -12,7 +13,7 @@
             <TabItem Header="Valeur du point">
                 <StackPanel Margin="12">
                     <TextBlock Text="Valeur (DA)"/>
-                    <TextBox Text="{Binding VpValeur, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <controls:MoneyTextBox Value="{Binding VpValeur, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
                     <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
                     <TextBox Text="{Binding VpDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
                     <TextBlock Text="Version (libellé)"/>

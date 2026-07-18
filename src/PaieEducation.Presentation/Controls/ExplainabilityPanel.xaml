@@ -1,0 +1,24 @@
+<UserControl x:Class="PaieEducation.Presentation.Controls.ExplainabilityPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PaieEducation.Presentation.Controls"
+             mc:Ignorable="d" d:DesignWidth="600">
+    <UserControl.Resources>
+        <Style x:Key="NœudStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,1,0,1"/>
+        </Style>
+    </UserControl.Resources>
+    <TreeView ItemsSource="{Binding Nœuds, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              BorderThickness="0">
+        <TreeView.Resources>
+            <HierarchicalDataTemplate DataType="{x:Type local:NœudExplication}" ItemsSource="{Binding Enfants}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding Libellé}" FontWeight="{Binding Poids}" Style="{StaticResource NœudStyle}"/>
+                    <TextBlock Text="{Binding Valeur}" Foreground="Gray" Margin="6,0,0,0" Style="{StaticResource NœudStyle}"/>
+                </StackPanel>
+            </HierarchicalDataTemplate>
+        </TreeView.Resources>
+    </TreeView>
+</UserControl>

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using PaieEducation.Application.Agents.UseCases;
 using PaieEducation.Application.Referentiels.UseCases;
 using PaieEducation.Domain.Agents;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Domain.Calcul.ValueObjects;
 using PaieEducation.Presentation.Dialogs;
 
@@ -14,19 +15,15 @@ namespace PaieEducation.Presentation.Agents;
 /// appelle le use case <see cref="CreerAgent"/> (déjà livré, Phase 5).
 /// </summary>
 /// <remarks>
-/// <c>GradeId</c>/<c>CategorieId</c>/<c>EchelonId</c> sont sélectionnés via
-/// <see cref="ListerReferentiels"/> (chargé au montage de l'écran, cf.
-/// <see cref="ChargerReferentielsCommand"/>) plutôt que saisis en texte
-/// brut. <c>Sexe</c>/<c>SituationFamiliale</c>/<c>TypeContrat</c> restent
-/// des listes fermées (mêmes valeurs que les contraintes <c>CHECK</c>
-/// V011) : un <c>ComboBox</c> statique suffit, pas besoin d'une source de
-/// données.
+/// Les listes de <c>Sexe</c>/<c>SituationFamiliale</c>/<c>TypeContrat</c>
+/// sont chargées depuis les tables <c>TypesSexe</c>, <c>SituationsFamiliales</c>,
+/// <c>TypesContrat</c> au montage de l'écran (<see cref="ChargerReferentielsCommand"/>).
 /// </remarks>
 public sealed partial class CreerAgentViewModel : ObservableObject
 {
-    public IReadOnlyList<string> SexesDisponibles { get; } = ["M", "F"];
-    public IReadOnlyList<string> SituationsDisponibles { get; } = ["CELIBATAIRE", "MARIE", "DIVORCE", "VEUF"];
-    public IReadOnlyList<string> TypesContratDisponibles { get; } = ["STATUTAIRE", "CONTRACTUEL"];
+    public ObservableCollection<string> SexesDisponibles { get; } = [];
+    public ObservableCollection<string> SituationsDisponibles { get; } = [];
+    public ObservableCollection<string> TypesContratDisponibles { get; } = [];
 
     public ObservableCollection<ReferentielItem> GradesDisponibles { get; } = [];
     public ObservableCollection<ReferentielItem> CategoriesDisponibles { get; } = [];
@@ -34,6 +31,7 @@ public sealed partial class CreerAgentViewModel : ObservableObject
 
     private readonly CreerAgent _creerAgent;
     private readonly ListerReferentiels _listerReferentiels;
+    private readonly IAgentReadRepository _agentRead;
     private readonly IDialogService _dialogs;
 
     [ObservableProperty] private string matricule = string.Empty;
@@ -50,10 +48,12 @@ public sealed partial class CreerAgentViewModel : ObservableObject
     [ObservableProperty] private string? resultat;
     [ObservableProperty] private bool enCours;
 
-    public CreerAgentViewModel(CreerAgent creerAgent, ListerReferentiels listerReferentiels, IDialogService dialogs)
+    public CreerAgentViewModel(CreerAgent creerAgent, ListerReferentiels listerReferentiels,
+        IAgentReadRepository agentRead, IDialogService dialogs)
     {
         _creerAgent = creerAgent ?? throw new ArgumentNullException(nameof(creerAgent));
         _listerReferentiels = listerReferentiels ?? throw new ArgumentNullException(nameof(listerReferentiels));
+        _agentRead = agentRead ?? throw new ArgumentNullException(nameof(agentRead));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
 
         _ = ChargerReferentielsCommand.ExecuteAsync(null);
@@ -62,19 +62,40 @@ public sealed partial class CreerAgentViewModel : ObservableObject
     [RelayCommand]
     private async Task ChargerReferentielsAsync()
     {
-        var result = await _listerReferentiels.ExecuterAsync();
-        if (result.IsFailure)
+        var listerResult = await _listerReferentiels.ExecuterAsync();
+        if (listerResult.IsFailure)
         {
-            await _dialogs.ShowErrorAsync(result.Error.Message);
+            await _dialogs.ShowErrorAsync(listerResult.Error.Message);
             return;
         }
 
         GradesDisponibles.Clear();
-        foreach (var g in result.Value.Grades) GradesDisponibles.Add(g);
+        foreach (var g in listerResult.Value.Grades) GradesDisponibles.Add(g);
         CategoriesDisponibles.Clear();
-        foreach (var c in result.Value.Categories) CategoriesDisponibles.Add(c);
+        foreach (var c in listerResult.Value.Categories) CategoriesDisponibles.Add(c);
         EchelonsDisponibles.Clear();
-        foreach (var e in result.Value.Echelons) EchelonsDisponibles.Add(e);
+        foreach (var e in listerResult.Value.Echelons) EchelonsDisponibles.Add(e);
+
+        var sexes = await _agentRead.ListerSexesAsync();
+        if (sexes.IsFailure) { await _dialogs.ShowErrorAsync(sexes.Error.Message); return; }
+        SexesDisponibles.Clear();
+        foreach (var s in sexes.Value) SexesDisponibles.Add(s.Id);
+        if (!sexes.Value.Any(s => s.Id == Sexe))
+            Sexe = sexes.Value[0].Id;
+
+        var situations = await _agentRead.ListerSituationsFamilialesAsync();
+        if (situations.IsFailure) { await _dialogs.ShowErrorAsync(situations.Error.Message); return; }
+        SituationsDisponibles.Clear();
+        foreach (var s in situations.Value) SituationsDisponibles.Add(s.Id);
+        if (!situations.Value.Any(s => s.Id == SituationFamiliale))
+            SituationFamiliale = situations.Value[0].Id;
+
+        var contrats = await _agentRead.ListerTypesContratAsync();
+        if (contrats.IsFailure) { await _dialogs.ShowErrorAsync(contrats.Error.Message); return; }
+        TypesContratDisponibles.Clear();
+        foreach (var c in contrats.Value) TypesContratDisponibles.Add(c.Id);
+        if (!contrats.Value.Any(c => c.Id == TypeContrat))
+            TypeContrat = contrats.Value[0].Id;
     }
 
     [RelayCommand]

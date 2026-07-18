@@ -1,7 +1,7 @@
 using System.Linq;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Persistence.Migrations;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Tools;
 
@@ -420,7 +420,7 @@ public class ReglementaireSeederTests
         {
             await new ReglementaireSeeder().SeedAsync(conn);
 
-            Assert.Equal(7L, Count(conn, "Parametres"));
+            Assert.Equal(10L, Count(conn, "Parametres"));
 
             var valeur = TestSupport.Scalar<string>(conn,
                 "SELECT Valeur FROM Parametres WHERE Cle = 'ARRONDI_MODE';");
@@ -456,7 +456,7 @@ public class ReglementaireSeederTests
             Assert.Equal(8L, Count(conn, "ReglesEligibilite"));
             Assert.Equal(5L, Count(conn, "RubriqueBaremes"));
             Assert.Equal(3L, Count(conn, "Cotisations"));
-            Assert.Equal(7L, Count(conn, "Parametres"));
+            Assert.Equal(10L, Count(conn, "Parametres"));
         }
     }
 

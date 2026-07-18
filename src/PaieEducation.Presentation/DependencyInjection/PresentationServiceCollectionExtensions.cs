@@ -30,6 +30,10 @@ public static class PresentationServiceCollectionExtensions
         services.AddTransient<GrilleIndiciaireViewModel>();
         services.AddTransient<SuggererRubriquesViewModel>();
         services.AddTransient<WorkbenchPlaceholderViewModel>();
+        services.AddTransient<MatriceCouvertureViewModel>();
+        services.AddTransient<AuditLogViewModel>();
+        services.AddTransient<FicheRubriqueViewModel>();
+        services.AddTransient<EditerRubriqueViewModel>();
 
         return services;
     }

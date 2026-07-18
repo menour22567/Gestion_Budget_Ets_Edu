@@ -5,7 +5,7 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Infrastructure.Repositories.Agents;
 using PaieEducation.Infrastructure.Repositories.Payroll;
 using PaieEducation.Shared.Time;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.UseCases;
 
@@ -76,14 +76,16 @@ public class GenererRappelsTests
         var agents = new AgentCarriereRepository(conn);
         var variables = new VariableRepository(conn);
         var payroll = new PayrollReadRepository(conn);
+        var parametres = new ParametreSystemeRepository(conn);
         var bulletinsEcriture = new BulletinRepository(conn);
         var bulletinsLecture = new BulletinReadRepository(conn);
         var rappels = new RappelRepository(conn);
+        var calculer = new CalculerBulletin(agents, variables, payroll, parametres, SourceValeurResolverFactory.ResolverReel());
 
         return (
-            new GenererRappels(bulletinsLecture, rappels, agents, variables, payroll, horloge),
-            new CalculerBulletin(agents, variables, payroll),
-            new ValiderBulletin(agents, variables, payroll, bulletinsEcriture, horloge));
+            new GenererRappels(bulletinsLecture, rappels, calculer, horloge),
+            calculer,
+            new ValiderBulletin(calculer, bulletinsEcriture, horloge));
     }
 
     [Fact]
@@ -104,7 +106,7 @@ public class GenererRappelsTests
         // donne un Net différent — l'évolution a bien un effet mesurable.
         var recalculAttendu = await calculerUseCase.ExecuterAsync(Demande());
         Assert.True(recalculAttendu.IsSuccess, recalculAttendu.IsFailure ? recalculAttendu.Error.Message : null);
-        Assert.NotEqual(57739m, recalculAttendu.Value.Net);
+        Assert.NotEqual(57739m, recalculAttendu.Value.Net.Amount);
 
         var lignes = await rappelUseCase.ExecuterAsync(Demande());
 
@@ -121,7 +123,7 @@ public class GenererRappelsTests
                 scope.Conn,
                 "SELECT Delta FROM Rappels WHERE AgentId = 'A-PILOTE' AND RubriqueId = @rubriqueId;",
                 ("@rubriqueId", ligne.RubriqueId));
-            Assert.Equal((double)ligne.Delta, deltaPersiste, precision: 6);
+            Assert.Equal((double)ligne.Delta.Amount, deltaPersiste, precision: 6);
         }
     }
 

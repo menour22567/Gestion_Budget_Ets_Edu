@@ -4,7 +4,7 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Infrastructure.Repositories.Agents;
 using PaieEducation.Infrastructure.Repositories.Payroll;
 using PaieEducation.Shared.Time;
-using PaieEducation.Tools.Seeding;
+using PaieEducation.Seeding;
 
 namespace PaieEducation.Tests.Integration.UseCases;
 
@@ -69,9 +69,12 @@ public class ConsulterBulletinTests
         await SeedTout(scope.Conn);
         SeedAgentReel(scope.Conn);
 
-        var valider = new ValiderBulletin(
+        var calculer = new CalculerBulletin(
             new AgentCarriereRepository(scope.Conn), new VariableRepository(scope.Conn),
-            new PayrollReadRepository(scope.Conn), new BulletinRepository(scope.Conn),
+            new PayrollReadRepository(scope.Conn), new ParametreSystemeRepository(scope.Conn),
+            SourceValeurResolverFactory.ResolverReel());
+        var valider = new ValiderBulletin(
+            calculer, new BulletinRepository(scope.Conn),
             new HorlogeFixe(new DateTimeOffset(2026, 7, 16, 10, 0, 0, TimeSpan.Zero)));
         var validation = await valider.ExecuterAsync(DemandeCalcul());
         Assert.True(validation.IsSuccess, validation.IsFailure ? validation.Error.Message : null);
@@ -80,7 +83,7 @@ public class ConsulterBulletinTests
         var result = await consulter.ExecuterAsync(new ConsulterBulletin.Demande("A-PILOTE", "2025-06-01"));
 
         Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
-        Assert.Equal(57739m, result.Value.Net);
+        Assert.Equal(57739m, result.Value.Net.Amount);
     }
 
     [Fact]

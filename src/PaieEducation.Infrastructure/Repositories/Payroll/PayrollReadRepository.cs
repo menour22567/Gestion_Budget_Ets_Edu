@@ -6,7 +6,9 @@ using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.ValueObjects;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Domain.Workbench.Enums;
 using PaieEducation.Domain.Workbench.Services;
 using PaieEducation.Domain.Workbench.ValueObjects;
@@ -190,16 +192,7 @@ public sealed class PayrollReadRepository : IPayrollReadRepository
 
     // ---- Parseurs enum ----
 
-    private static BaremeDimension ParseDimension(string s) => s switch
-    {
-        "CATEGORIE" => BaremeDimension.Categorie,
-        "ECHELON" => BaremeDimension.Echelon,
-        "ANCIENNETE" => BaremeDimension.Anciennete,
-        "TYPE_ETABLISSEMENT" => BaremeDimension.TypeEtablissement,
-        "CORPS" => BaremeDimension.Corps,
-        "GRADE" => BaremeDimension.Grade,
-        _ => throw new InvalidOperationException($"Dimension inconnue : {s}")
-    };
+    private static BaremeDimension ParseDimension(string s) => BaremeDimensionKeys.Parser(s);
 
     private static BaremeTypeValeur ParseTypeValeurBareme(string s) => s switch
     {

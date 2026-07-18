@@ -1,0 +1,39 @@
+<UserControl x:Class="PaieEducation.Presentation.Workbench.MatriceCouvertureView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="700">
+    <StackPanel Margin="24" MaxWidth="640" HorizontalAlignment="Left">
+        <TextBlock Text="Matrice de couverture" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
+
+        <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
+        <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxWidth="200" HorizontalAlignment="Left"/>
+
+        <Button Content="Charger" Command="{Binding ChargerCommand}"
+                Width="120" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+
+        <TextBlock Text="Chargement en cours…" Foreground="Gray" Margin="0,0,0,8">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EnCours}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <DataGrid ItemsSource="{Binding Cellules}" AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Corps" Binding="{Binding CorpsId}" Width="140"/>
+                <DataGridTextColumn Header="Rubrique" Binding="{Binding RubriqueId}" Width="*"/>
+                <DataGridCheckBoxColumn Header="Couverte" Binding="{Binding Couverte}" Width="90"/>
+                <DataGridCheckBoxColumn Header="Active" Binding="{Binding Active}" Width="90"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </StackPanel>
+</UserControl>

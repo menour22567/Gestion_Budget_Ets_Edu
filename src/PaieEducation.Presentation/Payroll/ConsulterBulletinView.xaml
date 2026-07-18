@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:controls="clr-namespace:PaieEducation.Presentation.Controls"
              mc:Ignorable="d" d:DesignWidth="500">
     <StackPanel Margin="24" MaxWidth="420" HorizontalAlignment="Left">
         <TextBlock Text="Consulter un bulletin" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
@@ -29,6 +30,40 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+        <TextBlock Text="{Binding Resultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,12"/>
+
+        <Expander Header="Arbre d'explication" Margin="0,0,0,8"
+                  Visibility="{Binding HasBulletin, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <controls:ExplainabilityPanel Bulletin="{Binding Bulletin}" Margin="0,4,0,0"/>
+        </Expander>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="Exporter PDF" Command="{Binding ExporterCommand}"
+                    CommandParameter="Pdf" Width="120" Margin="0,0,8,0">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="IsEnabled" Value="False"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding PeutExporter}" Value="True">
+                                <Setter Property="IsEnabled" Value="True"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Content="Exporter Excel" Command="{Binding ExporterCommand}"
+                    CommandParameter="Excel" Width="120">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="IsEnabled" Value="False"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding PeutExporter}" Value="True">
+                                <Setter Property="IsEnabled" Value="True"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
     </StackPanel>
 </UserControl>

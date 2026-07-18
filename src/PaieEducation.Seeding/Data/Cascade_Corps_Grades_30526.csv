@@ -1,0 +1,191 @@
+Num_Ord;Type_Contrat;Type_Filiere;Type_Secteur;Type_Personnel;Corps_Filiere;Grades;Categorie;"Indice Minimum avant
+01/03/2022";"Indice Minimum
+A partir du 01/03/2022";"Indice Minimum
+A partir du 01/01/2023";"Indice Minimum
+A partir du 01/01/2024"
+1;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Adjoints de l'Education;Adjoint de l’'Education;7;348;398;473;548
+2;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Adjoints de l'Education;Adjoint principal de l’'Education;8;379;429;504;579
+3;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur de l’'Education;10;453;503;578;653
+4;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur principal de l’'Education;11;498;548;623;698
+5;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur de l’Education en chef;12;537;587;662;737
+6;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Superviseur general de l’Education;13;578;628;703;778
+7;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur specialise en soutien Educatif;10;453;503;578;653
+8;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur specialise principal en soutien Educatif;11;498;548;623;698
+9;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur specialise en chef en soutien Educatif;12;537;587;662;737
+10;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Superviseurs de l'Education;Educateur specialise general en soutien Educatif;13;578;628;703;778
+11;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Conseillers de l'Education;Conseiller de l’'Education;13;578;628;703;778
+12;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Conseillers de l'Education;Conseiller principal de l’'Education;13;578;628;703;778
+13;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Conseillers de l'Education;Conseiller de l’'Education en chef;14;621;671;746;821
+14;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Censeurs de lycée;Censeur de lycee;14;621;671;746;821
+15;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Censeurs;Censeur de l’enseignement primaire;14;621;671;746;821
+16;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Censeurs;Censeur de l’enseignement moyen;15;666;716;791;866
+17;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Education;Corps des Censeurs;Censeur de l’enseignement secondaire;16;713;763;838;913
+18;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation scolaire et professionnelle;Conseiller de l’'orientation scolaire et professionnelle (Cat 10);10;453;503;578;653
+19;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller de l’orientation et de la guidance scolaire et professionnelle;12;537;587;662;737
+20;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller principal de l'’orientation et de la guidance scolaire et professionnelle (Cat 13);13;578;628;703;778
+21;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller analyste de l’orientation et de la guidance scolaire et professionnelle;13;578;628;703;778
+22;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller principal de l'’orientation et de la guidance scolaire et professionnelle;14;621;671;746;821
+23;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'Orientation et Guid. Scol.et Profess.;Corps des Conseillers de l'orientation et de la guidance scolaire et professionnelle;Conseiller en chef de l’orientation et de la guidance scolaire et professionnelle;16;713;763;838;913
+24;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller en alimentation scolaire (Cat 11);11;498;548;623;698
+25;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller en alimentation scolaire;12;537;587;662;737
+26;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller principal en alimentation scolaire;13;578;628;703;778
+27;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de l'alimentation scolaire;Corps des Conseillers en alimentation scolaire;Conseiller en chef en alimentation scolaire;14;621;671;746;821
+28;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs des Ecoles primaires;Assistant du directeur de l’'Ecole primaire;12;537;587;662;737
+29;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs des Ecoles primaires;Directeur de l’'Ecole primaire_Cat14;14;621;671;746;821
+30;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs de colleges;Directeur de college_Cat15;15;666;716;791;866
+31;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs de lycees;Directeur de lycee_Cat16;16;713;763;838;913
+32;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs des Ècoles primaires;Directeur de l’'Ecole primaire_Cat15;15;666;716;791;866
+33;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs de colleges;Directeur de college_Cat16;16;713;763;838;913
+34;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Direction;Corps des Directeurs de lycees;Directeur de lycee_Cat17;17;762;812;887;962
+35;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Intendance;Corps des Adjoints des services Economiques;Adjoint des services Economiques;7;348;398;473;548
+36;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Intendance;Corps des Adjoints des services Economiques;Adjoint principal des services Economiques;8;379;429;504;579
+37;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Intendance;Corps des Sous-intendants;Sous-intendant;10;453;503;578;653
+38;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Intendance;Corps des Sous-intendants;Sous-intendant gestionnaire;11;498;548;623;698
+39;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Intendance;Corps des Intendants;Intendant;13;578;628;703;778
+40;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels d'Intendance;Corps des Intendants;Intendant principal;14;621;671;746;821
+41;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Aides techniques de laboratoire;Aide technique de laboratoire;4;263;313;388;463
+42;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Agents techniques de laboratoire;Agent technique de laboratoire;5;288;338;413;488
+43;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Adjoints techniques de laboratoire;Adjoint technique de laboratoire;7;348;398;473;548
+44;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Attaches de laboratoire;Attache de laboratoire;8;379;429;504;579
+45;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Attaches de laboratoire;Attache principal de laboratoire;10;453;503;578;653
+46;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Attaches de laboratoire;Attache en chef de laboratoire;11;498;548;623;698
+47;Statut_Fonctionnaire;ADMIN;Education Nationale;Personnels de Laboratoire;Corps des Attaches de laboratoire;Attache superviseur de laboratoire;12;537;587;662;737
+48;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Administrateurs;Administrateur;12;537;587;662;737
+49;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Administrateurs;Administrateur analyste;13;578;628;703;778
+50;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Administrateurs;Administrateur principal;14;621;671;746;821
+51;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Administrateurs;Administrateur conseiller;16;713;763;838;913
+52;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Assistants administrateurs;Assistant administrateur;11;498;548;623;698
+53;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Attaches d'Administration;Attache d'administration;9;418;468;543;618
+54;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Attaches d'Administration;Attache Principal d'administration;10;453;503;578;653
+55;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Agents d'Administration;Agent de bureau;5;288;338;413;488
+56;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Agents d'Administration;Agent d'administration;7;348;398;473;548
+57;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Agents d'Administration;Agent Principal d'administration;8;379;429;504;579
+58;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Agents d'Administration;Agent de saisie;5;288;338;413;488
+59;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Secretaires;Secretaire;6;315;365;440;515
+60;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Secretaires;Secretaire de direction;8;379;429;504;579
+61;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Secretaires;Secretaire Principal de direction;10;453;503;578;653
+62;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Comptables administratifs;Aide-comptable administratif;5;288;338;413;488
+63;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Comptables administratifs;Comptable administratif;8;379;429;504;579
+64;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Administration générale;Corps des Comptables administratifs;Comptable administratif principal;10;453;503;578;653
+65;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Traduction - interprétariat;Corps des Traducteurs interprètes;Traducteur-interprète;12;537;587;662;737
+66;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Traduction - interprétariat;Corps des Traducteurs interprètes;Traducteur-interprete spécialisé;13;578;628;703;778
+67;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Traduction - interprétariat;Corps des Traducteurs interprètes;Traducteur-interprète principal;14;621;671;746;821
+68;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Traduction - interprétariat;Corps des Traducteurs interprètes;Traducteur-interprete en chef;16;713;763;838;913
+69;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Ingenieurs;Ingenieur d’Etat en Informatique;13;578;628;703;778
+70;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Ingenieurs;Ingenieur principal en Informatique;14;621;671;746;821
+71;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Ingenieurs;Ingenieur en chef en Informatique;16;713;763;838;913
+72;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Assistants Ingenieurs;Assistant Ingenieur de niveau 1 en Informatique;11;498;548;623;698
+73;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Assistants Ingenieurs;Assistant Ingenieur de niveau 2 en Informatique;12;537;587;662;737
+74;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Techniciens;Technicien en Informatique;8;379;429;504;579
+75;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Techniciens;Technicien superieur en Informatique;10;453;503;578;653
+76;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Adjoints techniques;Adjoint technique en Informatique;7;348;398;473;548
+77;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Informatique;Corps des Agents techniques;Agent technique en Informatique;5;288;338;413;488
+78;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Ingenieurs;Ingenieur d’Etat en Statistiques;13;578;628;703;778
+79;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Ingenieurs;Ingenieur principal en Statistiques;14;621;671;746;821
+80;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Ingenieurs;Ingenieur en chef en Statistiques;16;713;763;838;913
+81;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Assistants Ingenieurs;Assistant Ingenieur de niveau 1 en Statistiques;11;498;548;623;698
+82;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Assistants Ingenieurs;Assistant Ingenieur de niveau 2 en Statistiques;12;537;587;662;737
+83;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Techniciens;Technicien en Statistiques;8;379;429;504;579
+84;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Techniciens;Technicien superieur en Statistiques;10;453;503;578;653
+85;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Adjoints techniques;Adjoint technique en Statistiques;7;348;398;473;548
+86;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Statistiques;Corps des Agents techniques;Agent technique en Statistiques;5;288;338;413;488
+87;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Documentalistes- archivistes;Documentaliste-archiviste;12;537;587;662;737
+88;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Documentalistes- archivistes;Documentaliste-archiviste analyste;13;578;628;703;778
+89;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Documentalistes- archivistes;Documentaliste-archiviste principal;14;621;671;746;821
+90;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Documentalistes- archivistes;Documentaliste-archiviste en chef;16;713;763;838;913
+91;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Assistants documentalistes-archivistes;Assistant documentaliste-archiviste;10;453;503;578;653
+92;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Assistants documentalistes-archivistes;Assistant documentaliste-archiviste principal;11;498;548;623;698
+93;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Documentation et archives;Corps des Agents techniques en documentation et archives;Agent technique en documentation et archives;7;348;398;473;548
+94;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Ingenieurs;Ingenieur d’Etat-Laboratoire et maintenance-;13;578;628;703;778
+95;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Ingenieurs;Ingenieur principal-Laboratoire et maintenance-;14;621;671;746;821
+96;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Ingenieurs;Ingenieur en chef-Laboratoire et maintenance-;16;713;763;838;913
+97;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Techniciens;Assistant ingenieur de niveau 1-Laboratoire et maintenance-;11;498;548;623;698
+98;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Techniciens;Assistant ingenieur de niveau 2-Laboratoire et maintenance-;12;537;587;662;737
+99;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Techniciens;Technicien-Laboratoire et maintenance-;8;379;429;504;579
+100;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Techniciens;Technicien Superieur-Laboratoire et maintenance-;10;453;503;578;653
+101;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Adjoints techniques;Adjoint technique-Laboratoire et maintenance-;7;348;398;473;548
+102;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Agents techniques;Agent technique-Laboratoire et maintenance-;5;288;338;413;488
+103;Statut_Fonctionnaire;ADMIN;Corps Communs;Personnels Laboratoire et maintenance;Corps des Agents de laboratoire;Agent de Laboratoire-Laboratoire et maintenance-;4;263;313;388;463
+104;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Maitres de l'Ecole Primaire;Instructeur;7;348;398;473;548
+105;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l'’Ecole primaire;11;498;548;623;698
+106;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur Principal de l'’Ecole primaire;12;537;587;662;737
+107;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur Formateur de l'’Ecole primaire;14;621;671;746;821
+108;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Maitre de l'Ecole primaire;10;453;503;578;653
+109;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l’enseignement primaire;12;537;587;662;737
+110;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l’enseignement primaire classe 1;13;578;628;703;778
+111;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur de l’enseignement primaire classe 2;14;621;671;746;821
+112;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Ecole primaire;Professeur Emérite de l’enseignement primaire;15;666;716;791;866
+113;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Fondamental;Professeur de l’'enseignement fondamental;11;498;548;623;698
+114;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur de l’'enseignement moyen;12;537;587;662;737
+115;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Prof.Coordinateur d'Enseign.Moyen;12;537;587;662;737
+116;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur Principal de l’'enseignement moyen;13;578;628;703;778
+117;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur Formateur de l’'enseignement moyen;15;666;716;791;866
+118;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur de l’enseignement moyen classe 1;13;578;628;703;778
+119;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur de l’enseignement moyen classe 2;15;666;716;791;866
+120;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement Moyen;Professeur Emerite de l’enseignement moyen;16;713;763;838;913
+121;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs Techniques de Lycee;Professeur technique de lycee-chef d’'atelier;11;498;548;623;698
+122;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs Techniques de Lycee;Professeur technique de lycee, chef de travaux;12;537;587;662;737
+123;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur de l’'enseignement secondaire;13;578;628;703;778
+124;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Prof.Coordinateur d'Enseign.Secondaire;13;578;628;703;778
+125;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur Principal de l'’enseignement secondaire;14;621;671;746;821
+126;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur Formateur de l'’enseignement secondaire;16;713;763;838;913
+127;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur de l’enseignement secondaire classe 1;14;621;671;746;821
+128;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur de l’enseignement secondaire classe 2;16;713;763;838;913
+129;Statut_Fonctionnaire;ENSEIGNANT;Education Nationale;Personnels Enseignants;Corps des Professeurs de l'Enseignement secondaire;Professeur Emerite de l’enseignement secondaire;17;762;812;887;962
+130;Regime_Contractuel;ENSEIGNANT;Enseignants Contractuels;Enseignants Contractuels du Primaire;Prof.Contractuel de l’'Enseign. Primaire;Prof.Contractuel de l'’école primaire;12;537;587;662;737
+131;Regime_Contractuel;ENSEIGNANT;Enseignants Contractuels;Enseignants Contractuels du CEM;Prof.Contractuel de l’'Enseign. Moyen;Prof.Contractuel de l’'Enseign. Moyen;12;537;587;662;737
+132;Regime_Contractuel;ENSEIGNANT;Enseignants Contractuels;Enseignants Contractuels du Lycée;Prof.Contractuel de l’'Enseign. Secondaire;Prof.Contractuel de l’'Enseign. Secondaire;13;578;628;703;778
+133;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteur de l’enseignement primaire;15;666;716;791;866
+134;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’orientation et de la guidance scolaire et professionnelle;"Inspecteur de l’orientation et de la
+guidance scolaire et professionnelle";15;666;716;791;866
+135;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’enseignement moyen;16;713;763;838;913
+136;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’Education nationale;Inspecteur de l’éducation nationale (Cat 17);17;762;812;887;962
+137;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteurs de l’enseignement primaire spécialité disciplines;17;762;812;887;962
+138;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteur de l’enseignement primaire spécialité administration des écoles primaires;17;762;812;887;962
+139;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement primaire;Inspecteur de l’enseignement primaire spécialite alimentation scolaire;17;762;812;887;962
+140;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’enseignement moyen specialite disciplines;17;762;812;887;962
+141;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’enseignement moyen specialite administration des collèges;17;762;812;887;962
+142;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de l’orientation et de la guidance scolaire et professionnelle aux collèges;17;762;812;887;962
+143;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement moyen;Inspecteur de la gestion financiere et materielle des colleges;16;713;763;838;913
+144;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’enseignement secondaire specialite disciplines;HC-S1;930;980;1055;1130
+145;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’enseignement secondaire specialite administration des lycees;HC-S1;930;980;1055;1130
+146;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’orientation et de la guidance scolaire et professionnelle aux lycées;HC-S1;930;980;1055;1130
+147;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de la gestion financiere et materielle des lycees;17;762;812;887;962
+148;Statut_Fonctionnaire;INSPECTION;Education Nationale;Personnels d'Inspection;Corps des Inspecteurs de l’enseignement secondaire;Inspecteur de l’Education nationale;HC-S2;990;1040;1115;1190
+149;Statut_Fonctionnaire;SANTE_PUBLIQUE;Sante publique;Personnels des Infirmiers-Soignants;Corps des Aides-soignants de santé publique;Aide-soignants de sante publique;8;379;429;504;579
+150;Statut_Fonctionnaire;SANTE_PUBLIQUE;Sante publique;Personnels des Infirmiers-Soignants;Corps des Aides-soignants de santé publique;Aide-soignant principal de sante publique;9;418;468;543;618
+151;Statut_Fonctionnaire;SANTE_PUBLIQUE;Sante publique;Personnels des Infirmiers-Soignants;Corps des Infirmiers de santé publique;Infirmier brevete;9;418;468;543;618
+152;Statut_Fonctionnaire;SANTE_PUBLIQUE;Sante publique;Personnels des Infirmiers-Soignants;Corps des Infirmiers de santé publique;Infirmier de sante publique;11;498;548;623;698
+153;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 3;1;200;250;325;400
+154;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 2;3;240;290;365;440
+155;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1;5;288;338;413;488
+156;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef de Parc;5;288;338;413;488
+157;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef d'Atelier;5;288;338;413;488
+158;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef Magasinier;5;288;338;413;488
+159;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Chef de Cuisine;5;288;338;413;488
+160;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Cat 1 - Responsable du Service Interieur;5;288;338;413;488
+161;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie;6;315;365;440;515
+162;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef de Parc;6;315;365;440;515
+163;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef d'Atelier;6;315;365;440;515
+164;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef Magasinier;6;315;365;440;515
+165;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Chef de Cuisine;6;315;365;440;515
+166;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Ouvriers Professionnels;Corps des Ouvriers professionnels;Ouvrier Professionnel Hors Categorie - Responsable du Service Interieur;6;315;365;440;515
+167;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Conducteurs d'automobile;Corps des Conducteurs díautomobile;Conducteur d'automobile Cat 2;2;219;269;344;419
+168;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Conducteurs d'automobile;Corps des Conducteurs díautomobile;Conducteur d'automobile Cat 2 - Chef de Parc;2;219;269;344;419
+169;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Conducteurs d'automobile;Corps des Conducteurs díautomobile;Conducteur d'automobile Cat 1;3;240;290;365;440
+170;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Conducteurs d'automobile;Corps des Conducteurs díautomobile;Conducteur d'automobile Cat 1 - Chef de Parc;3;240;290;365;440
+171;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Appariteurs;Corps des Appariteurs;Appariteur;1;200;250;325;400
+172;Statut_Fonctionnaire;OUVRIERS_AGENTS;Ouvriers Conducteur Appariteur;Appariteurs;Corps des Appariteurs;Appariteur Principal;2;219;269;344;419
+173;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Ouvriers Professionnels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 1;1;200;250;325;400
+174;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Ouvriers Professionnels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 2;3;240;290;365;440
+175;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Ouvriers Professionnels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 3;5;288;338;413;488
+176;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Ouvriers Professionnels;Ouvriers Professionnels Contractuels;Ouvrier Professionnel Niv 4;6;315;365;440;515
+177;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Agents de service;Agents de service Contractuels;Agent de service Niv 1;1;200;250;325;400
+178;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Agents de service;Agents de service Contractuels;Agent de service Niv 2;3;240;290;365;440
+179;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Agents de service;Agents de service Contractuels;Agent de service Niv 3;5;288;338;413;488
+180;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Conducteurs d'automobile;Conducteurs d'automobile Contractuels;Conducteur d'automobile Niveau 1;2;219;269;344;419
+181;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Conducteurs d'automobile;Conducteurs d'automobile Contractuels;Conducteur d'automobile Niveau 2;3;240;290;365;440
+182;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Conducteurs d'automobile;Conducteurs d'automobile Contractuels;Conducteur d'automobile Niveau 3 et Chef de Parc;4;263;313;388;463
+183;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Gardiens;Gardiens Contractuels;Gardien;1;200;250;325;400
+184;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Agents de prevention;Agents de prevention Contractuels;Agent de prevention Niv 1;5;288;338;413;488
+185;Regime_Contractuel;OUVRIERS_AGENTS;Ouvriers Conducteurs Appariteurs Contractuels;Agents de prevention;Agents de prevention Contractuels;Agent de prevention Niv 2;7;348;398;473;548

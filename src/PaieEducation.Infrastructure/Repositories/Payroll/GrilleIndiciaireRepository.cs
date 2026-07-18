@@ -3,6 +3,9 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Common;
+using PaieEducation.Infrastructure.Persistence;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Infrastructure.Repositories.Payroll;
 
@@ -14,12 +17,17 @@ namespace PaieEducation.Infrastructure.Repositories.Payroll;
 public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
 {
     private readonly SqliteConnection _connection;
+    private readonly ICacheInvalidator? _cache;
 
-    public GrilleIndiciaireRepository(SqliteConnection connection)
-        => _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+    public GrilleIndiciaireRepository(SqliteConnection connection, ICacheInvalidator? cache = null)
+    {
+        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _cache = cache;
+    }
 
     public async Task<Result<string>> DefinirValeurPointAsync(
-        decimal valeur, string dateEffet, string version, string? source, DateTimeOffset creeLe, CancellationToken ct = default)
+        decimal valeur, string dateEffet, string version, string? source, DateTimeOffset creeLe,
+        CancellationToken ct = default, IUnitOfWork? uow = null)
     {
         if (valeur <= 0)
             return Result.Failure<string>(Error.Validation("La valeur du point indiciaire doit être strictement positive."));
@@ -40,23 +48,47 @@ public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
         var id = $"VP-{dateEffet}";
         var createdAt = creeLe.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
-        using var tx = _connection.BeginTransaction();
-        if (courante is not null)
-            await FermerVersionAsync("ValeurPoint", courante.Id, dateEffet, tx, ct);
+        var uowTx = (uow as DapperUnitOfWork)?.Transaction;
+        SqliteTransaction tx;
+        bool ownsTx;
+        if (uowTx is not null)
+        {
+            tx = uowTx;
+            ownsTx = false;
+        }
+        else
+        {
+            tx = _connection.BeginTransaction();
+            ownsTx = true;
+        }
 
-        await _connection.ExecuteAsync(new CommandDefinition("""
-            INSERT INTO ValeurPoint (Id, DateEffet, DateFin, Valeur, Version, Source, Hash, CreatedAt)
-            VALUES (@id, @dateEffet, NULL, @valeur, @version, @source, @hash, @createdAt);
-            """,
-            new { id, dateEffet, valeur, version, source, hash = $"h-{id}", createdAt }, tx, cancellationToken: ct));
+        try
+        {
+            if (courante is not null)
+                await FermerVersionAsync("ValeurPoint", courante.Id, dateEffet, tx, ct);
 
-        tx.Commit();
-        return Result.Success(id);
+            await _connection.ExecuteAsync(new CommandDefinition("""
+                INSERT INTO ValeurPoint (Id, DateEffet, DateFin, Valeur, Version, Source, Hash, CreatedAt)
+                VALUES (@id, @dateEffet, NULL, @valeur, @version, @source, @hash, @createdAt);
+                """,
+                new { id, dateEffet, valeur, version, source, hash = $"h-{id}", createdAt }, tx, cancellationToken: ct));
+
+            if (ownsTx)
+                tx.Commit();
+            _cache?.Invalider();
+            return Result.Success(id);
+        }
+        catch
+        {
+            if (ownsTx)
+                tx?.Rollback();
+            throw;
+        }
     }
 
     public async Task<Result<string>> DefinirIndiceMinAsync(
         string categorieId, int indiceMin, string dateEffet, string version, string? source, DateTimeOffset creeLe,
-        CancellationToken ct = default)
+        CancellationToken ct = default, IUnitOfWork? uow = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(categorieId);
         if (indiceMin <= 0)
@@ -81,23 +113,47 @@ public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
         var id = $"GI-{categorieId}-{dateEffet}";
         var createdAt = creeLe.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
-        using var tx = _connection.BeginTransaction();
-        if (courante is not null)
-            await FermerVersionAsync("GrilleIndiciaire", courante.Id, dateEffet, tx, ct);
+        var uowTx = (uow as DapperUnitOfWork)?.Transaction;
+        SqliteTransaction tx;
+        bool ownsTx;
+        if (uowTx is not null)
+        {
+            tx = uowTx;
+            ownsTx = false;
+        }
+        else
+        {
+            tx = _connection.BeginTransaction();
+            ownsTx = true;
+        }
 
-        await _connection.ExecuteAsync(new CommandDefinition("""
-            INSERT INTO GrilleIndiciaire (Id, CategorieId, DateEffet, DateFin, IndiceMin, Version, Source, Hash, CreatedAt)
-            VALUES (@id, @categorieId, @dateEffet, NULL, @indiceMin, @version, @source, @hash, @createdAt);
-            """,
-            new { id, categorieId, dateEffet, indiceMin, version, source, hash = $"h-{id}", createdAt }, tx, cancellationToken: ct));
+        try
+        {
+            if (courante is not null)
+                await FermerVersionAsync("GrilleIndiciaire", courante.Id, dateEffet, tx, ct);
 
-        tx.Commit();
-        return Result.Success(id);
+            await _connection.ExecuteAsync(new CommandDefinition("""
+                INSERT INTO GrilleIndiciaire (Id, CategorieId, DateEffet, DateFin, IndiceMin, Version, Source, Hash, CreatedAt)
+                VALUES (@id, @categorieId, @dateEffet, NULL, @indiceMin, @version, @source, @hash, @createdAt);
+                """,
+                new { id, categorieId, dateEffet, indiceMin, version, source, hash = $"h-{id}", createdAt }, tx, cancellationToken: ct));
+
+            if (ownsTx)
+                tx.Commit();
+            _cache?.Invalider();
+            return Result.Success(id);
+        }
+        catch
+        {
+            if (ownsTx)
+                tx?.Rollback();
+            throw;
+        }
     }
 
     public async Task<Result<string>> DefinirIndiceEchelonAsync(
         string echelonId, int indice, string dateEffet, string version, string? source, DateTimeOffset creeLe,
-        CancellationToken ct = default)
+        CancellationToken ct = default, IUnitOfWork? uow = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(echelonId);
         if (indice < 0)
@@ -122,22 +178,47 @@ public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
         var id = $"IE-{echelonId}-{dateEffet}";
         var createdAt = creeLe.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
-        using var tx = _connection.BeginTransaction();
-        if (courante is not null)
-            await FermerVersionAsync("IndicesEchelon", courante.Id, dateEffet, tx, ct);
+        var uowTx = (uow as DapperUnitOfWork)?.Transaction;
+        SqliteTransaction tx;
+        bool ownsTx;
+        if (uowTx is not null)
+        {
+            tx = uowTx;
+            ownsTx = false;
+        }
+        else
+        {
+            tx = _connection.BeginTransaction();
+            ownsTx = true;
+        }
 
-        await _connection.ExecuteAsync(new CommandDefinition("""
-            INSERT INTO IndicesEchelon (Id, EchelonId, DateEffet, DateFin, Indice, Version, Source, Hash, CreatedAt)
-            VALUES (@id, @echelonId, @dateEffet, NULL, @indice, @version, @source, @hash, @createdAt);
-            """,
-            new { id, echelonId, dateEffet, indice, version, source, hash = $"h-{id}", createdAt }, tx, cancellationToken: ct));
+        try
+        {
+            if (courante is not null)
+                await FermerVersionAsync("IndicesEchelon", courante.Id, dateEffet, tx, ct);
 
-        tx.Commit();
-        return Result.Success(id);
+            await _connection.ExecuteAsync(new CommandDefinition("""
+                INSERT INTO IndicesEchelon (Id, EchelonId, DateEffet, DateFin, Indice, Version, Source, Hash, CreatedAt)
+                VALUES (@id, @echelonId, @dateEffet, NULL, @indice, @version, @source, @hash, @createdAt);
+                """,
+                new { id, echelonId, dateEffet, indice, version, source, hash = $"h-{id}", createdAt }, tx, cancellationToken: ct));
+
+            if (ownsTx)
+                tx.Commit();
+            _cache?.Invalider();
+            return Result.Success(id);
+        }
+        catch
+        {
+            if (ownsTx)
+                tx?.Rollback();
+            throw;
+        }
     }
 
     public async Task<Result<string>> DupliquerValeurPointAsync(
-        string nouvelleDateEffet, string version, string? source, DateTimeOffset creeLe, CancellationToken ct = default)
+        string nouvelleDateEffet, string version, string? source, DateTimeOffset creeLe,
+        CancellationToken ct = default, IUnitOfWork? uow = null)
     {
         var courante = await _connection.QuerySingleOrDefaultAsync<ValeurPointCourante>(
             new CommandDefinition(
@@ -159,18 +240,42 @@ public sealed class GrilleIndiciaireRepository : IGrilleIndiciaireRepository
         var id = $"VP-{nouvelleDateEffet}";
         var createdAt = creeLe.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
-        using var tx = _connection.BeginTransaction();
-        await FermerVersionAsync("ValeurPoint", courante.Id, nouvelleDateEffet, tx, ct);
+        var uowTx = (uow as DapperUnitOfWork)?.Transaction;
+        SqliteTransaction tx;
+        bool ownsTx;
+        if (uowTx is not null)
+        {
+            tx = uowTx;
+            ownsTx = false;
+        }
+        else
+        {
+            tx = _connection.BeginTransaction();
+            ownsTx = true;
+        }
 
-        await _connection.ExecuteAsync(new CommandDefinition("""
-            INSERT INTO ValeurPoint (Id, DateEffet, DateFin, Valeur, Version, Source, Hash, CreatedAt)
-            VALUES (@id, @nouvelleDateEffet, NULL, @valeur, @version, @source, @hash, @createdAt);
-            """,
-            new { id, nouvelleDateEffet, valeur = (decimal)courante.Valeur, version, source, hash = $"h-{id}", createdAt },
-            tx, cancellationToken: ct));
+        try
+        {
+            await FermerVersionAsync("ValeurPoint", courante.Id, nouvelleDateEffet, tx, ct);
 
-        tx.Commit();
-        return Result.Success(id);
+            await _connection.ExecuteAsync(new CommandDefinition("""
+                INSERT INTO ValeurPoint (Id, DateEffet, DateFin, Valeur, Version, Source, Hash, CreatedAt)
+                VALUES (@id, @nouvelleDateEffet, NULL, @valeur, @version, @source, @hash, @createdAt);
+                """,
+                new { id, nouvelleDateEffet, valeur = (decimal)courante.Valeur, version, source, hash = $"h-{id}", createdAt },
+                tx, cancellationToken: ct));
+
+            if (ownsTx)
+                tx.Commit();
+            _cache?.Invalider();
+            return Result.Success(id);
+        }
+        catch
+        {
+            if (ownsTx)
+                tx?.Rollback();
+            throw;
+        }
     }
 
     private static Error? ValiderContinuite(VersionCourante? courante, string nouvelleDateEffet)

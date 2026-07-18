@@ -3,7 +3,8 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Agents;
 using PaieEducation.Domain.Agents.Repositories;
-using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
 
 namespace PaieEducation.Infrastructure.Repositories.Agents;
 

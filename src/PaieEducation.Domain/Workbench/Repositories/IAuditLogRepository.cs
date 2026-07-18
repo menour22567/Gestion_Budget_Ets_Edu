@@ -1,10 +1,13 @@
 using PaieEducation.Domain.Common;
+using PaieEducation.Shared.Results;
+using PaieEducation.Shared.Guards;
+using PaieEducation.Domain.Workbench.ValueObjects;
 
 namespace PaieEducation.Domain.Workbench.Repositories;
 
 /// <summary>
-/// Écrit une ligne d'audit (<c>AuditLog</c>, V001) — journal de toute action
-/// métier sensible. Port du Domain implémenté par
+/// Écrit et liste les lignes d'audit (<c>AuditLog</c>, V001) — journal de
+/// toute action métier sensible. Port du Domain implémenté par
 /// <c>Infrastructure.Repositories.Workbench.AuditLogRepository</c>.
 /// </summary>
 /// <remarks>
@@ -23,5 +26,14 @@ public interface IAuditLogRepository
         string? payload,
         string? comment,
         DateTimeOffset occurredAt,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        IUnitOfWork? uow = null);
+
+    /// <summary>
+    /// Les 500 entrées les plus récentes, triées par <c>OccurredAt</c>
+    /// décroissant — pas de pagination réelle (dette assumée, cf. mémoire
+    /// phase6-audit-log-ecran), un plafond simple suffit pour une vue
+    /// d'audit consultée occasionnellement.
+    /// </summary>
+    Task<Result<IReadOnlyList<EntreeAuditLog>>> ListerAsync(CancellationToken ct = default);
 }

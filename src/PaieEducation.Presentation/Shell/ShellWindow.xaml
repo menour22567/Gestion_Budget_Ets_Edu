@@ -19,7 +19,13 @@
             <MenuItem Header="_Référentiels">
                 <MenuItem Header="_Grille indiciaire" Command="{Binding NaviguerVersGrilleIndiciaireCommand}"/>
             </MenuItem>
-            <MenuItem Header="_Workbench réglementaire" Command="{Binding NaviguerVersWorkbenchCommand}"/>
+            <MenuItem Header="_Workbench réglementaire">
+                <MenuItem Header="_Vue d'ensemble" Command="{Binding NaviguerVersWorkbenchCommand}"/>
+                <MenuItem Header="_Matrice de couverture" Command="{Binding NaviguerVersMatriceCouvertureCommand}"/>
+                <MenuItem Header="_Audit &amp; traçabilité" Command="{Binding NaviguerVersAuditLogCommand}"/>
+                <MenuItem Header="_Fiche rubrique" Command="{Binding NaviguerVersFicheRubriqueCommand}"/>
+                <MenuItem Header="_Éditer une rubrique" Command="{Binding NaviguerVersEditerRubriqueCommand}"/>
+            </MenuItem>
         </Menu>
         <ContentControl Content="{Binding CurrentViewModel}"/>
     </DockPanel>

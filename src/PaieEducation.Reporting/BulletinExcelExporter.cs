@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Snapshot;
 
 namespace PaieEducation.Reporting;
@@ -8,9 +9,15 @@ namespace PaieEducation.Reporting;
 /// immuable (C3.3). Utilise ClosedXML. Le rendu est déterministe : aucune
 /// relecture de base, aucun recalcul.
 /// </summary>
+/// <remarks>
+/// <paramref name="rappels"/> est accepté pour respecter le contrat
+/// <see cref="IDocumentRenderer"/> ; l'export Excel n'affiche pas la section
+/// « Rappels » en V1 (réservée à l'export PDF, 7.2a). Un export Excel avec
+/// rappels viendra en lot 7.4.
+/// </remarks>
 public sealed class BulletinExcelExporter : IDocumentRenderer
 {
-    public byte[] Rendre(BulletinSnapshot snapshot)
+    public byte[] Rendre(BulletinSnapshot snapshot, IReadOnlyList<LigneRappel>? rappels = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 

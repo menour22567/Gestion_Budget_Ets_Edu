@@ -1,4 +1,5 @@
 using PaieEducation.Domain.Calcul.Snapshot;
+using PaieEducation.Reporting.Documents;
 
 namespace PaieEducation.Reporting;
 
@@ -14,28 +15,36 @@ public enum FormatDocument
 /// <summary>
 /// Service d'orchestration du Reporting : génère un document (PDF/Excel) à
 /// partir d'un <see cref="BulletinSnapshot"/> figé, et le persiste sur disque.
-/// Tout document est dérivé du snapshot immuable — jamais recalculé.
 /// </summary>
+/// <remarks>
+/// Phase 7, 7.1 : la résolution du PDF passe par le
+/// <see cref="DocumentModelRegistry"/>. L'Excel utilise pour l'instant
+/// <see cref="BulletinExcelExporter"/> directement (sera réintroduit comme
+/// modèle dédié en lot 7.4). Tout document PDF est dérivé du snapshot
+/// immuable — jamais recalculé.
+/// </remarks>
 public sealed class ReportingService
 {
-    private readonly IDocumentRenderer _pdf;
-    private readonly IDocumentRenderer _excel;
+    private readonly DocumentModelRegistry _models;
+    private readonly BulletinExcelExporter _excel;
 
-    public ReportingService(BulletinPdfRenderer pdf, BulletinExcelExporter excel)
+    public ReportingService(DocumentModelRegistry models, BulletinExcelExporter excel)
     {
-        _pdf = pdf ?? throw new ArgumentNullException(nameof(pdf));
+        _models = models ?? throw new ArgumentNullException(nameof(models));
         _excel = excel ?? throw new ArgumentNullException(nameof(excel));
     }
 
     /// <summary>
-    /// Génère les octets du document dans le format demandé.
+    /// Génère les octets du document dans le format demandé. PDF → modèle
+    /// versionné (« bulletin », v1) résolu via le registre. Excel → exporter
+    /// dédié.
     /// </summary>
     public byte[] Generer(BulletinSnapshot snapshot, FormatDocument format)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         return format switch
         {
-            FormatDocument.Pdf => _pdf.Rendre(snapshot),
+            FormatDocument.Pdf => _models.Resolve<BulletinSnapshot>("bulletin", 1).Render(snapshot),
             FormatDocument.Excel => _excel.Rendre(snapshot),
             _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
         };

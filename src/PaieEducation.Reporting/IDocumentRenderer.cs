@@ -1,3 +1,4 @@
+using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Snapshot;
 
 namespace PaieEducation.Reporting;
@@ -11,6 +12,9 @@ public interface IDocumentRenderer
 {
     /// <summary>
     /// Rend le bulletin au format demandé et retourne les octets du document.
+    /// <paramref name="rappels"/> optionnel : lignes additionnelles issues
+    /// d'une évolution réglementaire rétroactive (D9) ; null = aucune
+    /// ligne à afficher (la section « Rappels » reste présente mais vide).
     /// </summary>
-    byte[] Rendre(BulletinSnapshot snapshot);
+    byte[] Rendre(BulletinSnapshot snapshot, IReadOnlyList<LigneRappel>? rappels = null);
 }

@@ -58,4 +58,15 @@ public sealed class ArrondiService
     };
 
     public Money Arrondir(Money montant) => new(Arrondir(montant.Amount), montant.Currency);
+
+    /// <summary>
+    /// Arrondit à un nombre de décimales arbitraire — point d'entrée dédié à la fonction
+    /// de formule <c>round(x[, n])</c> (<see cref="Formules.FormulaEvaluator"/>), distinct
+    /// de <see cref="Arrondir(decimal)"/> qui applique le <see cref="ModeArrondi"/> paramétré
+    /// à un montant final de bulletin. Reste dans <c>ArrondiService.cs</c> : seul point
+    /// d'arrondi centralisé autorisé par ADR-0011 (garde d'architecture
+    /// <c>DependencyRulesTests.Arrondi_centralise_uniquement_dans_ArrondiService</c>).
+    /// </summary>
+    public static decimal ArrondirDecimales(decimal valeur, int decimales) =>
+        Math.Round(valeur, decimales, MidpointRounding.AwayFromZero);
 }

@@ -1,3 +1,4 @@
+using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
 
@@ -89,11 +90,11 @@ public sealed class FormulaEvaluator
         {
             var n = Eval(c.Args[1], ctx);
             if (n.IsFailure) return n;
-            if (n.Value < 0 || n.Value > 28 || n.Value != Math.Truncate(n.Value))
+            if (n.Value < 0 || n.Value > 28 || n.Value % 1m != 0m)
                 return Result.Failure<decimal>(Error.Evaluation($"round : nombre de décimales invalide ({n.Value})."));
             decimales = (int)n.Value;
         }
-        return Result.Success(Math.Round(x.Value, decimales, MidpointRounding.AwayFromZero));
+        return Result.Success(ArrondiService.ArrondirDecimales(x.Value, decimales));
     }
 
     private static Result<decimal> EvalUnaireFonction(CallNode c, IFormulaContext ctx, Func<decimal, decimal> f)

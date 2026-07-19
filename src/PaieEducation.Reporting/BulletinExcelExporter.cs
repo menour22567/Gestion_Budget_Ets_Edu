@@ -18,8 +18,12 @@ namespace PaieEducation.Reporting;
 public sealed class BulletinExcelExporter : IDocumentRenderer
 {
     public byte[] Rendre(BulletinSnapshot snapshot, IReadOnlyList<LigneRappel>? rappels = null)
+        => Rendre(BulletinAffichage.FromSnapshot(snapshot), rappels);
+
+    public byte[] Rendre(BulletinAffichage affichage, IReadOnlyList<LigneRappel>? rappels = null)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(affichage);
+        var snapshot = affichage.Snapshot;
 
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Bulletin");

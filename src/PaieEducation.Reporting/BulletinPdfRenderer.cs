@@ -10,18 +10,19 @@ namespace PaieEducation.Reporting;
 
 /// <summary>
 /// Rendu PDF d'un bulletin de paie à partir du <see cref="BulletinSnapshot"/>
-/// immuable (C3.2). Utilise QuestPDF (référencé mais jusqu'ici non utilisé).
-/// Le rendu est déterministe : aucune relecture de base, aucun recalcul.
+/// immuable (C3.2). Utilise QuestPDF. Le rendu est déterministe : aucune
+/// relecture de base, aucun recalcul.
 /// </summary>
 /// <remarks>
-/// Sections rendues (Phase 7, 7.2a) :
+/// Sections rendues (Phase 7, 7.2a + 7.2b) :
 /// <list type="bullet">
-///   <item>En-tête : entête administratif + identification agent/période.</item>
-///   <item>Corps : détail des rubriques + totaux + net à payer.</item>
-///   <item>Section « Rappels » (D9) : lignes additionnelles issues d'une
-///         évolution réglementaire rétroactive ; section toujours affichée,
-///         vide si aucun rappel n'est passé.</item>
-///   <item>Pied : horodatage du snapshot + mention d'inviolabilité.</item>
+///   <item>En-tête : entête administratif + identification agent/période
+///         + BulletinId (V2) + période lisible (« Juin 2025 »).</item>
+///   <item>Corps : détail des rubriques + totaux + net à payer + section
+///         « Cumuls depuis le 1er janvier » (V2, si <see cref="CumulsAnnuels"/>
+///         fourni) + section « Rappels » (D9).</item>
+///   <item>Pied : horodatage du snapshot + mentions réglementaires
+///         algériennes (V2) + mention d'inviolabilité.</item>
 /// </list>
 /// </remarks>
 public sealed class BulletinPdfRenderer : IDocumentRenderer
@@ -34,9 +35,15 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
+    // ----- Surcharges (V1 et V2) -----
+
     public byte[] Rendre(BulletinSnapshot snapshot, IReadOnlyList<LigneRappel>? rappels = null)
+        => Rendre(BulletinAffichage.FromSnapshot(snapshot), rappels);
+
+    public byte[] Rendre(BulletinAffichage affichage, IReadOnlyList<LigneRappel>? rappels = null)
     {
-        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(affichage);
+        ArgumentNullException.ThrowIfNull(affichage.Snapshot);
         return Document.Create(container =>
         {
             container.Page(page =>
@@ -46,21 +53,45 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
                 page.DefaultTextStyle(x => x.FontSize(9).FontFamily(Fonts.Calibri));
                 page.PageColor(Colors.White);
 
-                page.Header().Element(BuildHeader(snapshot));
-                page.Content().Element(BuildBody(snapshot, rappels));
-                page.Footer().Element(BuildFooter(snapshot));
+                page.Header().Element(BuildHeader(affichage));
+                page.Content().Element(BuildBody(affichage, rappels));
+                page.Footer().Element(BuildFooter(affichage));
             });
         }).GeneratePdf();
     }
+
+    // ----- Mise en forme -----
 
     private static string Dzd(decimal montant) =>
         montant.ToString("N2", _culture) + " DA";
 
     private static string DzdSigne(decimal montant) =>
-        (montant < 0 ? "- " : "") + Math.Abs(montant).ToString("N2", _culture) + " DA";
+        (montant < 0 ? "- " : "+ ") + Math.Abs(montant).ToString("N2", _culture) + " DA";
 
-    private static Action<IContainer> BuildHeader(BulletinSnapshot snapshot)
+    /// <summary>
+    /// Convertit une date ISO <c>YYYY-MM-DD</c> en libellé français lisible
+    /// (« Juin 2025 »). Le mois est forcé en Title Case — <c>MMMM</c> en
+    /// fr-FR produit « juin » (minuscule), mais un bulletin officiel
+    /// attend la majuscule typographique. Retourne la date brute si le
+    /// format est inattendu.
+    /// </summary>
+    private static string PeriodeLisible(string datePaie)
     {
+        if (DateTime.TryParseExact(datePaie, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var dt))
+        {
+            var mois = dt.ToString("MMMM", new CultureInfo("fr-FR"));
+            var moisCapitalise = char.ToUpper(mois[0], CultureInfo.InvariantCulture) + mois[1..];
+            return $"{moisCapitalise} {dt.Year}";
+        }
+        return datePaie;
+    }
+
+    // ----- Sections -----
+
+    private static Action<IContainer> BuildHeader(BulletinAffichage affichage)
+    {
+        var snapshot = affichage.Snapshot;
         var agent = snapshot.Input.Agent;
         return c => c.Column(col =>
         {
@@ -70,6 +101,15 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
                 row.RelativeItem().AlignRight().Text("Ministère de l'Éducation Nationale").FontSize(9);
             });
             col.Item().Text("BULLETIN DE PAIE").FontSize(14).SemiBold().FontColor(Colors.Blue.Medium);
+
+            // V2 : BulletinId en sous-titre + période lisible.
+            var sousTitre = $"Période : {PeriodeLisible(snapshot.Input.DatePaie)}";
+            if (!string.IsNullOrWhiteSpace(affichage.BulletinId))
+            {
+                sousTitre += $"   |   N° {affichage.BulletinId}";
+            }
+            col.Item().Text(sousTitre).FontSize(9).Italic().FontColor(Colors.Grey.Darken1);
+
             col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
             col.Item().Table(grid =>
             {
@@ -88,11 +128,11 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
         });
     }
 
-    private static Action<IContainer> BuildBody(BulletinSnapshot snapshot, IReadOnlyList<LigneRappel>? rappels)
+    private static Action<IContainer> BuildBody(BulletinAffichage affichage, IReadOnlyList<LigneRappel>? rappels)
     {
         return c => c.Column(col =>
         {
-            var bulletin = snapshot.Resultat;
+            var bulletin = affichage.Snapshot.Resultat;
 
             // ----- Détail du bulletin -----
             col.Item().Text("Détail du bulletin").SemiBold();
@@ -123,7 +163,7 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
 
             col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
-            // ----- Totaux -----
+            // ----- Totaux du bulletin courant -----
             col.Item().Table(totaux =>
             {
                 totaux.ColumnsDefinition(cols =>
@@ -139,6 +179,29 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
                 totaux.Cell().Text("NET À PAYER").FontSize(12).SemiBold().FontColor(Colors.Green.Darken2);
                 totaux.Cell().AlignRight().Text(Dzd(bulletin.Net.Amount)).FontSize(12).SemiBold();
             });
+
+            // ----- Section Cumuls annuels (V2) -----
+            if (affichage.Cumuls is { } cumuls && cumuls.NombreBulletins > 0)
+            {
+                col.Item().PaddingTop(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                col.Item().PaddingTop(4).Text($"Cumuls depuis le 1er janvier {cumuls.Annee}").SemiBold();
+                col.Item().Text($"({cumuls.NombreBulletins} bulletin{(cumuls.NombreBulletins > 1 ? "s" : "")} validé{(cumuls.NombreBulletins > 1 ? "s" : "")})")
+                    .Italic().FontSize(8).FontColor(Colors.Grey.Medium);
+                col.Item().Table(c =>
+                {
+                    c.ColumnsDefinition(cols =>
+                    {
+                        cols.RelativeColumn(3);
+                        cols.RelativeColumn(1);
+                    });
+                    LigneTotaux(c, "Cumul gains", cumuls.TotalGains.Amount);
+                    LigneTotaux(c, "Cumul assiette imposable", cumuls.TotalImposable.Amount);
+                    LigneTotaux(c, "Cumul assiette cotisable", cumuls.TotalCotisable.Amount);
+                    LigneTotaux(c, "Cumul retenues", cumuls.TotalRetenues.Amount);
+                    LigneTotaux(c, "Cumul IRG", cumuls.TotalIrg.Amount);
+                    LigneTotaux(c, "Cumul net à payer", cumuls.TotalNet.Amount);
+                });
+            }
 
             // ----- Section Rappels (D9) -----
             col.Item().PaddingTop(8).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
@@ -178,12 +241,26 @@ public sealed class BulletinPdfRenderer : IDocumentRenderer
         });
     }
 
-    private static Action<IContainer> BuildFooter(BulletinSnapshot snapshot)
+    private static Action<IContainer> BuildFooter(BulletinAffichage affichage)
     {
-        return c => c.Row(row =>
+        return c => c.Column(col =>
         {
-            row.RelativeItem().Text($"Snapshot capturé le {snapshot.CapturesLe}").FontSize(7).FontColor(Colors.Grey.Medium);
-            row.RelativeItem().AlignRight().Text("Document généré automatiquement — ne pas modifier").FontSize(7).FontColor(Colors.Grey.Medium);
+            // ----- Mentions réglementaires (V2) -----
+            col.Item().PaddingTop(6).Text(t =>
+            {
+                t.Span("Conformément à la réglementation en vigueur. ").Italic().FontSize(7).FontColor(Colors.Grey.Darken1);
+                t.Span("Le présent bulletin est à conserver sans limitation de durée. ").Italic().FontSize(7).FontColor(Colors.Grey.Darken1);
+                t.Span("Toute modification ultérieure du bulletin initial entraînera l'émission d'un rappel (D9).")
+                    .Italic().FontSize(7).FontColor(Colors.Grey.Darken1);
+            });
+            // ----- Horodatage du snapshot + mention d'inviolabilité -----
+            col.Item().Row(row =>
+            {
+                row.RelativeItem().Text($"Snapshot capturé le {affichage.Snapshot.CapturesLe}")
+                    .FontSize(7).FontColor(Colors.Grey.Medium);
+                row.RelativeItem().AlignRight().Text("Document généré automatiquement — ne pas modifier")
+                    .FontSize(7).FontColor(Colors.Grey.Medium);
+            });
         });
     }
 

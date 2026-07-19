@@ -6,9 +6,9 @@ namespace PaieEducation.Reporting;
 
 /// <summary>
 /// Composition Root du module Reporting : enregistre les renderers, le
-/// service d'orchestration, le registre de modèles versionnés (7.1), le
-/// modèle bulletin V1 (7.2a) et le use case d'export. Le Bootstrapper/
-/// Presentation appelle <see cref="AddReporting"/> une fois (idempotent).
+/// service d'orchestration, le registre de modèles versionnés (7.1), les
+/// modèles bulletin V1 (7.2a) et V2 (7.2b) et le use case d'export. Le
+/// Bootstrapper/Presentation appelle <see cref="AddReporting"/> une fois.
 /// </summary>
 public static class ReportingServiceCollectionExtensions
 {
@@ -17,8 +17,9 @@ public static class ReportingServiceCollectionExtensions
         services.AddSingleton<BulletinPdfRenderer>();
         services.AddSingleton<BulletinExcelExporter>();
 
-        // Modèle bulletin V1 — résolu par le registre pour les exports PDF.
+        // Modèles bulletin V1 et V2 — coexistent dans le registre.
         services.AddSingleton<BulletinDocumentModelV1>();
+        services.AddSingleton<BulletinDocumentModelV2>();
 
         // Registre de modèles : factory qui enregistre les modèles au moment
         // de la première résolution. Les modèles eux-mêmes sont des singletons.
@@ -26,6 +27,7 @@ public static class ReportingServiceCollectionExtensions
         {
             var registry = new DocumentModelRegistry();
             registry.Register(sp.GetRequiredService<BulletinDocumentModelV1>());
+            registry.Register(sp.GetRequiredService<BulletinDocumentModelV2>());
             return registry;
         });
 

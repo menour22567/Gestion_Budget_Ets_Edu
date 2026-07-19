@@ -64,12 +64,14 @@ public class ExporterBulletinTests
     {
         // On câble ReportingService à la main (sans héberger le bootstrapper
         // WPF) pour avoir un test d'intégration léger, focalisé sur le
-        // comportement du use case + service.
+        // comportement du use case + service. On enregistre les DEUX
+        // modèles de bulletin (V1 et V2) — V2 est le chemin par défaut
+        // depuis 7.2b.
         var pdfRenderer = new BulletinPdfRenderer();
         var excelRenderer = new BulletinExcelExporter();
-        var model = new BulletinDocumentModelV1(pdfRenderer);
         var registry = new DocumentModelRegistry();
-        registry.Register(model);
+        registry.Register(new BulletinDocumentModelV1(pdfRenderer));
+        registry.Register(new BulletinDocumentModelV2(pdfRenderer));
         var service = new ReportingService(registry, excelRenderer);
         var lecture = new BulletinReadRepository(conn);
         return (service, lecture);

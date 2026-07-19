@@ -1,3 +1,4 @@
+using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
@@ -16,6 +17,28 @@ public interface IBulletinReadRepository
     /// bulletin n'a été validé pour cet agent à cette date.
     /// </summary>
     Task<Result<BulletinSnapshot>> ConsulterAsync(string agentId, string datePaie, CancellationToken ct = default);
+
+    /// <summary>
+    /// Variante enrichie de <see cref="ConsulterAsync"/> : renvoie en plus
+    /// le <c>BulletinId</c> (GUID unique retourné par
+    /// <c>BulletinRepository.ValiderAsync</c>) que le rendu PDF doit
+    /// afficher en en-tête. Phase 7, 7.2b.
+    /// </summary>
+    Task<Result<(BulletinSnapshot Snapshot, string BulletinId)>> ConsulterAvecBulletinIdAsync(
+        string agentId, string datePaie, CancellationToken ct = default);
+
+    /// <summary>
+    /// Renvoie les bulletins (snapshots immuables complets) d'un agent dont
+    /// la <c>DatePaie</c> est comprise dans l'intervalle
+    /// [<paramref name="periodeDebut"/> ; <paramref name="periodeFin"/>].
+    /// Utilisé par le calculateur de cumuls annuels (Phase 7, 7.2b) — le
+    /// snapshot porte à la fois <see cref="BulletinSnapshot.Input"/>
+    /// (DatePaie) et <see cref="BulletinSnapshot.Resultat"/> (totaux).
+    /// <paramref name="periodeFin"/> peut être <c>null</c> pour « période
+    /// ouverte ».
+    /// </summary>
+    Task<Result<IReadOnlyList<BulletinSnapshot>>> ListerPourPeriodeAsync(
+        string agentId, string periodeDebut, string? periodeFin, CancellationToken ct = default);
 
     /// <summary>
     /// Compte le nombre de bulletins validés dont la <c>DatePaie</c> est

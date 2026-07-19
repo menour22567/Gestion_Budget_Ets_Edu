@@ -101,7 +101,15 @@ public class BulletinPdfRendererSmokeTests
     {
         var renderer = new BulletinPdfRenderer();
 
-        Assert.Throws<ArgumentNullException>(() => renderer.Rendre(null!));
+        Assert.Throws<ArgumentNullException>(() => renderer.Rendre((BulletinSnapshot)null!));
+    }
+
+    [Fact]
+    public void Rendre_affichage_null_leve_ArgumentNullException()
+    {
+        var renderer = new BulletinPdfRenderer();
+
+        Assert.Throws<ArgumentNullException>(() => renderer.Rendre((BulletinAffichage)null!));
     }
 
     [Fact]

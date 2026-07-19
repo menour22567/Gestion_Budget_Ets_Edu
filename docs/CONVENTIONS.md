@@ -51,7 +51,13 @@ Un type public = un fichier. PascalCase (types/méthodes/propriétés), `_camelC
 ## 5. Règles de code
 
 - **Domaine sans dépendance technique** ; les rubriques/valeurs réglementaires **ne sont jamais codées en dur** (tout en base, versionné par date d'effet).
-- Montants monétaires via l'objet valeur `Money` (DZD) — jamais `decimal` nu dans le domaine.
+- Montants monétaires : `decimal` natif C# (System.Decimal) — pas de Value Object `Money` en V1.
+  Cette prescription est **suspendue par [ADR-0011](adr/0011-money-decision-decimal.md)** au profit
+  de `decimal` + `ArrondiService` centralisé ; tout `Money` introduit dans le code sans amendement
+  préalable d'ADR-0011 doit être refusé en revue. L'arrondi est obligatoire et passe par
+  `PaieEducation.Domain/Calcul/Services/ArrondiService.cs` exclusivement — aucune instruction
+  `Math.Round` / `decimal.Round` / `Math.Floor` / `Math.Ceiling` / `Math.Truncate` dans le code
+  métier de `Domain` et `Application` (test d'architecture `Arrondi_centralise_uniquement_dans_ArrondiService`).
 - **Cas métier attendus → `Result` / `Error`** ; exceptions réservées aux situations exceptionnelles.
 - **MVVM strict** : aucune logique métier dans les `*.xaml.cs` ; navigation via services.
 - `async`/`await` pour les opérations longues (I/O, calcul de masse, PDF, export).

@@ -7,8 +7,8 @@ namespace PaieEducation.Reporting;
 /// Modèle V1 du bulletin de paie (Phase 7, 7.1 + 7.2a). Identifiant logique
 /// <c>"bulletin"</c>, version <c>1</c>. Délègue le rendu PDF au
 /// <see cref="BulletinPdfRenderer"/> sous-jacent ; expose la même surface
-/// <see cref="IDocumentModel{TInput}"/> que les futurs modèles (attestations,
-/// états récapitulatifs, ordre de virement) utiliseront.
+/// <see cref="IDocumentModel{TInput}"/> que les futurs modèles (attestations
+/// administratives, états récapitulatifs, journal de paie) utiliseront.
 /// </summary>
 /// <remarks>
 /// Cette indirection (modèle → renderer) permet :

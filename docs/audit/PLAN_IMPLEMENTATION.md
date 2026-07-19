@@ -270,7 +270,7 @@
 ### Lot 5.2 - Ajouter les documents officiels V1
 
 - Taches detaillees :
-  - [ ] Confirmer la liste V1: attestation salaire CNR, attestation travail, etats recap, ordre virement.
+  - [ ] Confirmer la liste V1: attestation salaire CNR, attestation travail, etats recap.
   - [ ] Definir DTO et templates QuestPDF/ClosedXML.
   - [ ] Ajouter use cases d'export et entrees UI.
   - [ ] Tester generation nominale.

@@ -106,11 +106,16 @@ Le moteur prend en charge :
 * bulletin de paie ;
 * état récapitulatif ;
 * journal de paie ;
-* ordre de virement ;
-* attestations administratives ;
+* attestations administratives (CNR, travail, 60 mois retraite, relevés d'émoluments) ;
 * fiches agents ;
 * rapports d'audit ;
 * documents techniques.
+
+> **Périmètre V4 (ADR-0010).** Le moteur de production documentaire couvre
+> exclusivement la phase **administrative** de la paie. Les documents liés à
+> l'**exécution du paiement** (ordre de virement, ordre de paiement, mandat de
+> prélèvement, état de trésorerie, relevé de compte bancaire) sont **hors scope**
+> — voir `docs/adr/0010-abstention-phase-paiement.md`.
 
 Chaque type correspond à un modèle dédié.
 

@@ -1,4 +1,4 @@
-
+﻿
 
 # Documentation de Référence du Projet
 
@@ -13,6 +13,28 @@
 # **Catalogue des Modules Fonctionnels**
 
 **Version :** 2.0
+
+> ⚠️ **RÉFÉRENCE ARCHIVÉE — Version 3.0.**
+> Ce tome est conservé pour mémoire historique. Les concepts qu'il décrit ont été
+> **revus et partiellement écartés** dans la Version 4.0 du projet.
+>
+> **Concepts de la phase paiement NON REPRIS en V4** : section *Finance* (Banques,
+> Agences, Comptes — l. 133-137), table conceptuelle T_Banque (Tome C v3.0 l. 1083),
+> référentiels *Banques* (Tome A v3.0 l. 762) et *Paramètres CNAS* (idem), entités
+> Banque (l. 1187) et Organisme (l. 1186) côté Agent.
+>
+> **Justification** : l'application PaieEducation est désormais positionnée comme un
+> **système de gestion administrative de la paie** (production de documents : bulletins,
+> attestations, relevés d'émoluments). L'exécution du paiement (virements, ordres de
+> paiement, gestion des comptes bancaires) relève d'un système d'information bancaire
+> distinct et est **hors périmètre**. Voir **docs/adr/0010-abstention-phase-paiement.md**
+> (ADR-0010, proposé le 19/07/2026) pour la décision d'architecture actant cette
+> abstention.
+>
+> **À lire comme** : un inventaire historique des concepts envisagés à un moment donné,
+> **pas** comme une spécification à implémenter. Toute table, migration, use case ou
+> endpoint inspiré de cette V3 et relevant de la phase paiement doit être rejeté en revue.
+
 **Statut :** Référentiel officiel des modules de l'ERP
 
 ---

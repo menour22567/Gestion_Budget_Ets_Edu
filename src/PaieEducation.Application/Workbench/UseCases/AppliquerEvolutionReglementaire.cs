@@ -30,13 +30,18 @@ public enum StrategieVersionning
 /// (même périmètre que <c>GérerRéférentiels</c>/<c>DupliquerVersion</c>).
 /// </summary>
 /// <remarks>
-/// L'écriture réglementaire et la ligne <c>AuditLog</c> ne sont **pas**
-/// atomiques entre elles (aucun <c>IUnitOfWork</c> dans le projet — chaque
-/// repository gère sa propre transaction interne) : si l'audit échoue après
-/// un commit réglementaire réussi, ce use case renvoie un échec explicite
-/// plutôt qu'un succès menteur, mais le changement réglementaire reste en
-/// base — incohérence possible, documentée, pas cachée (voir mémoire
-/// phase5-appliquerevolutionreglementaire). <see cref="Demande.RapportImpact"/>
+/// <b>Correction du 19/07/2026 (D3, audit d'avancement) :</b> l'écriture
+/// réglementaire et la ligne <c>AuditLog</c> **sont** atomiques entre elles —
+/// ce use case injecte <see cref="IUnitOfWork"/> et encadre l'écriture et
+/// l'enregistrement d'audit dans une transaction unique
+/// (<c>BeginAsync</c>/<c>CommitAsync</c>/<c>RollbackAsync</c>, voir
+/// <see cref="ExecuterAsync"/>) : si l'audit échoue après une écriture
+/// réglementaire réussie, la transaction est annulée dans son ensemble — le
+/// changement réglementaire ne reste jamais en base sans sa ligne d'audit.
+/// (Le commentaire précédent, affirmant l'absence d'<c>IUnitOfWork</c> et une
+/// incohérence possible, était obsolète depuis l'introduction de cette
+/// transaction ; corrigé ici sans changement de comportement.)
+/// <see cref="Demande.RapportImpact"/>
 /// exige que l'appelant ait déjà obtenu un rapport de
 /// <c>SimulerEvolutionReglementaire</c> — une convention de forme d'API, pas
 /// une preuve cryptographique du dry-run — <b>sauf bypass admin explicite</b>

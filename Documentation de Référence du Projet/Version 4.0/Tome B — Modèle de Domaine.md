@@ -159,7 +159,6 @@ Exemples :
 * Montant
 * Pourcentage
 * Adresse
-* IBAN (si pris en charge ultérieurement)
 * Période
 * Ancienneté
 * Indice
@@ -542,7 +541,6 @@ Agent
 ├── Carrière
 ├── Coordonnées
 ├── SituationAdministrative
-├── Banque
 ├── Diplômes
 └── Historique
 ```
@@ -856,8 +854,6 @@ Les référentiels comprennent notamment :
 * Zone
 * TypeContrat
 * SituationFamiliale
-* Banque
-* ModePaiement
 * RégimeIndemnitaire
 * RégimeFiscal
 

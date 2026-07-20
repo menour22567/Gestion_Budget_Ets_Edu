@@ -22,4 +22,8 @@ public sealed class ListerAuditLog
 
     public Task<Result<IReadOnlyList<EntreeAuditLog>>> ExecuterAsync(CancellationToken ct = default)
         => _auditLog.ListerAsync(ct);
+
+    /// <summary>Variante filtrée et paginée (chantier P4) — même enveloppe mince.</summary>
+    public Task<Result<IReadOnlyList<EntreeAuditLog>>> ExecuterAsync(FiltreAuditLog filtre, CancellationToken ct = default)
+        => _auditLog.ListerAsync(filtre, ct);
 }

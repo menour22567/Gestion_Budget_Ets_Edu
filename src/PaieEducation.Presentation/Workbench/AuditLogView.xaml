@@ -7,8 +7,23 @@
     <DockPanel Margin="24">
         <TextBlock Text="Audit &amp; traçabilité" FontSize="20" FontWeight="Bold" Margin="0,0,0,16" DockPanel.Dock="Top"/>
 
-        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" DockPanel.Dock="Top">
-            <Button Content="Actualiser" Command="{Binding ChargerCommand}" Width="120" Margin="0,0,8,0"/>
+        <WrapPanel Margin="0,0,0,8" DockPanel.Dock="Top">
+            <TextBlock Text="Acteur :" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding FiltreActeur, UpdateSourceTrigger=PropertyChanged}" Width="110" Margin="0,0,12,0"/>
+
+            <TextBlock Text="Action :" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding FiltreAction, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,12,0"/>
+
+            <TextBlock Text="Type d'entité :" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding FiltreTypeEntite, UpdateSourceTrigger=PropertyChanged}" Width="110" Margin="0,0,12,0"/>
+
+            <TextBlock Text="Du (aaaa-mm-jj) :" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding FiltreDateDebut, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0,0,12,0"/>
+
+            <TextBlock Text="Au (aaaa-mm-jj) :" VerticalAlignment="Center" Margin="0,0,4,0"/>
+            <TextBox Text="{Binding FiltreDateFin, UpdateSourceTrigger=PropertyChanged}" Width="100" Margin="0,0,12,0"/>
+
+            <Button Content="Filtrer" Command="{Binding ChargerCommand}" Width="100" Margin="0,0,8,0"/>
             <TextBlock Text="Chargement en cours…" Foreground="Gray" VerticalAlignment="Center">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">
@@ -21,7 +36,10 @@
                     </Style>
                 </TextBlock.Style>
             </TextBlock>
-        </StackPanel>
+        </WrapPanel>
+
+        <Button Content="Charger plus" Command="{Binding ChargerPlusCommand}" Width="120"
+                HorizontalAlignment="Left" Margin="0,8,0,0" DockPanel.Dock="Bottom"/>
 
         <DataGrid ItemsSource="{Binding Entrees}" AutoGenerateColumns="False" IsReadOnly="True"
                   CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column">

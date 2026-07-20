@@ -30,10 +30,19 @@ public interface IAuditLogRepository
         IUnitOfWork? uow = null);
 
     /// <summary>
-    /// Les 500 entrées les plus récentes, triées par <c>OccurredAt</c>
-    /// décroissant — pas de pagination réelle (dette assumée, cf. mémoire
-    /// phase6-audit-log-ecran), un plafond simple suffit pour une vue
-    /// d'audit consultée occasionnellement.
+    /// Les entrées les plus récentes, triées par <c>OccurredAt</c> décroissant,
+    /// plafonnées à <see cref="FiltreAuditLog.TaillePageMax"/> — comportement
+    /// historique conservé pour compatibilité, délègue à
+    /// <see cref="ListerAsync(FiltreAuditLog, CancellationToken)"/> sans filtre
+    /// (chantier P4 : la pagination réelle vit désormais dans la surcharge
+    /// filtrée).
     /// </summary>
     Task<Result<IReadOnlyList<EntreeAuditLog>>> ListerAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Variante filtrée et paginée (chantier P4) — acteur/action/type
+    /// d'entité/période, page 1-indexée. Tri déterministe
+    /// (<c>OccurredAt DESC, Id DESC</c>) pour une pagination stable.
+    /// </summary>
+    Task<Result<IReadOnlyList<EntreeAuditLog>>> ListerAsync(FiltreAuditLog filtre, CancellationToken ct = default);
 }

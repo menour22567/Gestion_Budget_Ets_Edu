@@ -1,5 +1,6 @@
 using PaieEducation.Application.Workbench.UseCases;
 using PaieEducation.Domain.Workbench.Constants;
+using PaieEducation.Domain.Workbench.ValueObjects;
 using PaieEducation.Infrastructure.Repositories.Workbench;
 
 namespace PaieEducation.Tests.Integration.UseCases;
@@ -23,5 +24,23 @@ public class ListerAuditLogTests
         Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
         Assert.Single(result.Value);
         Assert.Equal(AuditActions.AppliquerEvolution, result.Value[0].Action);
+    }
+
+    [Fact]
+    public async Task Executer_avec_filtre_delegue_au_repository_filtre()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var repo = new AuditLogRepository(scope.Conn);
+        await repo.EnregistrerAsync(
+            "admin", AuditActions.AppliquerEvolution, AuditEntityTypes.ValeurPoint, "VP-1", null, null, DateTimeOffset.UtcNow);
+        await repo.EnregistrerAsync(
+            "job", AuditActions.Calcul, AuditEntityTypes.Bulletin, "BUL-1", null, null, DateTimeOffset.UtcNow);
+
+        var useCase = new ListerAuditLog(repo);
+        var result = await useCase.ExecuterAsync(new FiltreAuditLog(Actor: "job"));
+
+        Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
+        Assert.Single(result.Value);
+        Assert.Equal("job", result.Value[0].Actor);
     }
 }

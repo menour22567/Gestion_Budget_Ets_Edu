@@ -1,0 +1,117 @@
+{
+  "version": "1.0",
+  "sourceGlobale": "J4F_TABLEAU_ISSRP_GRAIN_GRADE.md (validee jalons A/B, 15-16/07/2026) ; Cascade_Corps_Grades_30526.csv (185 grades) ; Reglementation/Statuts particuliers/Liste_Grades_Fr.csv (Q-C3, 4 grades hors categorie)",
+  "grades": {
+    "issrp45Direct": [
+      "CDL-G014", "C-G015", "C-G016", "C-G017", "DDEP-G028", "DDEP-G029", "DDC-G030",
+      "DDL-G031", "DDÈP-G032", "DDC-G033", "DDL-G034", "MDLP-G104", "PDLP-G105", "PDLP-G106",
+      "PDLP-G107", "PDLP-G108", "PDLP-G109", "PDLP-G110", "PDLP-G111", "PDLP-G112", "PDLF-G113",
+      "PDLM-G114", "PDLM-G115", "PDLM-G116", "PDLM-G117", "PDLM-G118", "PDLM-G119", "PDLM-G120",
+      "PTDL-G121", "PTDL-G122", "PDLS-G123", "PDLS-G124", "PDLS-G125", "PDLS-G126", "PDLS-G127",
+      "PDLS-G128", "PDLS-G129", "IDLP-G133", "IDLM-G135", "IDLN-G136", "IDLP-G137", "IDLP-G138",
+      "IDLM-G140", "IDLM-G141", "PDLP-G130", "PDLM-G131", "PDLS-G132",
+      "IDLS-G144", "IDLS-G145", "IDLS-G148"
+    ],
+    "issrpOrigine": [
+      "SDL-G007", "SDL-G008", "SDL-G009", "SDL-G010", "CDL-G011", "CDL-G012", "CDL-G013"
+    ],
+    "issrp30Direct": [
+      "ADL-G001", "ADL-G002", "SDL-G003", "SDL-G004", "SDL-G005", "SDL-G006",
+      "CDLSEP-G018", "CDLEDLGSEP-G019", "CDLEDLGSEP-G020", "CDLEDLGSEP-G021", "CDLEDLGSEP-G022",
+      "CDLEDLGSEP-G023", "CEAS-G024", "CEAS-G025", "CEAS-G026", "CEAS-G027", "IDLEDLGSEP-G134",
+      "IDLP-G139", "IDLM-G142", "IDLS-G146"
+    ],
+    "issrp15Direct": [
+      "ADSE-G035", "ADSE-G036", "S-G037", "S-G038", "I-G039", "I-G040", "ATDL-G041",
+      "ATDL-G042", "ATDL-G043", "ADL-G044", "ADL-G045", "ADL-G046", "ADL-G047", "IDLM-G143",
+      "IDLS-G147"
+    ]
+  },
+  "groupes": [
+    {
+      "groupeId": "GE-ISSRP45-DIRECT",
+      "rubriqueId": "ISSRP_45",
+      "dateEffet": "2025-01-01",
+      "dateFin": null,
+      "source": "Art. 10 D.ex. 25-55 (21/01/2025)",
+      "conditions": [
+        { "critereId": "GRADE", "operateur": "IN", "gradesRefs": ["issrp45Direct"] }
+      ]
+    },
+    {
+      "groupeId": "GE-ISSRP45-ORIGINE",
+      "rubriqueId": "ISSRP_45",
+      "dateEffet": "2025-01-01",
+      "dateFin": null,
+      "source": "Art. 10 D.ex. 25-55 (21/01/2025)",
+      "conditions": [
+        { "critereId": "GRADE", "operateur": "IN", "gradesRefs": ["issrpOrigine"] },
+        { "critereId": "ORIGINE_STATUTAIRE", "operateur": "=", "valeur": "ENSEIGNANT" }
+      ]
+    },
+    {
+      "groupeId": "GE-ISSRP30-DIRECT",
+      "rubriqueId": "ISSRP_30",
+      "dateEffet": "2025-01-01",
+      "dateFin": null,
+      "source": "Art. 10 D.ex. 25-55 (21/01/2025)",
+      "conditions": [
+        { "critereId": "GRADE", "operateur": "IN", "gradesRefs": ["issrp30Direct"] }
+      ]
+    },
+    {
+      "groupeId": "GE-ISSRP30-ORIGINE",
+      "rubriqueId": "ISSRP_30",
+      "dateEffet": "2025-01-01",
+      "dateFin": null,
+      "source": "Art. 10 D.ex. 25-55 (21/01/2025)",
+      "conditions": [
+        { "critereId": "GRADE", "operateur": "IN", "gradesRefs": ["issrpOrigine"] },
+        { "critereId": "ORIGINE_STATUTAIRE", "operateur": "=", "valeur": "AUTRE" }
+      ]
+    },
+    {
+      "groupeId": "GE-ISSRP15-DIRECT",
+      "rubriqueId": "ISSRP_15",
+      "dateEffet": "2025-01-01",
+      "dateFin": null,
+      "source": "Art. 10 D.ex. 25-55 (21/01/2025)",
+      "conditions": [
+        { "critereId": "GRADE", "operateur": "IN", "gradesRefs": ["issrp15Direct"] }
+      ]
+    },
+    {
+      "groupeId": "GE-ISSRP15-HIST",
+      "rubriqueId": "ISSRP_15",
+      "dateEffet": "2008-01-01",
+      "dateFin": "2024-12-31",
+      "source": "Art. 9 bis D.ex. 11-373 (26/10/2011, effet retroactif 01/01/2008)",
+      "conditions": [
+        { "critereId": "GRADE", "operateur": "IN", "gradesRefs": ["issrp45Direct", "issrpOrigine", "issrp30Direct", "issrp15Direct"] }
+      ]
+    }
+  ],
+  "gradesHorsCategorie": {
+    "source": "Reglementation/Statuts particuliers/Liste_Grades_Fr.csv (lignes 88-90, 92)",
+    "filiere": { "id": "INSPECTION", "libelle": "INSPECTION" },
+    "corps": { "id": "IDLS", "libelle": "Corps des Inspecteurs de l'enseignement secondaire", "filiereId": "INSPECTION" },
+    "categories": [
+      { "id": "HC-S1", "niveau": 18, "libelle": "Hors categorie - subdivision 1" },
+      { "id": "HC-S2", "niveau": 19, "libelle": "Hors categorie - subdivision 2" }
+    ],
+    "grilleIndiciaire": [
+      { "categorieId": "HC-S1", "dateEffet": "2022-03-01", "dateFin": "2022-12-31", "indice": 980, "version": "2022-03" },
+      { "categorieId": "HC-S1", "dateEffet": "2023-01-01", "dateFin": "2023-12-31", "indice": 1055, "version": "2023" },
+      { "categorieId": "HC-S1", "dateEffet": "2024-01-01", "dateFin": null, "indice": 1130, "version": "2024" },
+      { "categorieId": "HC-S2", "dateEffet": "2022-03-01", "dateFin": "2022-12-31", "indice": 1040, "version": "2022-03" },
+      { "categorieId": "HC-S2", "dateEffet": "2023-01-01", "dateFin": "2023-12-31", "indice": 1115, "version": "2023" },
+      { "categorieId": "HC-S2", "dateEffet": "2024-01-01", "dateFin": null, "indice": 1190, "version": "2024" }
+    ],
+    "grades": [
+      { "id": "IDLS-G144", "libelle": "Inspecteur de l'enseignement secondaire spécialité disciplines", "ordre": 144 },
+      { "id": "IDLS-G145", "libelle": "Inspecteur de l'enseignement secondaire spécialité administration des lycées", "ordre": 145 },
+      { "id": "IDLS-G146", "libelle": "Inspecteur de l'orientation et de la guidance scolaire et professionnelle aux lycées", "ordre": 146 },
+      { "id": "IDLS-G148", "libelle": "Inspecteur de l'Education nationale", "ordre": 148 }
+    ]
+  }
+}

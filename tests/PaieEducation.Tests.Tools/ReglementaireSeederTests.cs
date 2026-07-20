@@ -433,6 +433,76 @@ public class ReglementaireSeederTests
     }
 
     // -------------------------------------------------------------------------
+    // Chantier P2 (19/07/2026) — équivalence stricte DB ↔ JSON externalisé.
+    // Contrairement aux tests ci-dessus (Contains, vérification métier), ceux-ci
+    // comparent la valeur exacte insérée en base à la reconstruction depuis
+    // GroupesDnfIssrpJsonDataReader — preuve directe que le seed n'a rien perdu
+    // ni réordonné lors de l'externalisation des tableaux C# vers le JSON.
+    // -------------------------------------------------------------------------
+    [Fact]
+    public async Task Seed_Valeur_ISSRP45_DIRECT_correspond_exactement_a_la_liste_JSON_dans_l_ordre()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            var data = GroupesDnfIssrpJsonDataReader.Load();
+            var attendu = string.Join(",", GroupesDnfIssrpJsonDataReader.ResoudreGrades(data, ["issrp45Direct"]));
+
+            var valeurEnBase = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP45-DIRECT' AND CritereId = 'GRADE';
+                """);
+
+            Assert.Equal(attendu, valeurEnBase);
+        }
+    }
+
+    [Fact]
+    public async Task Seed_Valeur_ISSRP15_HIST_correspond_exactement_a_l_union_des_4_listes_92_grades()
+    {
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            var data = GroupesDnfIssrpJsonDataReader.Load();
+            var attendu = string.Join(",", GroupesDnfIssrpJsonDataReader.ResoudreGrades(
+                data, ["issrp45Direct", "issrpOrigine", "issrp30Direct", "issrp15Direct"]));
+
+            var valeurEnBase = TestSupport.Scalar<string>(conn, """
+                SELECT Valeur FROM ReglesEligibilite
+                WHERE GroupeId = 'GE-ISSRP15-HIST' AND CritereId = 'GRADE';
+                """);
+
+            Assert.Equal(92, attendu.Split(',').Length);
+            Assert.Equal(attendu, valeurEnBase);
+        }
+    }
+
+    [Fact]
+    public async Task Seed_hash_ISSRP_est_un_vrai_SHA256_canonique_pas_un_placeholder()
+    {
+        // Avant P2 : hash factices "h-groupe-{id}"/"h-cat-{id}" qui ne
+        // détectaient aucun drift de contenu. Depuis P2 : même mécanisme
+        // SHA-256 que les 4 autres sections externalisées.
+        var (conn, db) = OpenMigrated();
+        using (conn) using (db)
+        {
+            await new ReglementaireSeeder().SeedAsync(conn);
+
+            var hashGroupe = TestSupport.Scalar<string>(conn,
+                "SELECT Hash FROM GroupesEligibilite WHERE Id = 'GE-ISSRP45-DIRECT';");
+            var hashCategorie = TestSupport.Scalar<string>(conn,
+                "SELECT Hash FROM Categories WHERE Id = 'HC-S1';");
+
+            Assert.StartsWith("sha256:", hashGroupe);
+            Assert.StartsWith("sha256:", hashCategorie);
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Idempotence
     // -------------------------------------------------------------------------
     [Fact]

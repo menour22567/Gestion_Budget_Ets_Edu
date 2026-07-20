@@ -25,10 +25,13 @@
     <EmbeddedResource Include="Donnees\Formules\formules_v1.json" />
     <!-- Lot 1.3 final : référentiel réglementaire (10 rubriques + 5 barèmes +
          3 cotisations + 10 paramètres). Avant : 614 lignes dans
-         ReglementaireSeeder.cs. Les groupes DNF ISSRP (~92 grade IDs) et les
-         4 grades hors catégorie (Q-C3) restent en C# pour V1 — voir le
-         commentaire de ReglementaireSeeder. -->
+         ReglementaireSeeder.cs. -->
     <EmbeddedResource Include="Donnees\Reglementaire\referentiel_reglementaire_v1.json" />
+    <!-- Chantier P2 (19/07/2026) : dernière section réglementaire externalisée
+         — 6 groupes DNF ISSRP (~92 grade IDs) + les 4 grades hors catégorie
+         (Q-C3). Avant : tableaux C# dans ReglementaireSeeder.cs, reportés
+         lors du Lot 1.3 (volume + couplage DNF). -->
+    <EmbeddedResource Include="Donnees\Reglementaire\groupes_dnf_issrp_v1.json" />
   </ItemGroup>
 
   <PropertyGroup>

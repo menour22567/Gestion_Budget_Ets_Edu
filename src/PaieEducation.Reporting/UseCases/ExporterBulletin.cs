@@ -36,11 +36,13 @@ public sealed record Demande(
 public sealed class ExporterBulletin : IExporterBulletin
 {
     private readonly IBulletinReadRepository _bulletins;
+    private readonly IRappelRepository _rappels;
     private readonly ReportingService _reporting;
 
-    public ExporterBulletin(IBulletinReadRepository bulletins, ReportingService reporting)
+    public ExporterBulletin(IBulletinReadRepository bulletins, IRappelRepository rappels, ReportingService reporting)
     {
         _bulletins = bulletins ?? throw new ArgumentNullException(nameof(bulletins));
+        _rappels = rappels ?? throw new ArgumentNullException(nameof(rappels));
         _reporting = reporting ?? throw new ArgumentNullException(nameof(reporting));
     }
 
@@ -63,7 +65,13 @@ public sealed class ExporterBulletin : IExporterBulletin
         var bulletins = liste.Value.Select(s => s.Resultat).ToList();
         var cumuls = CumulsAnnuels.FromBulletins(annee, bulletins);
 
-        var affichage = new BulletinAffichage(snapshot, bulletinId, cumuls);
+        // 3) Rappels déjà générés pour ce bulletin (P9) — le renderer V2
+        // les affiche depuis 7.2a/lot 2.3, mais n'en recevait jamais avant.
+        var rappelsResult = await _rappels.ListerAsync(demande.AgentId, demande.DatePaie, ct);
+        if (rappelsResult.IsFailure)
+            return Result.Failure<string>(rappelsResult.Error);
+
+        var affichage = new BulletinAffichage(snapshot, bulletinId, cumuls, rappelsResult.Value);
 
         try
         {

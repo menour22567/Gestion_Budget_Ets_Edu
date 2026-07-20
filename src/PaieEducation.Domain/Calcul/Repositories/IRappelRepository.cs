@@ -18,6 +18,13 @@ public interface IRappelRepository
     /// </summary>
     Task<Result<bool>> ExisteAsync(string agentId, string datePaieOrigine, CancellationToken ct = default);
 
+    /// <summary>
+    /// Liste les rappels déjà générés pour cet agent à cette date d'origine
+    /// (P9) — restitution dans le parcours bulletin (écran + export).
+    /// Liste vide si aucun rappel n'a été généré.
+    /// </summary>
+    Task<Result<IReadOnlyList<LigneRappel>>> ListerAsync(string agentId, string datePaieOrigine, CancellationToken ct = default);
+
     Task<Result> EnregistrerAsync(
         string agentId,
         string datePaieOrigine,

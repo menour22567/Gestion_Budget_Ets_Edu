@@ -5,6 +5,7 @@ using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
+using PaieEducation.Shared.Money;
 
 namespace PaieEducation.Infrastructure.Repositories.Payroll;
 
@@ -31,6 +32,33 @@ public sealed class RappelRepository : IRappelRepository
 
         return Result.Success(existe > 0);
     }
+
+    public async Task<Result<IReadOnlyList<LigneRappel>>> ListerAsync(
+        string agentId, string datePaieOrigine, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(agentId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(datePaieOrigine);
+
+        var lignes = await _connection.QueryAsync<RappelRow>(
+            new CommandDefinition("""
+                SELECT RubriqueId, MontantAncien, MontantNouveau, Delta
+                FROM Rappels
+                WHERE AgentId = @agentId AND DatePaieOrigine = @datePaieOrigine
+                ORDER BY RubriqueId;
+                """,
+                new { agentId, datePaieOrigine }, cancellationToken: ct));
+
+        var resultat = lignes
+            .Select(r => new LigneRappel(
+                r.RubriqueId, new Money((decimal)r.MontantAncien), new Money((decimal)r.MontantNouveau), new Money((decimal)r.Delta)))
+            .ToList();
+        return Result.Success<IReadOnlyList<LigneRappel>>(resultat);
+    }
+
+    // SQLite REAL -> double via Microsoft.Data.Sqlite ; Dapper exige une
+    // correspondance exacte de type pour le mapping par constructeur d'un
+    // record (piège Dapper decimal/double documenté, cf. GrilleIndiciaireRepository).
+    private sealed record RappelRow(string RubriqueId, double MontantAncien, double MontantNouveau, double Delta);
 
     public async Task<Result> EnregistrerAsync(
         string agentId,

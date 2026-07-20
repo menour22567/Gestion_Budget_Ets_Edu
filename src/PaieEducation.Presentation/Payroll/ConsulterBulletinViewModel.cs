@@ -1,7 +1,9 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PaieEducation.Application.Payroll.UseCases;
 using PaieEducation.Domain.Calcul.Pipeline;
+using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Presentation.Dialogs;
 using PaieEducation.Reporting;
 using PaieEducation.Reporting.UseCases;
@@ -14,11 +16,14 @@ namespace PaieEducation.Presentation.Payroll;
 /// déjà validé d'un agent via le use case <see cref="ConsulterBulletin"/>
 /// (déjà livré, Phase 5). Lecture seule : ne recalcule jamais (ADR-0008).
 /// Ajoute l'export du bulletin validé (snapshot immuable) au format PDF ou
-/// Excel via <see cref="IExporterBulletin"/> (chantier C3).
+/// Excel via <see cref="IExporterBulletin"/> (chantier C3), ainsi que la
+/// restitution des rappels rattachés via <see cref="ListerRappels"/> (P9) —
+/// jusqu'ici générés (D9) mais invisibles à l'écran.
 /// </summary>
 public sealed partial class ConsulterBulletinViewModel : ObservableObject
 {
     private readonly ConsulterBulletin _consulterBulletin;
+    private readonly ListerRappels _listerRappels;
     private readonly IExporterBulletin _exporter;
     private readonly IDialogService _dialogs;
 
@@ -40,14 +45,17 @@ public sealed partial class ConsulterBulletinViewModel : ObservableObject
     [ObservableProperty]
     private Bulletin? bulletin;
 
+    public ObservableCollection<LigneRappel> Rappels { get; } = [];
+
     public bool HasBulletin => Bulletin is not null;
 
     partial void OnBulletinChanged(Bulletin? value) => OnPropertyChanged(nameof(HasBulletin));
 
     public ConsulterBulletinViewModel(
-        ConsulterBulletin consulterBulletin, IExporterBulletin exporter, IDialogService dialogs)
+        ConsulterBulletin consulterBulletin, ListerRappels listerRappels, IExporterBulletin exporter, IDialogService dialogs)
     {
         _consulterBulletin = consulterBulletin ?? throw new ArgumentNullException(nameof(consulterBulletin));
+        _listerRappels = listerRappels ?? throw new ArgumentNullException(nameof(listerRappels));
         _exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
     }
@@ -58,6 +66,7 @@ public sealed partial class ConsulterBulletinViewModel : ObservableObject
         EnCours = true;
         Resultat = null;
         PeutExporter = false;
+        Rappels.Clear();
         try
         {
             var demande = new ConsulterBulletin.Demande(AgentId, DatePaie);
@@ -72,6 +81,13 @@ public sealed partial class ConsulterBulletinViewModel : ObservableObject
             var b = Bulletin;
             Resultat = $"Net : {b.Net:N0} DA — Total gains : {b.TotalGains:N0} DA — IRG : {b.Irg:N0} DA";
             PeutExporter = true;
+
+            var rappels = await _listerRappels.ExecuterAsync(new ListerRappels.Demande(AgentId, DatePaie));
+            if (rappels.IsSuccess)
+            {
+                foreach (var ligne in rappels.Value)
+                    Rappels.Add(ligne);
+            }
         }
         finally
         {

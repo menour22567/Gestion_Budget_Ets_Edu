@@ -32,6 +32,6 @@ public sealed class BulletinDocumentModelV2 : IDocumentModel<BulletinAffichage>
     public byte[] Render(BulletinAffichage input)
     {
         ArgumentNullException.ThrowIfNull(input);
-        return _pdfRenderer.Rendre(input);
+        return _pdfRenderer.Rendre(input, input.Rappels);
     }
 }

@@ -21,6 +21,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddTransient<CalculEntreeResolver>();
         services.AddTransient<ValiderBulletin>();
         services.AddTransient<ConsulterBulletin>();
+        services.AddTransient<ListerRappels>();
         services.AddTransient<DefinirValeurPoint>();
         services.AddTransient<DefinirIndiceMinGrille>();
         services.AddTransient<DefinirIndiceEchelon>();

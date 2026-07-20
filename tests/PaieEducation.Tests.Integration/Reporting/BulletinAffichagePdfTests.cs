@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
+using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Domain.Workbench.Services;
@@ -171,6 +172,41 @@ public class BulletinAffichagePdfTests
         Assert.Contains("conformément à la réglementation", texte, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("sans limitation de durée", texte, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("rappel", texte, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task V2_avec_rappels_affiche_la_section_rappels_avec_les_montants()
+    {
+        // P9 : BulletinDocumentModelV2.Render passe désormais affichage.Rappels
+        // au renderer (avant ce chantier, l'argument restait implicitement
+        // null quel que soit le contenu de BulletinAffichage).
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var snapshot = await SeederEtCalculer(scope.Conn, "A-PILOTE");
+
+        var rappels = new List<LigneRappel>
+        {
+            new("QUALIF", MontantAncien: new Money(2000m), MontantNouveau: new Money(2500m), Delta: new Money(500m)),
+        };
+        var affichage = new BulletinAffichage(snapshot, BulletinId: "BUL-1", Cumuls: null, Rappels: rappels);
+        var bytes = RendreV2(affichage);
+        var texte = ExtraireTextePdf(bytes);
+
+        Assert.Contains("Rappels (évolutions réglementaires rétroactives)", texte);
+        Assert.Contains("QUALIF", texte);
+        Assert.DoesNotContain("Aucun rappel pour ce bulletin.", texte);
+    }
+
+    [Fact]
+    public async Task V2_sans_rappels_affiche_le_message_d_absence()
+    {
+        using var scope = SchemaTestSupport.CreateMigrated();
+        var snapshot = await SeederEtCalculer(scope.Conn, "A-PILOTE");
+
+        var affichage = new BulletinAffichage(snapshot, BulletinId: "BUL-1", Cumuls: null, Rappels: null);
+        var bytes = RendreV2(affichage);
+        var texte = ExtraireTextePdf(bytes);
+
+        Assert.Contains("Aucun rappel pour ce bulletin.", texte);
     }
 
     [Fact]

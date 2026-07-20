@@ -37,6 +37,32 @@
             <controls:ExplainabilityPanel Bulletin="{Binding Bulletin}" Margin="0,4,0,0"/>
         </Expander>
 
+        <Expander Header="Rappels rattachés" Margin="0,0,0,8"
+                  Visibility="{Binding HasBulletin, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel Margin="0,4,0,0">
+                <TextBlock Text="Aucun rappel pour ce bulletin." Foreground="Gray" FontStyle="Italic">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasItems, ElementName=RappelsGrid}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <controls:ERPDataGrid x:Name="RappelsGrid" ItemsSource="{Binding Rappels}">
+                    <controls:ERPDataGrid.Columns>
+                        <DataGridTextColumn Header="Rubrique" Binding="{Binding RubriqueId}" Width="140"/>
+                        <DataGridTextColumn Header="Ancien (DA)" Binding="{Binding MontantAncien.Amount, StringFormat=N0}" Width="100"/>
+                        <DataGridTextColumn Header="Nouveau (DA)" Binding="{Binding MontantNouveau.Amount, StringFormat=N0}" Width="100"/>
+                        <DataGridTextColumn Header="Delta (DA)" Binding="{Binding Delta.Amount, StringFormat=N0}" Width="100"/>
+                    </controls:ERPDataGrid.Columns>
+                </controls:ERPDataGrid>
+            </StackPanel>
+        </Expander>
+
         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
             <Button Content="Exporter PDF" Command="{Binding ExporterCommand}"
                     CommandParameter="Pdf" Width="120" Margin="0,0,8,0">

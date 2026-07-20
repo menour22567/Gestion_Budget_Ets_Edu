@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
+using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
@@ -11,6 +12,8 @@ using PaieEducation.Reporting;
 using PaieEducation.Reporting.Documents;
 using PaieEducation.Reporting.UseCases;
 using PaieEducation.Seeding;
+using PaieEducation.Shared.Money;
+using UglyToad.PdfPig;
 
 namespace PaieEducation.Tests.Integration.Reporting;
 
@@ -83,7 +86,7 @@ public class ExporterBulletinTests
         using var scope = SchemaTestSupport.CreateMigrated();
         var bulletinId = await SeederCalculerValider(scope.Conn, "A-PILOTE");
         var (service, lecture) = ConstruireService(scope.Conn);
-        var useCase = new ExporterBulletin(lecture, service);
+        var useCase = new ExporterBulletin(lecture, new RappelRepository(scope.Conn), service);
         var chemin = Path.Combine(Path.GetTempPath(), $"bulletin-A-PILOTE-{Guid.NewGuid():N}.pdf");
 
         try
@@ -108,7 +111,7 @@ public class ExporterBulletinTests
         using var scope = SchemaTestSupport.CreateMigrated();
         await SeederCalculerValider(scope.Conn, "A-PILOTE");
         var (service, lecture) = ConstruireService(scope.Conn);
-        var useCase = new ExporterBulletin(lecture, service);
+        var useCase = new ExporterBulletin(lecture, new RappelRepository(scope.Conn), service);
         var chemin = Path.Combine(Path.GetTempPath(), $"bulletin-sans-ext-{Guid.NewGuid():N}");
 
         try
@@ -132,7 +135,7 @@ public class ExporterBulletinTests
         using var scope = SchemaTestSupport.CreateMigrated();
         // Pas de bulletin validé en base.
         var (service, lecture) = ConstruireService(scope.Conn);
-        var useCase = new ExporterBulletin(lecture, service);
+        var useCase = new ExporterBulletin(lecture, new RappelRepository(scope.Conn), service);
         var chemin = Path.Combine(Path.GetTempPath(), $"bulletin-vide-{Guid.NewGuid():N}.pdf");
 
         var result = await useCase.ExecuterAsync(
@@ -158,5 +161,42 @@ public class ExporterBulletinTests
         Assert.NotNull(bytes);
         Assert.True(bytes.Length > 0);
         Assert.Equal("%PDF-", System.Text.Encoding.ASCII.GetString(bytes, 0, 5));
+    }
+
+    [Fact]
+    public async Task ExecuterAsync_avec_rappels_generes_les_affiche_dans_le_pdf_exporte()
+    {
+        // P9 : avant ce chantier, RappelRepository n'avait aucun chemin de
+        // lecture — un rappel enregistré en base restait invisible dans
+        // l'export, alors même que BulletinPdfRenderer sait déjà les
+        // afficher (Lot 2.3). Ce test verrouille le câblage bout-en-bout.
+        using var scope = SchemaTestSupport.CreateMigrated();
+        await SeederCalculerValider(scope.Conn, "A-PILOTE");
+        var rappelsRepo = new RappelRepository(scope.Conn);
+        await rappelsRepo.EnregistrerAsync(
+            "A-PILOTE", "2025-06-01",
+            [new LigneRappel("QUALIF", new Money(2000m), new Money(2500m), new Money(500m))],
+            DateTimeOffset.UtcNow);
+        var (service, lecture) = ConstruireService(scope.Conn);
+        var useCase = new ExporterBulletin(lecture, rappelsRepo, service);
+        var chemin = Path.Combine(Path.GetTempPath(), $"bulletin-rappels-{Guid.NewGuid():N}.pdf");
+
+        try
+        {
+            var result = await useCase.ExecuterAsync(
+                new Demande("A-PILOTE", "2025-06-01", FormatDocument.Pdf, chemin));
+
+            Assert.True(result.IsSuccess, result.IsFailure ? result.Error.Message : null);
+            using var pdf = PdfDocument.Open(File.ReadAllBytes(result.Value));
+            var texte = string.Join(' ', pdf.GetPages().Select(p => p.Text));
+
+            Assert.Contains("Rappels (évolutions réglementaires rétroactives)", texte);
+            Assert.Contains("QUALIF", texte);
+            Assert.DoesNotContain("Aucun rappel pour ce bulletin.", texte);
+        }
+        finally
+        {
+            if (File.Exists(chemin)) File.Delete(chemin);
+        }
     }
 }

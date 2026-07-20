@@ -4,6 +4,7 @@ using PaieEducation.Domain.Calcul.Audit;
 using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
+using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Domain.Calcul.Services;
 using PaieEducation.Domain.Calcul.Snapshot;
@@ -47,20 +48,29 @@ public class ConsulterBulletinViewModelTests
         return new BulletinSnapshot(input, bulletin, "2025-06-05T10:00:00.0000000Z");
     }
 
+    private static ConsulterBulletinViewModel BuildViewModel(
+        out Mock<IBulletinReadRepository> bulletins, out Mock<IRappelRepository> rappelsRepo, out Mock<IDialogService> dialogs)
+    {
+        bulletins = new Mock<IBulletinReadRepository>();
+        rappelsRepo = new Mock<IRappelRepository>();
+        dialogs = new Mock<IDialogService>();
+
+        var consulterBulletin = new ConsulterBulletin(bulletins.Object);
+        var listerRappels = new ListerRappels(rappelsRepo.Object);
+        return new ConsulterBulletinViewModel(
+            consulterBulletin, listerRappels, new Mock<IExporterBulletin>().Object, dialogs.Object);
+    }
+
     [Fact]
     public async Task ConsulterAsync_succes_affiche_le_bulletin()
     {
-        var bulletins = new Mock<IBulletinReadRepository>();
+        var vm = BuildViewModel(out var bulletins, out var rappelsRepo, out var dialogs);
         bulletins.Setup(b => b.ConsulterAsync("A-1", "2025-06-01", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(SnapshotDeTest()));
-
-        var consulterBulletin = new ConsulterBulletin(bulletins.Object);
-        var dialogs = new Mock<IDialogService>();
-        var vm = new ConsulterBulletinViewModel(consulterBulletin, new Mock<IExporterBulletin>().Object, dialogs.Object)
-        {
-            AgentId = "A-1",
-            DatePaie = "2025-06-01",
-        };
+        rappelsRepo.Setup(r => r.ListerAsync("A-1", "2025-06-01", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<LigneRappel>>([]));
+        vm.AgentId = "A-1";
+        vm.DatePaie = "2025-06-01";
 
         await vm.ConsulterCommand.ExecuteAsync(null);
 
@@ -69,23 +79,18 @@ public class ConsulterBulletinViewModelTests
         Assert.Contains("57", vm.Resultat);
         Assert.NotNull(vm.Bulletin);
         Assert.True(vm.HasBulletin);
+        Assert.Empty(vm.Rappels);
         dialogs.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
     public async Task ConsulterAsync_aucun_bulletin_affiche_une_erreur()
     {
-        var bulletins = new Mock<IBulletinReadRepository>();
+        var vm = BuildViewModel(out var bulletins, out _, out var dialogs);
         bulletins.Setup(b => b.ConsulterAsync("A-1", "2025-06-01", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure<BulletinSnapshot>(Error.NotFound("Aucun bulletin validé pour l'agent 'A-1' à la date 2025-06-01.")));
-
-        var consulterBulletin = new ConsulterBulletin(bulletins.Object);
-        var dialogs = new Mock<IDialogService>();
-        var vm = new ConsulterBulletinViewModel(consulterBulletin, new Mock<IExporterBulletin>().Object, dialogs.Object)
-        {
-            AgentId = "A-1",
-            DatePaie = "2025-06-01",
-        };
+        vm.AgentId = "A-1";
+        vm.DatePaie = "2025-06-01";
 
         await vm.ConsulterCommand.ExecuteAsync(null);
 
@@ -94,5 +99,24 @@ public class ConsulterBulletinViewModelTests
         Assert.Null(vm.Bulletin);
         Assert.False(vm.HasBulletin);
         dialogs.Verify(d => d.ShowErrorAsync(It.Is<string>(m => m.Contains("bulletin"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConsulterAsync_succes_avec_rappels_peuple_la_collection_rappels()
+    {
+        var vm = BuildViewModel(out var bulletins, out var rappelsRepo, out _);
+        bulletins.Setup(b => b.ConsulterAsync("A-1", "2025-06-01", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(SnapshotDeTest()));
+        rappelsRepo.Setup(r => r.ListerAsync("A-1", "2025-06-01", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<LigneRappel>>(
+                [new LigneRappel("QUALIF", new Money(2000m), new Money(2500m), new Money(500m))]));
+        vm.AgentId = "A-1";
+        vm.DatePaie = "2025-06-01";
+
+        await vm.ConsulterCommand.ExecuteAsync(null);
+
+        var rappel = Assert.Single(vm.Rappels);
+        Assert.Equal("QUALIF", rappel.RubriqueId);
+        Assert.Equal(500m, rappel.Delta.Amount);
     }
 }

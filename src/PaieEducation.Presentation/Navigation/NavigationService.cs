@@ -13,8 +13,13 @@ public sealed class NavigationService : INavigationService
     public event Action<object>? ViewModelChanged;
 
     public void NavigateTo<TViewModel>() where TViewModel : class
+        => NavigateTo<TViewModel>(_ => { });
+
+    public void NavigateTo<TViewModel>(Action<TViewModel> configurer) where TViewModel : class
     {
+        ArgumentNullException.ThrowIfNull(configurer);
         var viewModel = _services.GetRequiredService<TViewModel>();
+        configurer(viewModel);
         ViewModelChanged?.Invoke(viewModel);
     }
 }

@@ -13,6 +13,14 @@ public interface INavigationService
     /// <summary>Résout <typeparamref name="TViewModel"/> via DI et notifie <see cref="ViewModelChanged"/>.</summary>
     void NavigateTo<TViewModel>() where TViewModel : class;
 
+    /// <summary>
+    /// Résout <typeparamref name="TViewModel"/> via DI, laisse <paramref name="configurer"/>
+    /// initialiser l'instance (ex. présélection d'un identifiant, déclenchement d'un
+    /// chargement) puis notifie <see cref="ViewModelChanged"/> — pour une navigation
+    /// « préchargée » depuis un écran vers un autre (drill-down).
+    /// </summary>
+    void NavigateTo<TViewModel>(Action<TViewModel> configurer) where TViewModel : class;
+
     /// <summary>Levé après chaque navigation réussie, avec le nouveau ViewModel courant.</summary>
     event Action<object>? ViewModelChanged;
 }

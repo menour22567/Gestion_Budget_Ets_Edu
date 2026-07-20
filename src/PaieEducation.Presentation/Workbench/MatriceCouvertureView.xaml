@@ -3,12 +3,28 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             mc:Ignorable="d" d:DesignWidth="700">
-    <StackPanel Margin="24" MaxWidth="640" HorizontalAlignment="Left">
+             mc:Ignorable="d" d:DesignWidth="900">
+    <StackPanel Margin="24" HorizontalAlignment="Left">
         <TextBlock Text="Matrice de couverture" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
 
-        <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
-        <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" MaxWidth="200" HorizontalAlignment="Left"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <StackPanel Margin="0,0,16,0">
+                <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
+                <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Width="140"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,0">
+                <TextBlock Text="Filtre corps"/>
+                <TextBox Text="{Binding FiltreCorps, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+            </StackPanel>
+            <StackPanel Margin="0,0,16,0">
+                <TextBlock Text="Filtre rubrique"/>
+                <TextBox Text="{Binding FiltreRubrique, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Filtre état"/>
+                <ComboBox ItemsSource="{Binding EtatsFiltrables}" SelectedItem="{Binding FiltreEtat}" Width="160"/>
+            </StackPanel>
+        </StackPanel>
 
         <Button Content="Charger" Command="{Binding ChargerCommand}"
                 Width="120" HorizontalAlignment="Left" Margin="0,0,0,8"/>
@@ -26,14 +42,11 @@
             </TextBlock.Style>
         </TextBlock>
 
-        <DataGrid ItemsSource="{Binding Cellules}" AutoGenerateColumns="False" IsReadOnly="True"
-                  CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Corps" Binding="{Binding CorpsId}" Width="140"/>
-                <DataGridTextColumn Header="Rubrique" Binding="{Binding RubriqueId}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Couverte" Binding="{Binding Couverte}" Width="90"/>
-                <DataGridCheckBoxColumn Header="Active" Binding="{Binding Active}" Width="90"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <TextBlock Margin="0,0,0,8" FontStyle="Italic" Foreground="Gray"
+                   Text="Légende : ✓ vert = couverte active · ~ orange = couverte inactive (expirée/future) · — rouge = non couverte. Clic sur une cellule → fiche de la rubrique."/>
+
+        <DataGrid x:Name="Grille" ItemsSource="{Binding Lignes}" AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
+                  HorizontalScrollBarVisibility="Auto" MaxHeight="480"/>
     </StackPanel>
 </UserControl>

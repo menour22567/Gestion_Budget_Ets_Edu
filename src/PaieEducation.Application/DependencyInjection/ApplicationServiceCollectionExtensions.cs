@@ -41,6 +41,11 @@ public static class ApplicationServiceCollectionExtensions
         services.AddTransient<DefinirFormuleRubrique>();
         services.AddTransient<DefinirParametreRubrique>();
         services.AddTransient<DefinirValeurBareme>();
+        services.AddTransient<DefinirGroupeEligibilite>();
+        services.AddTransient<CloreGroupeEligibilite>();
+        services.AddTransient<DefinirRegleEligibilite>();
+        services.AddTransient<CloreRegleEligibilite>();
+        services.AddTransient<ListerCriteresEligibilite>();
 
         return services;
     }

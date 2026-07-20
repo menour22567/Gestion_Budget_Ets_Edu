@@ -97,16 +97,89 @@
 
             <!-- Éligibilité -->
             <TabItem Header="Éligibilité">
-                <controls:ERPDataGrid ItemsSource="{Binding Conditions}" Margin="12">
-                    <controls:ERPDataGrid.Columns>
-                        <DataGridTextColumn Header="Critère" Binding="{Binding CritereId}" Width="140"/>
-                        <DataGridTextColumn Header="Opérateur" Binding="{Binding Operateur}" Width="90"/>
-                        <DataGridTextColumn Header="Valeur" Binding="{Binding Valeur}" Width="160"/>
-                        <DataGridTextColumn Header="Groupe" Binding="{Binding GroupeId}" Width="100"/>
-                        <DataGridTextColumn Header="Date d'effet" Binding="{Binding Periode.DateEffet}" Width="100"/>
-                        <DataGridTextColumn Header="Date de fin" Binding="{Binding Periode.DateFin}" Width="*"/>
-                    </controls:ERPDataGrid.Columns>
-                </controls:ERPDataGrid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Groupes DNF" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <controls:ERPDataGrid ItemsSource="{Binding Groupes}" Margin="0,0,0,16" MaxHeight="160">
+                            <controls:ERPDataGrid.Columns>
+                                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="160"/>
+                                <DataGridTextColumn Header="Sévérité" Binding="{Binding Severite}" Width="140"/>
+                                <DataGridTextColumn Header="Priorité" Binding="{Binding Priorite}" Width="70"/>
+                                <DataGridTextColumn Header="Date d'effet" Binding="{Binding Periode.DateEffet}" Width="100"/>
+                                <DataGridTextColumn Header="Date de fin" Binding="{Binding Periode.DateFin}" Width="*"/>
+                            </controls:ERPDataGrid.Columns>
+                        </controls:ERPDataGrid>
+
+                        <TextBlock Text="Conditions" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <controls:ERPDataGrid ItemsSource="{Binding Conditions}" Margin="0,0,0,16" MaxHeight="160">
+                            <controls:ERPDataGrid.Columns>
+                                <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="160"/>
+                                <DataGridTextColumn Header="Critère" Binding="{Binding CritereId}" Width="140"/>
+                                <DataGridTextColumn Header="Opérateur" Binding="{Binding Operateur}" Width="90"/>
+                                <DataGridTextColumn Header="Valeur" Binding="{Binding Valeur}" Width="160"/>
+                                <DataGridTextColumn Header="Groupe" Binding="{Binding GroupeId}" Width="100"/>
+                                <DataGridTextColumn Header="Date d'effet" Binding="{Binding Periode.DateEffet}" Width="100"/>
+                                <DataGridTextColumn Header="Date de fin" Binding="{Binding Periode.DateFin}" Width="*"/>
+                            </controls:ERPDataGrid.Columns>
+                        </controls:ERPDataGrid>
+
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Nouveau groupe DNF -->
+                            <StackPanel Margin="0,0,24,0" Width="260">
+                                <TextBlock Text="Nouveau groupe DNF" FontWeight="Bold" Margin="0,0,0,4"/>
+                                <TextBlock Text="Identifiant (ex. GE-ISSRP45-ORIGINE)"/>
+                                <TextBox Text="{Binding NouveauGroupeId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Code rubrique"/>
+                                <TextBox Text="{Binding NouveauGroupeRubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Sévérité"/>
+                                <ComboBox ItemsSource="{Binding Severites}" SelectedItem="{Binding NouveauGroupeSeverite}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Priorité"/>
+                                <TextBox Text="{Binding NouveauGroupePriorite, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                                <TextBox Text="{Binding NouveauGroupeDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Source (opt.)"/>
+                                <TextBox Text="{Binding NouveauGroupeSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <Button Content="Créer le groupe" Command="{Binding DefinirGroupeCommand}" HorizontalAlignment="Left" Margin="0,4,0,4"/>
+
+                                <TextBlock Text="Clôturer un groupe" FontWeight="Bold" Margin="0,12,0,4"/>
+                                <TextBlock Text="Identifiant du groupe"/>
+                                <TextBox Text="{Binding GroupeACloturerId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Date de fin (AAAA-MM-JJ)"/>
+                                <TextBox Text="{Binding GroupeClotureDateFin, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <Button Content="Clôturer le groupe" Command="{Binding CloreGroupeCommand}" HorizontalAlignment="Left" Margin="0,4,0,4"/>
+                                <TextBlock Text="{Binding GroupeResultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <!-- Nouvelle condition -->
+                            <StackPanel Width="280">
+                                <TextBlock Text="Nouvelle condition" FontWeight="Bold" Margin="0,0,0,4"/>
+                                <TextBlock Text="Code rubrique"/>
+                                <TextBox Text="{Binding NouvelleRegleRubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Critère"/>
+                                <ComboBox ItemsSource="{Binding Criteres}" SelectedItem="{Binding NouvelleRegleCritere}" DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                                <TextBlock Text="Opérateur"/>
+                                <ComboBox ItemsSource="{Binding Operateurs}" SelectedItem="{Binding NouvelleRegleOperateur}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Valeur (ex. G001 ou G001,G002 pour IN)"/>
+                                <TextBox Text="{Binding NouvelleRegleValeur, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Groupe (vide = condition commune)"/>
+                                <TextBox Text="{Binding NouvelleRegleGroupeId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                                <TextBox Text="{Binding NouvelleRegleDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Source (opt.)"/>
+                                <TextBox Text="{Binding NouvelleRegleSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <Button Content="Créer la condition" Command="{Binding DefinirRegleCommand}" HorizontalAlignment="Left" Margin="0,4,0,4"/>
+
+                                <TextBlock Text="Clôturer une condition" FontWeight="Bold" Margin="0,12,0,4"/>
+                                <TextBlock Text="Identifiant de la condition"/>
+                                <TextBox Text="{Binding RegleACloturerId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Date de fin (AAAA-MM-JJ)"/>
+                                <TextBox Text="{Binding RegleClotureDateFin, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <Button Content="Clôturer la condition" Command="{Binding CloreRegleCommand}" HorizontalAlignment="Left" Margin="0,4,0,4"/>
+                                <TextBlock Text="{Binding RegleResultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </DockPanel>

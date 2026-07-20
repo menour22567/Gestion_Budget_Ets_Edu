@@ -95,6 +95,42 @@
                     <TextBlock Text="{Binding ParametreResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                 </StackPanel>
             </TabItem>
+
+            <!-- Barème -->
+            <TabItem Header="Barème">
+                <StackPanel Margin="12" MaxWidth="520" HorizontalAlignment="Left">
+                    <TextBlock Text="Code rubrique"/>
+                    <TextBox Text="{Binding BaremeRubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Dimension"/>
+                            <ComboBox ItemsSource="{Binding BaremeDimensions}" SelectedItem="{Binding BaremeDimension}" Width="180"/>
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Type de valeur"/>
+                            <ComboBox ItemsSource="{Binding BaremeTypesValeur}" SelectedItem="{Binding BaremeTypeValeur}" Width="120"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="Borne inférieure (clé de tranche)"/>
+                            <TextBox Text="{Binding BaremeBorneInf, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Borne supérieure (vide = +infini)"/>
+                            <TextBox Text="{Binding BaremeBorneSup, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Text="Valeur (fraction pour TAUX, entier pour MONTANT)"/>
+                    <TextBox Text="{Binding BaremeValeur, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding BaremeDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Source (référence réglementaire, opt.)"/>
+                    <TextBox Text="{Binding BaremeSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <Button Content="Enregistrer le barème" Command="{Binding DefinirBaremeCommand}" Width="200" HorizontalAlignment="Left" Margin="0,8,0,8"/>
+                    <TextBlock Text="{Binding BaremeResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                </StackPanel>
+            </TabItem>
         </TabControl>
     </DockPanel>
 </UserControl>

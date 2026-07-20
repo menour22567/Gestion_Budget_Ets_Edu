@@ -17,6 +17,16 @@ public static class BaremeDimensionKeys
     public const string Grade = "GRADE";
 
     /// <summary>
+    /// Les valeurs valides pour la colonne <c>RubriqueBaremes.Dimension</c>
+    /// (CHECK V008) — <see cref="Grade"/> en est délibérément absent : il est
+    /// valide pour <see cref="BaremeDimension"/> (utilisé ailleurs, ex.
+    /// <c>ReglesEligibilite.CritereId</c>) mais rejeté par la contrainte CHECK
+    /// de cette table précise si on tente de l'y insérer.
+    /// </summary>
+    public static readonly IReadOnlyList<string> ValidesPourRubriqueBaremes =
+        [Categorie, Echelon, Anciennete, TypeEtablissement, Corps];
+
+    /// <summary>
     /// Parse une chaîne de caractères en <see cref="BaremeDimension"/>.
     /// </summary>
     public static BaremeDimension Parser(string dimension) => dimension switch

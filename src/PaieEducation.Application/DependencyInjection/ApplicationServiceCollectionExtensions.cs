@@ -40,6 +40,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddTransient<DefinirRubrique>();
         services.AddTransient<DefinirFormuleRubrique>();
         services.AddTransient<DefinirParametreRubrique>();
+        services.AddTransient<DefinirValeurBareme>();
 
         return services;
     }

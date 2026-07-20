@@ -60,6 +60,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IAgentRubriqueRepository, AgentRubriqueRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IRubriqueRepository, RubriqueRepository>();
+        services.AddScoped<IRubriqueBaremeRepository, RubriqueBaremeRepository>();
 
         // Lot 1.2 — port pour la lecture des paramètres de rubrique
         // (utilisé par ConstanteReglementaireCalculator). Enregistré en

@@ -3,7 +3,9 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PaieEducation.Application.Referentiels.UseCases;
+using PaieEducation.Application.Workbench.UseCases;
 using PaieEducation.Domain.Calcul.Formules;
+using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
 using PaieEducation.Presentation.Dialogs;
@@ -28,6 +30,7 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     private readonly DefinirRubrique _definirRubrique;
     private readonly DefinirFormuleRubrique _definirFormule;
     private readonly DefinirParametreRubrique _definirParametre;
+    private readonly DefinirValeurBareme _definirBareme;
     private readonly IDialogService _dialogs;
     private readonly INavigationService _navigation;
 
@@ -70,13 +73,30 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     [ObservableProperty] private bool parametreEnCours;
     [ObservableProperty] private string? parametreResultat;
 
+    // -- Barème versionné (chantier P5, audit du 19/07/2026) --
+    public ObservableCollection<string> BaremeDimensions { get; } = [.. BaremeDimensionKeys.ValidesPourRubriqueBaremes];
+    public ObservableCollection<string> BaremeTypesValeur { get; } = [.. BaremeTypeValeurKeys.Valides];
+
+    [ObservableProperty] private string baremeRubriqueId = string.Empty;
+    [ObservableProperty] private string baremeDimension = BaremeDimensionKeys.Categorie;
+    [ObservableProperty] private string baremeBorneInf = string.Empty;
+    [ObservableProperty] private string? baremeBorneSup = string.Empty;
+    [ObservableProperty] private string baremeTypeValeur = BaremeTypeValeurKeys.Taux;
+    [ObservableProperty] private string baremeValeur = string.Empty;
+    [ObservableProperty] private string baremeDateEffet = string.Empty;
+    [ObservableProperty] private string? baremeSource = string.Empty;
+    [ObservableProperty] private bool baremeEnCours;
+    [ObservableProperty] private string? baremeResultat;
+
     public EditerRubriqueViewModel(
         DefinirRubrique definirRubrique, DefinirFormuleRubrique definirFormule,
-        DefinirParametreRubrique definirParametre, IDialogService dialogs, INavigationService navigation)
+        DefinirParametreRubrique definirParametre, DefinirValeurBareme definirBareme,
+        IDialogService dialogs, INavigationService navigation)
     {
         _definirRubrique = definirRubrique ?? throw new ArgumentNullException(nameof(definirRubrique));
         _definirFormule = definirFormule ?? throw new ArgumentNullException(nameof(definirFormule));
         _definirParametre = definirParametre ?? throw new ArgumentNullException(nameof(definirParametre));
+        _definirBareme = definirBareme ?? throw new ArgumentNullException(nameof(definirBareme));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
     }
@@ -191,6 +211,37 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
         finally
         {
             ParametreEnCours = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DefinirBaremeAsync()
+    {
+        if (string.IsNullOrWhiteSpace(BaremeRubriqueId) || string.IsNullOrWhiteSpace(BaremeBorneInf))
+        {
+            await _dialogs.ShowErrorAsync("Rubrique et borne inférieure de tranche requises.");
+            return;
+        }
+
+        BaremeEnCours = true;
+        BaremeResultat = null;
+        try
+        {
+            var result = await _definirBareme.ExecuterAsync(new DefinirValeurBareme.Demande(
+                BaremeRubriqueId, BaremeDimension, BaremeBorneInf,
+                string.IsNullOrWhiteSpace(BaremeBorneSup) ? null : BaremeBorneSup,
+                BaremeTypeValeur, BaremeValeur, BaremeDateEffet,
+                string.IsNullOrWhiteSpace(BaremeSource) ? null : BaremeSource));
+            if (result.IsFailure)
+            {
+                await _dialogs.ShowErrorAsync(result.Error.Message);
+                return;
+            }
+            BaremeResultat = $"Barème enregistré (Id : {result.Value})";
+        }
+        finally
+        {
+            BaremeEnCours = false;
         }
     }
 }

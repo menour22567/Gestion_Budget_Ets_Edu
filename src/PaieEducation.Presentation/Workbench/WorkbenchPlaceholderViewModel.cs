@@ -19,17 +19,17 @@ public sealed partial class WorkbenchPlaceholderViewModel
     }
 
     [RelayCommand]
-    private void AllerVersMatriceCouverture() => _navigation.NavigateTo<MatriceCouvertureViewModel>();
+    private void AllerVersMatriceCouverture() => _navigation.OpenTab<MatriceCouvertureViewModel>("Matrice de couverture");
 
     [RelayCommand]
-    private void AllerVersFicheRubrique() => _navigation.NavigateTo<FicheRubriqueViewModel>();
+    private void AllerVersFicheRubrique() => _navigation.OpenTab<FicheRubriqueViewModel>("Fiche rubrique");
 
     [RelayCommand]
-    private void AllerVersEditerRubrique() => _navigation.NavigateTo<EditerRubriqueViewModel>();
+    private void AllerVersEditerRubrique() => _navigation.OpenTab<EditerRubriqueViewModel>("Éditer une rubrique");
 
     [RelayCommand]
-    private void AllerVersAuditLog() => _navigation.NavigateTo<AuditLogViewModel>();
+    private void AllerVersAuditLog() => _navigation.OpenTab<AuditLogViewModel>("Audit & traçabilité");
 
     [RelayCommand]
-    private void AllerVersSuggererRubriques() => _navigation.NavigateTo<SuggererRubriquesViewModel>();
+    private void AllerVersSuggererRubriques() => _navigation.OpenTab<SuggererRubriquesViewModel>("Suggérer des rubriques");
 }

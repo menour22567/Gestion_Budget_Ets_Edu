@@ -153,6 +153,34 @@ public class CliTests
         Assert.Equal(4L, Count(conn, "IRGReglesPeriode"));
     }
 
+    [Fact]
+    public void Seed_all_sans_option_n_insere_aucun_agent_fictif()
+    {
+        using var db = new TempSqliteDb();
+        var (code, _, stderr) = Run("seed", "all", "--db", db.Path);
+        Assert.Equal(0, code);
+        Assert.Empty(stderr);
+
+        using var conn = new SqliteConnection(db.ConnectionString);
+        conn.Open();
+        // Chemin par défaut = production : aucune donnée de test injectée.
+        Assert.Equal(0L, Count(conn, "Agents"));
+    }
+
+    [Fact]
+    public void Seed_all_avec_with_fake_agents_insere_les_agents_de_test()
+    {
+        using var db = new TempSqliteDb();
+        var (code, _, stderr) = Run("seed", "all", "--db", db.Path, "--with-fake-agents");
+        Assert.Equal(0, code);
+        Assert.Empty(stderr);
+
+        using var conn = new SqliteConnection(db.ConnectionString);
+        conn.Open();
+        Assert.Equal(29L, Count(conn, "Agents"));
+        Assert.Equal(29L, Count(conn, "Carrieres"));
+    }
+
     // -------------------------------------------------------------------------
     // Validate
     // -------------------------------------------------------------------------

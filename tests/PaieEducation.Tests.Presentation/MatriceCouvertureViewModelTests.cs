@@ -144,12 +144,12 @@ public class MatriceCouvertureViewModelTests
         vm.DatePaie = "2026-03-15";
         Action<FicheRubriqueViewModel>? configurateurCapture = null;
         navigation
-            .Setup(n => n.NavigateTo(It.IsAny<Action<FicheRubriqueViewModel>>()))
-            .Callback<Action<FicheRubriqueViewModel>>(a => configurateurCapture = a);
+            .Setup(n => n.OpenTab(It.IsAny<string>(), It.IsAny<Action<FicheRubriqueViewModel>>()))
+            .Callback<string, Action<FicheRubriqueViewModel>>((_, a) => configurateurCapture = a);
 
         vm.NaviguerVersFicheCommand.Execute("ISSRP_45");
 
-        navigation.Verify(n => n.NavigateTo(It.IsAny<Action<FicheRubriqueViewModel>>()), Times.Once);
+        navigation.Verify(n => n.OpenTab(It.IsAny<string>(), It.IsAny<Action<FicheRubriqueViewModel>>()), Times.Once);
         Assert.NotNull(configurateurCapture);
 
         var fiche = BuildFicheRubriqueViewModelPourNavigation(out var workbenchFiche);

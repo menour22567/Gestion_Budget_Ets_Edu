@@ -7,8 +7,18 @@
     <StackPanel Margin="24" MaxWidth="420" HorizontalAlignment="Left">
         <TextBlock Text="Valider un bulletin" FontSize="20" FontWeight="Bold" Margin="0,0,0,16"/>
 
-        <TextBlock Text="Identifiant agent"/>
-        <TextBox Text="{Binding AgentId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+        <TextBlock Text="Agent"/>
+        <ComboBox ItemsSource="{Binding Agents}"
+                  SelectedItem="{Binding AgentSelectionne, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  DisplayMemberPath="Libelle"
+                  SelectedValuePath="Id"
+                  Margin="0,0,0,8">
+            <ComboBox.ItemContainerStyle>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+            </ComboBox.ItemContainerStyle>
+        </ComboBox>
 
         <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
         <TextBox Text="{Binding DatePaie, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>

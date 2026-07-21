@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PaieEducation.Application.Payroll.UseCases;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Domain.Calcul.Pipeline;
 using PaieEducation.Domain.Calcul.Rappels;
 using PaieEducation.Presentation.Dialogs;
@@ -18,14 +19,22 @@ namespace PaieEducation.Presentation.Payroll;
 /// Ajoute l'export du bulletin validé (snapshot immuable) au format PDF ou
 /// Excel via <see cref="IExporterBulletin"/> (chantier C3), ainsi que la
 /// restitution des rappels rattachés via <see cref="ListerRappels"/> (P9) —
-/// jusqu'ici générés (D9) mais invisibles à l'écran.
+/// jusqu'ici générés (D9) mais invisibles à l'écran. Sélecteur d'agent
+/// (<see cref="Agents"/>, même patron que <c>CalculerBulletinViewModel</c>)
+/// plutôt qu'une saisie libre de GUID.
 /// </summary>
 public sealed partial class ConsulterBulletinViewModel : ObservableObject
 {
     private readonly ConsulterBulletin _consulterBulletin;
     private readonly ListerRappels _listerRappels;
     private readonly IExporterBulletin _exporter;
+    private readonly IAgentReadRepository _agentsRead;
     private readonly IDialogService _dialogs;
+
+    public ObservableCollection<AgentResume> Agents { get; } = [];
+
+    [ObservableProperty]
+    private AgentResume? agentSelectionne;
 
     [ObservableProperty]
     private string agentId = string.Empty;
@@ -52,12 +61,34 @@ public sealed partial class ConsulterBulletinViewModel : ObservableObject
     partial void OnBulletinChanged(Bulletin? value) => OnPropertyChanged(nameof(HasBulletin));
 
     public ConsulterBulletinViewModel(
-        ConsulterBulletin consulterBulletin, ListerRappels listerRappels, IExporterBulletin exporter, IDialogService dialogs)
+        ConsulterBulletin consulterBulletin, ListerRappels listerRappels, IExporterBulletin exporter,
+        IAgentReadRepository agentsRead, IDialogService dialogs)
     {
         _consulterBulletin = consulterBulletin ?? throw new ArgumentNullException(nameof(consulterBulletin));
         _listerRappels = listerRappels ?? throw new ArgumentNullException(nameof(listerRappels));
         _exporter = exporter ?? throw new ArgumentNullException(nameof(exporter));
+        _agentsRead = agentsRead ?? throw new ArgumentNullException(nameof(agentsRead));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
+
+        _ = ChargerAgentsCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>Reflète la sélection du ComboBox dans l'identifiant utilisé par le use case.</summary>
+    partial void OnAgentSelectionneChanged(AgentResume? value) => AgentId = value?.Id ?? string.Empty;
+
+    [RelayCommand]
+    private async Task ChargerAgentsAsync()
+    {
+        var result = await _agentsRead.ListerAsync();
+        if (result.IsFailure)
+        {
+            await _dialogs.ShowErrorAsync(result.Error.Message);
+            return;
+        }
+
+        Agents.Clear();
+        foreach (var a in result.Value)
+            Agents.Add(a);
     }
 
     [RelayCommand]

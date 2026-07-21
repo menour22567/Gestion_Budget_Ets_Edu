@@ -8,21 +8,27 @@ namespace PaieEducation.Seeding;
 /// Seeder d'agents fictifs de différents grades (filières ENSEIGNANT, ADMIN,
 /// INSPECTION, SANTE_PUBLIQUE, OUVRIERS_AGENTS, Éducation, etc.) permettant
 /// de tester l'application avec un jeu de données réaliste.
-/// Idempotent : chaque agent peut être supprimé manuellement après test.
+/// <b>Fixture de test uniquement</b> : jamais activé sur le chemin de
+/// production (<see cref="DatabaseSeeder.SeedFakeAgents"/> vaut <c>false</c>
+/// par défaut ; opt-in explicite via le CLI de test, <c>seed all
+/// --with-fake-agents</c>). Idempotent : un agent déjà présent (même
+/// matricule) est ignoré, jamais dupliqué.
 /// </summary>
 /// <remarks>
-/// Les 30 agents couvrent :
+/// Les 29 agents couvrent :
 /// <list type="bullet">
 ///   <item><b>Filières</b> : ENSEIGNANT, ADMIN, INSPECTION, SANTE_PUBLIQUE, OUVRIERS_AGENTS</item>
-///   <item><b>Catégories</b> : 5 à 17</item>
-///   <item><b>Échelons</b> : 1 à 12</item>
+///   <item><b>Catégories</b> : 5 à 15</item>
+///   <item><b>Échelons</b> : 2 à 11</item>
 ///   <item><b>Sexes</b> : M et F</item>
 ///   <item><b>Situations familiales</b> : CELIBATAIRE, MARIE, DIVORCE, VEUF</item>
 ///   <item><b>Types de contrat</b> : STATUTAIRE et CONTRACTUEL</item>
 /// </list>
 /// Le seeder suppose que la nomenclature (filières, corps, grades, catégories,
-/// échelons) a déjà été seedée par <see cref="NomenclatureSeeder"/> — les
-/// INSERT échoueront silencieusement si un gradeId est invalide (FK).
+/// échelons) a déjà été seedée par <see cref="NomenclatureSeeder"/>. Avec
+/// <c>PRAGMA foreign_keys=ON</c> (le cas en production comme en test), un
+/// <c>GradeId</c>/<c>CategorieId</c>/<c>EchelonId</c> invalide fait
+/// <b>échouer</b> l'insertion (jamais silencieusement).
 /// </remarks>
 public sealed class FakeAgentSeeder
 {
@@ -61,8 +67,8 @@ public sealed class FakeAgentSeeder
         new("MAT-ED-009", "Zidane", "Mohamed",   "1977-06-12", "2001-09-01", "M", "MARIE",     "PDLM-G117", "15", "11", "STATUTAIRE"),
 
         // Corps: Professeurs de l'Enseignement secondaire (PDLES)
-        new("MAT-ED-010", "Bouali", "Salima",    "1984-08-05", "2007-09-01", "F", "MARIE",     "PDLES-G123","13", "5",  "STATUTAIRE"),
-        new("MAT-ED-011", "Saidi",  "Tahar",     "1980-03-20", "2003-09-01", "M", "DIVORCE",   "PDLES-G125","14", "9",  "STATUTAIRE"),
+        new("MAT-ED-010", "Bouali", "Salima",    "1984-08-05", "2007-09-01", "F", "MARIE",     "PDLS-G123", "13", "5",  "STATUTAIRE"),
+        new("MAT-ED-011", "Saidi",  "Tahar",     "1980-03-20", "2003-09-01", "M", "DIVORCE",   "PDLS-G125", "14", "9",  "STATUTAIRE"),
 
         // Corps: Professeurs Techniques de Lycee (PTDL)
         new("MAT-ED-012", "Guerfi", "Nassima",   "1986-10-30", "2010-09-01", "F", "CELIBATAIRE","PTDL-G121","11", "5",  "STATUTAIRE"),
@@ -73,28 +79,28 @@ public sealed class FakeAgentSeeder
         new("MAT-ED-015", "Fodil",  "Yacine",    "1991-11-03", "2016-09-01", "M", "CELIBATAIRE","PDLS-G132","13", "5",  "CONTRACTUEL"),
 
         // ===== ADMINISTRATION (ÉDUCATION) =====
-        // Corps: Adjoints de l'Education (ADLE)
-        new("MAT-AD-001", "Bekkar", "Aicha",     "1978-12-11", "2002-09-01", "F", "MARIE",     "ADLE-G001", "7",  "4",  "STATUTAIRE"),
-        // Corps: Superviseurs de l'Education (SDLE)
-        new("MAT-AD-002", "Mahrez", "Lamine",    "1985-05-28", "2009-09-01", "M", "MARIE",     "SDLE-G003", "10", "5",  "STATUTAIRE"),
-        // Corps: Conseillers de l'Education (CDLE)
-        new("MAT-AD-003", "Yahia",  "Djamila",   "1976-09-15", "2000-09-01", "F", "DIVORCE",   "CDLE-G011", "13", "7",  "STATUTAIRE"),
+        // Corps: Adjoints de l'Education (ADL)
+        new("MAT-AD-001", "Bekkar", "Aicha",     "1978-12-11", "2002-09-01", "F", "MARIE",     "ADL-G001",  "7",  "4",  "STATUTAIRE"),
+        // Corps: Superviseurs de l'Education (SDL)
+        new("MAT-AD-002", "Mahrez", "Lamine",    "1985-05-28", "2009-09-01", "M", "MARIE",     "SDL-G003",  "10", "5",  "STATUTAIRE"),
+        // Corps: Conseillers de l'orientation et de la guidance scolaire (CDLEDLGSEP)
+        new("MAT-AD-003", "Yahia",  "Djamila",   "1976-09-15", "2000-09-01", "F", "DIVORCE",   "CDLEDLGSEP-G020","13","7", "STATUTAIRE"),
 
         // ===== ADMINISTRATION (CORPS COMMUNS) =====
         // Corps: Administrateurs (A)
         new("MAT-AD-004", "Bouchra","Mounir",    "1980-02-22", "2005-09-01", "M", "MARIE",     "A-G048",    "12", "6",  "STATUTAIRE"),
         // Corps: Assistants administrateurs (AA)
         new("MAT-AD-005", "Dahmani","Zoubida",   "1987-06-10", "2012-09-01", "F", "VEUF",      "AA-G052",   "11", "4",  "STATUTAIRE"),
-        // Corps: Agents d'Administration (ADA)
-        new("MAT-AD-006", "Messaoudi","Ali",     "1970-11-05", "1995-09-01", "M", "MARIE",     "ADA-G055",  "5",  "3",  "STATUTAIRE"),
+        // Corps: Agents d'Administration (AD)
+        new("MAT-AD-006", "Messaoudi","Ali",     "1970-11-05", "1995-09-01", "M", "MARIE",     "AD-G056",   "5",  "3",  "STATUTAIRE"),
         // Corps: Secretaires (S)
         new("MAT-AD-007", "Belaid", "Farida",    "1990-03-18", "2013-09-01", "F", "CELIBATAIRE","S-G059",   "6",  "4",  "STATUTAIRE"),
         // Corps: Comptables administratifs (CA)
         new("MAT-AD-008", "Khelifi","Rachid",    "1975-08-27", "2001-09-01", "M", "MARIE",     "CA-G063",   "8",  "6",  "STATUTAIRE"),
 
         // ===== INSPECTION =====
-        // Corps: Inspecteurs de l'enseignement primaire (IDLEP)
-        new("MAT-INS-001","Hocine", "Mustapha",  "1972-12-03", "1996-09-01", "M", "MARIE",     "IDLEP-G133","15", "8",  "STATUTAIRE"),
+        // Corps: Inspecteurs de l'enseignement primaire (IDLP)
+        new("MAT-INS-001","Hocine", "Mustapha",  "1972-12-03", "1996-09-01", "M", "MARIE",     "IDLP-G133", "15", "8",  "STATUTAIRE"),
 
         // ===== SANTE PUBLIQUE =====
         // Corps: Infirmiers de santé publique (IDSP)
@@ -116,9 +122,10 @@ public sealed class FakeAgentSeeder
     };
 
     /// <summary>
-    /// Insère les 30 agents fictifs avec leur carrière initiale.
-    /// Idempotent : les matricules UNIQUE assurent qu'un agent déjà présent
-    /// ne sera pas dupliqué.
+    /// Insère les 29 agents fictifs avec leur carrière initiale.
+    /// Idempotent : un agent dont le matricule existe déjà est ignoré ; l'agent
+    /// et sa carrière sont insérés ensemble ou pas du tout — jamais de carrière
+    /// orpheline.
     /// </summary>
     /// <param name="connection">Connexion SQLite ouverte.</param>
     /// <param name="ct">Jeton d'annulation.</param>
@@ -139,17 +146,24 @@ public sealed class FakeAgentSeeder
         {
             ct.ThrowIfCancellationRequested();
 
+            // Idempotence : si le matricule est déjà présent, ne rien réinsérer.
+            // (Réinsérer la carrière avec un nouvel AgentId — l'agent étant, lui,
+            // ignoré sur conflit de matricule — créerait une carrière orpheline
+            // et violerait la FK Carrieres.AgentId → Agents.Id.)
+            var matriculeExistant = await connection.QuerySingleOrDefaultAsync<string>(
+                "SELECT Id FROM Agents WHERE Matricule = $matricule;",
+                new { matricule = agent.Matricule }, tx);
+            if (matriculeExistant is not null) continue;
+
             var agentId = Guid.NewGuid().ToString();
             var carriereId = Guid.NewGuid().ToString();
 
-            var inserted = await connection.ExecuteAsync("""
+            await connection.ExecuteAsync("""
                 INSERT INTO Agents (Id, Matricule, Nom, Prenom, DateNaissance, DateRecrutement, Sexe, SituationFamiliale, CreatedAt)
-                VALUES ($agentId, $matricule, $nom, $prenom, $dateNaissance, $dateRecrutement, $sexe, $situationFamiliale, $createdAt)
-                ON CONFLICT(Matricule) DO NOTHING;
+                VALUES ($agentId, $matricule, $nom, $prenom, $dateNaissance, $dateRecrutement, $sexe, $situationFamiliale, $createdAt);
 
                 INSERT INTO Carrieres (Id, AgentId, GradeId, CategorieId, EchelonId, TypeContrat, DateEffet, Motif, CreatedAt)
-                VALUES ($carriereId, $agentId, $gradeId, $categorieId, $echelonId, $typeContrat, $dateEffet, 'Recrutement', $createdAt)
-                ON CONFLICT(Id) DO NOTHING;
+                VALUES ($carriereId, $agentId, $gradeId, $categorieId, $echelonId, $typeContrat, $dateEffet, 'Recrutement', $createdAt);
                 """, new
                 {
                     agentId,
@@ -169,7 +183,7 @@ public sealed class FakeAgentSeeder
                     createdAt = at
                 }, tx);
 
-            if (inserted > 0) insertedTotal++;
+            insertedTotal++;
         }
 
         await tx.CommitAsync(ct).ConfigureAwait(false);

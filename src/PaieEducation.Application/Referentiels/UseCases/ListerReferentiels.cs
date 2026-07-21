@@ -18,7 +18,9 @@ public sealed class ListerReferentiels
     public sealed record ReferentielsDisponibles(
         IReadOnlyList<ReferentielItem> Grades,
         IReadOnlyList<ReferentielItem> Categories,
-        IReadOnlyList<ReferentielItem> Echelons);
+        IReadOnlyList<ReferentielItem> Echelons,
+        IReadOnlyList<ReferentielItem> Fonctions,
+        IReadOnlyList<ReferentielItem> Etablissements);
 
     private readonly IReferentielReadRepository _referentiels;
 
@@ -36,6 +38,13 @@ public sealed class ListerReferentiels
         var echelons = await _referentiels.ListerEchelonsAsync(ct);
         if (echelons.IsFailure) return Result.Failure<ReferentielsDisponibles>(echelons.Error);
 
-        return Result.Success(new ReferentielsDisponibles(grades.Value, categories.Value, echelons.Value));
+        var fonctions = await _referentiels.ListerFonctionsAsync(ct);
+        if (fonctions.IsFailure) return Result.Failure<ReferentielsDisponibles>(fonctions.Error);
+
+        var etablissements = await _referentiels.ListerEtablissementsAsync(ct);
+        if (etablissements.IsFailure) return Result.Failure<ReferentielsDisponibles>(etablissements.Error);
+
+        return Result.Success(new ReferentielsDisponibles(
+            grades.Value, categories.Value, echelons.Value, fonctions.Value, etablissements.Value));
     }
 }

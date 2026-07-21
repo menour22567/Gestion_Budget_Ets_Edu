@@ -17,6 +17,10 @@ public static class ApplicationServiceCollectionExtensions
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddTransient<CreerAgent>();
+        services.AddTransient<ConsulterFicheAgent>();
+        services.AddTransient<ModifierAgent>();
+        services.AddTransient<EnregistrerEvenementCarriere>();
+        services.AddTransient<DefinirAttributAgent>();
         services.AddTransient<CalculerBulletin>();
         services.AddTransient<CalculEntreeResolver>();
         services.AddTransient<ValiderBulletin>();

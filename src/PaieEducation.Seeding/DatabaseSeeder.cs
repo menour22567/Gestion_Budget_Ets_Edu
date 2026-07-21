@@ -11,13 +11,19 @@ namespace PaieEducation.Seeding;
 /// <remarks>
 /// La nomenclature provient du CSV cascade embarqué (<see cref="SeedCsvProvider"/>) ;
 /// les référentiels réglementaire, IRG et formules sont autonomes.
-/// Les agents fictifs (30 profils couvrant toutes les filières) sont ajoutés
-/// en fin de seed pour permettre un test immédiat de l'application.
+/// Les agents fictifs de test (<see cref="FakeAgentSeeder"/>) ne sont ajoutés
+/// que si <see cref="SeedFakeAgents"/> est explicitement activé (faux par
+/// défaut) — jamais sur le chemin de production.
 /// </remarks>
 public sealed class DatabaseSeeder : IDataSeeder
 {
-    /// <summary>Si <c>true</c>, insère les 30 agents fictifs en fin de seed.</summary>
-    public bool SeedFakeAgents { get; init; } = true;
+    /// <summary>
+    /// Si <c>true</c>, insère les agents fictifs de test (<see cref="FakeAgentSeeder"/>)
+    /// en fin de seed. <b>Faux par défaut</b> : le chemin de production ne doit
+    /// jamais injecter de données de test. Activé explicitement par le CLI de
+    /// test (<c>seed all --with-fake-agents</c>).
+    /// </summary>
+    public bool SeedFakeAgents { get; init; } = false;
 
     public async Task<SeedReport> SeedAllAsync(SqliteConnection connection, CancellationToken ct = default)
     {
@@ -40,8 +46,8 @@ public sealed class DatabaseSeeder : IDataSeeder
         var frm = await new FormulesSeeder().SeedAsync(connection, ct).ConfigureAwait(false);
         Merge(report, frm);
 
-        // Agents fictifs pour test — activé par défaut, désactivable via
-        // SeedFakeAgents = false
+        // Agents fictifs de test — désactivés par défaut (jamais en production),
+        // activés explicitement par le CLI (seed all --with-fake-agents).
         if (SeedFakeAgents)
         {
             var agents = await new FakeAgentSeeder().SeedAsync(connection, ct).ConfigureAwait(false);

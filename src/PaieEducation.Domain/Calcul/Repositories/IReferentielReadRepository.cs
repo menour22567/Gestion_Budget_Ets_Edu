@@ -18,4 +18,10 @@ public interface IReferentielReadRepository
     Task<Result<IReadOnlyList<ReferentielItem>>> ListerCategoriesAsync(CancellationToken ct = default);
 
     Task<Result<IReadOnlyList<ReferentielItem>>> ListerEchelonsAsync(CancellationToken ct = default);
+
+    /// <summary>Fonctions particulières actives (<c>Fonctions</c>, V002) — optionnelles sur une carrière.</summary>
+    Task<Result<IReadOnlyList<ReferentielItem>>> ListerFonctionsAsync(CancellationToken ct = default);
+
+    /// <summary>Établissements actifs (<c>Etablissements</c>, V002) — optionnels sur une carrière.</summary>
+    Task<Result<IReadOnlyList<ReferentielItem>>> ListerEtablissementsAsync(CancellationToken ct = default);
 }

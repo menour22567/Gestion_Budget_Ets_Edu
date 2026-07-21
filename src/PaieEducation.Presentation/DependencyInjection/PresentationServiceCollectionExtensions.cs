@@ -20,12 +20,15 @@ public static class PresentationServiceCollectionExtensions
     {
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<AccueilViewModel>();
         services.AddSingleton<ShellViewModel>();
         services.AddSingleton<ShellWindow>();
 
         services.AddTransient<CalculerBulletinViewModel>();
         services.AddTransient<ValiderBulletinViewModel>();
         services.AddTransient<ConsulterBulletinViewModel>();
+        services.AddTransient<ListeAgentsViewModel>();
+        services.AddTransient<FicheAgentViewModel>();
         services.AddTransient<CreerAgentViewModel>();
         services.AddTransient<GrilleIndiciaireViewModel>();
         services.AddTransient<SuggererRubriquesViewModel>();

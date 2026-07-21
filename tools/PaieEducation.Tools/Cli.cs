@@ -16,7 +16,7 @@ namespace PaieEducation.Tools;
     ///   <item><c>seed nomenclature --db &lt;path&gt;</c>  : nomenclature (CSV cascade embarqué)</item>
     ///   <item><c>seed reglementaire --db &lt;path&gt;</c></item>
     ///   <item><c>seed irg --db &lt;path&gt;</c></item>
-    ///   <item><c>seed all --db &lt;path&gt;</c>           : tout enchaîner</item>
+    ///   <item><c>seed all --db &lt;path&gt; [--with-fake-agents]</c> : tout enchaîner (+ 29 agents fictifs de test si opt-in)</item>
     ///   <item><c>validate --db &lt;path&gt;</c>           : PRAGMA integrity_check + counts</item>
     ///   <item><c>--help</c>                              : cette aide</item>
     /// </list>
@@ -93,13 +93,15 @@ public static class Cli
               PaieEducation.Tools seed nomenclature --db <path>
               PaieEducation.Tools seed reglementaire --db <path>
               PaieEducation.Tools seed irg --db <path>
-              PaieEducation.Tools seed all --db <path>
+              PaieEducation.Tools seed all --db <path> [--with-fake-agents]
               PaieEducation.Tools validate --db <path>
               PaieEducation.Tools --help
 
             Tous les fichiers sont des chemins absolus ou relatifs au CWD.
             La base SQLite est créée si elle n'existe pas (cas : --db <nouveau>).
             Le CSV cascade de nomenclature est embarqué (aucun --csv requis).
+            --with-fake-agents (seed all) ajoute 29 agents fictifs de test —
+            réservé aux essais, jamais pour une base de production.
             """);
     }
 
@@ -198,7 +200,11 @@ public static class Cli
         conn.Open();
 
         // 2. Seed complet (nomenclature embarquée + réglementaire + IRG + formules).
-        var report = await new DatabaseSeeder().SeedAllAsync(conn).ConfigureAwait(false);
+        //    Les agents fictifs de test ne sont ajoutés que sur opt-in explicite
+        //    (--with-fake-agents), jamais par défaut.
+        var withFakeAgents = opts.ContainsKey("with-fake-agents");
+        var report = await new DatabaseSeeder { SeedFakeAgents = withFakeAgents }
+            .SeedAllAsync(conn).ConfigureAwait(false);
 
         // 3. Rapport agrégé.
         PrintReport(stdout, report, "all");

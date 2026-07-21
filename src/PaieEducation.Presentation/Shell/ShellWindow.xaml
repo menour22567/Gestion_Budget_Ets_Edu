@@ -13,6 +13,7 @@
                 <MenuItem Header="C_onsulter un bulletin" Command="{Binding NaviguerVersConsulterBulletinCommand}"/>
             </MenuItem>
             <MenuItem Header="_Agents">
+                <MenuItem Header="_Liste des agents" Command="{Binding NaviguerVersListeAgentsCommand}"/>
                 <MenuItem Header="_Créer un agent" Command="{Binding NaviguerVersCreerAgentCommand}"/>
                 <MenuItem Header="_Suggérer des rubriques" Command="{Binding NaviguerVersSuggererRubriquesCommand}"/>
             </MenuItem>
@@ -27,6 +28,22 @@
                 <MenuItem Header="_Éditer une rubrique" Command="{Binding NaviguerVersEditerRubriqueCommand}"/>
             </MenuItem>
         </Menu>
-        <ContentControl Content="{Binding CurrentViewModel}"/>
+        <TabControl ItemsSource="{Binding Onglets}" SelectedItem="{Binding OngletActif}">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Titre}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <Button Content="✕" Padding="4,0" BorderThickness="0" Background="Transparent"
+                                Command="{Binding FermerCommand}"
+                                Visibility="{Binding EstFermable, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <ContentControl Content="{Binding Contenu}"/>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+        </TabControl>
     </DockPanel>
 </Window>

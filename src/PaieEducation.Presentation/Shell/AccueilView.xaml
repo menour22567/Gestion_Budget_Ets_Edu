@@ -1,0 +1,116 @@
+<UserControl x:Class="PaieEducation.Presentation.Shell.AccueilView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:shell="clr-namespace:PaieEducation.Presentation.Shell"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance shell:AccueilViewModel}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" Orientation="Vertical">
+            <TextBlock Text="PaieEducation" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <TextBlock Text="Choisissez un écran à ouvrir — chaque écran s'ouvre dans son propre onglet."
+                       Margin="0,0,0,16" Foreground="Gray"/>
+
+            <TextBlock Text="Paie" FontWeight="SemiBold" Margin="0,8,0,4"/>
+            <UniformGrid Columns="3" HorizontalAlignment="Left">
+                <Button Command="{Binding OuvrirCalculerBulletinCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Calculer un bulletin" FontWeight="SemiBold"/>
+                        <TextBlock Text="Simulation de paie pour un agent" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirValiderBulletinCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Valider un bulletin" FontWeight="SemiBold"/>
+                        <TextBlock Text="Passage en snapshot définitif" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirConsulterBulletinCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Consulter un bulletin" FontWeight="SemiBold"/>
+                        <TextBlock Text="Lecture d'un bulletin déjà validé" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <TextBlock Text="Agents" FontWeight="SemiBold" Margin="0,16,0,4"/>
+            <UniformGrid Columns="3" HorizontalAlignment="Left">
+                <Button Command="{Binding OuvrirListeAgentsCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Liste des agents" FontWeight="SemiBold"/>
+                        <TextBlock Text="Rechercher et consulter un agent" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirCreerAgentCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Créer un agent" FontWeight="SemiBold"/>
+                        <TextBlock Text="Nouvelle fiche agent et carrière" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirSuggererRubriquesCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Suggérer des rubriques" FontWeight="SemiBold"/>
+                        <TextBlock Text="Affectation assistée d'un agent" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <TextBlock Text="Référentiels" FontWeight="SemiBold" Margin="0,16,0,4"/>
+            <UniformGrid Columns="3" HorizontalAlignment="Left">
+                <Button Command="{Binding OuvrirGrilleIndiciaireCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Grille indiciaire" FontWeight="SemiBold"/>
+                        <TextBlock Text="Points d'indice et échelons" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+
+            <TextBlock Text="Workbench réglementaire" FontWeight="SemiBold" Margin="0,16,0,4"/>
+            <UniformGrid Columns="3" HorizontalAlignment="Left">
+                <Button Command="{Binding OuvrirWorkbenchCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Vue d'ensemble" FontWeight="SemiBold"/>
+                        <TextBlock Text="Centre de réglementation paramétrable" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirMatriceCouvertureCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Matrice de couverture" FontWeight="SemiBold"/>
+                        <TextBlock Text="Corps × rubriques : éligibilité et périodes" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirAuditLogCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Audit &amp; traçabilité" FontWeight="SemiBold"/>
+                        <TextBlock Text="Journal des évolutions réglementaires" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirFicheRubriqueCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Fiche rubrique" FontWeight="SemiBold"/>
+                        <TextBlock Text="Consultation identité / barème / éligibilité" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+                <Button Command="{Binding OuvrirEditerRubriqueCommand}"
+                        Height="64" Width="220" Margin="4" Padding="12" HorizontalContentAlignment="Left">
+                    <StackPanel>
+                        <TextBlock Text="Éditer une rubrique" FontWeight="SemiBold"/>
+                        <TextBlock Text="Création / formule / paramètre versionné" FontSize="11" Foreground="Gray"/>
+                    </StackPanel>
+                </Button>
+            </UniformGrid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

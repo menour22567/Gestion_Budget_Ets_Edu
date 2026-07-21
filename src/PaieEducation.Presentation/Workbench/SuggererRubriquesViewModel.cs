@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PaieEducation.Application.Workbench.UseCases;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
 using PaieEducation.Domain.Workbench.ValueObjects;
@@ -24,7 +25,9 @@ namespace PaieEducation.Presentation.Workbench;
 /// Alias <c>SuggererRubriquesUseCase</c> pour éviter la collision de nom
 /// avec ce ViewModel lui-même. Après chaque action, <see cref="Affectations"/>
 /// est rechargée depuis la base (jamais de mise à jour optimiste côté
-/// client) — le <c>Statut</c> affiché reflète toujours l'état réel.
+/// client) — le <c>Statut</c> affiché reflète toujours l'état réel. Sélecteur
+/// d'agent (<see cref="Agents"/>, même patron que <c>CalculerBulletinViewModel</c>)
+/// plutôt qu'une saisie libre de GUID.
 /// </remarks>
 public sealed partial class SuggererRubriquesViewModel : ObservableObject
 {
@@ -33,7 +36,13 @@ public sealed partial class SuggererRubriquesViewModel : ObservableObject
     private readonly AccepterSuggestion _accepterSuggestion;
     private readonly SupprimerAffectation _supprimerAffectation;
     private readonly SuspendreAffectation _suspendreAffectation;
+    private readonly IAgentReadRepository _agentsRead;
     private readonly IDialogService _dialogs;
+
+    public ObservableCollection<AgentResume> Agents { get; } = [];
+
+    [ObservableProperty]
+    private AgentResume? agentSelectionne;
 
     [ObservableProperty]
     private string agentId = string.Empty;
@@ -52,14 +61,35 @@ public sealed partial class SuggererRubriquesViewModel : ObservableObject
     public SuggererRubriquesViewModel(
         SuggererRubriquesUseCase suggererRubriques, ListerAffectationsAgent listerAffectations,
         AccepterSuggestion accepterSuggestion, SupprimerAffectation supprimerAffectation,
-        SuspendreAffectation suspendreAffectation, IDialogService dialogs)
+        SuspendreAffectation suspendreAffectation, IAgentReadRepository agentsRead, IDialogService dialogs)
     {
         _suggererRubriques = suggererRubriques ?? throw new ArgumentNullException(nameof(suggererRubriques));
         _listerAffectations = listerAffectations ?? throw new ArgumentNullException(nameof(listerAffectations));
         _accepterSuggestion = accepterSuggestion ?? throw new ArgumentNullException(nameof(accepterSuggestion));
         _supprimerAffectation = supprimerAffectation ?? throw new ArgumentNullException(nameof(supprimerAffectation));
         _suspendreAffectation = suspendreAffectation ?? throw new ArgumentNullException(nameof(suspendreAffectation));
+        _agentsRead = agentsRead ?? throw new ArgumentNullException(nameof(agentsRead));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
+
+        _ = ChargerAgentsCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>Reflète la sélection du ComboBox dans l'identifiant utilisé par le use case.</summary>
+    partial void OnAgentSelectionneChanged(AgentResume? value) => AgentId = value?.Id ?? string.Empty;
+
+    [RelayCommand]
+    private async Task ChargerAgentsAsync()
+    {
+        var result = await _agentsRead.ListerAsync();
+        if (result.IsFailure)
+        {
+            await _dialogs.ShowErrorAsync(result.Error.Message);
+            return;
+        }
+
+        Agents.Clear();
+        foreach (var a in result.Value)
+            Agents.Add(a);
     }
 
     [RelayCommand]

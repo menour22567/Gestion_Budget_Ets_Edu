@@ -27,6 +27,18 @@ public sealed class ReferentielReadRepository : IReferentielReadRepository
     public Task<Result<IReadOnlyList<ReferentielItem>>> ListerEchelonsAsync(CancellationToken ct = default)
         => ListerAsync("Echelons", ct);
 
+    public Task<Result<IReadOnlyList<ReferentielItem>>> ListerFonctionsAsync(CancellationToken ct = default)
+        => ListerAsync("Fonctions", ct);
+
+    public async Task<Result<IReadOnlyList<ReferentielItem>>> ListerEtablissementsAsync(CancellationToken ct = default)
+    {
+        // Etablissements porte son libellé dans la colonne Nom (pas Libelle) —
+        // aliasé pour rester sur le DTO commun ReferentielItem.
+        var items = await _connection.QueryAsync<ReferentielItem>(new CommandDefinition(
+            "SELECT Id, Nom AS Libelle FROM Etablissements WHERE Actif = 1 ORDER BY Nom;", cancellationToken: ct));
+        return Result.Success<IReadOnlyList<ReferentielItem>>(items.ToList());
+    }
+
     private async Task<Result<IReadOnlyList<ReferentielItem>>> ListerAsync(string table, CancellationToken ct)
     {
         var items = await _connection.QueryAsync<ReferentielItem>(new CommandDefinition(

@@ -1,5 +1,6 @@
 using Moq;
 using PaieEducation.Application.Workbench.UseCases;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Domain.Calcul.Repositories;
 using PaieEducation.Shared.Results;
 using PaieEducation.Shared.Guards;
@@ -42,7 +43,11 @@ public class SuggererRubriquesViewModelTests
         var supprimer = new SupprimerAffectation(agentRubriques.Object, clock.Object);
         var suspendre = new SuspendreAffectation(agentRubriques.Object, clock.Object);
 
-        return new SuggererRubriquesViewModel(suggerer, lister, accepter, supprimer, suspendre, dialogs.Object);
+        var agentsRead = new Mock<IAgentReadRepository>();
+        agentsRead.Setup(a => a.ListerAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<AgentResume>>(Array.Empty<AgentResume>()));
+
+        return new SuggererRubriquesViewModel(suggerer, lister, accepter, supprimer, suspendre, agentsRead.Object, dialogs.Object);
     }
 
     [Fact]

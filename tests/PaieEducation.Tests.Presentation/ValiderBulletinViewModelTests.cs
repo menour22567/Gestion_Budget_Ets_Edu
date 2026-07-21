@@ -1,6 +1,7 @@
 using Moq;
 using PaieEducation.Application.Payroll.Services;
 using PaieEducation.Application.Payroll.UseCases;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Irg;
 using PaieEducation.Domain.Calcul.Pipeline;
@@ -72,7 +73,7 @@ public class ValiderBulletinViewModelTests
         var calculerBulletin = new ValiderBulletin(
             CalculerBulletinAvec(agents, variables, payroll), bulletins.Object, clock.Object);
         var dialogs = new Mock<IDialogService>();
-        var vm = new ValiderBulletinViewModel(calculerBulletin, dialogs.Object)
+        var vm = new ValiderBulletinViewModel(calculerBulletin, AgentsReadVide(), dialogs.Object)
         {
             AgentId = "A-1",
             DatePaie = "2025-06-01",
@@ -100,7 +101,7 @@ public class ValiderBulletinViewModelTests
             calculerBulletin, new Mock<IBulletinRepository>().Object, new Mock<IClock>().Object);
         var dialogs = new Mock<IDialogService>();
 
-        var vm = new ValiderBulletinViewModel(validerBulletin, dialogs.Object)
+        var vm = new ValiderBulletinViewModel(validerBulletin, AgentsReadVide(), dialogs.Object)
         {
             AgentId = "A-1",
             DatePaie = "2025-06-01",
@@ -116,6 +117,15 @@ public class ValiderBulletinViewModelTests
     private static CalculerBulletin CalculerBulletinAvec(
         Mock<IAgentCarriereRepository> agents, Mock<IVariableRepository> variables, Mock<IPayrollReadRepository> payroll)
         => new CalculerBulletin(agents.Object, variables.Object, payroll.Object, ParametresMock(), EntreeResolverMock());
+
+    /// <summary>Sélecteur d'agent vide — ces tests posent <c>AgentId</c> directement, sans passer par le ComboBox.</summary>
+    private static IAgentReadRepository AgentsReadVide()
+    {
+        var mock = new Mock<IAgentReadRepository>();
+        mock.Setup(a => a.ListerAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<AgentResume>>(Array.Empty<AgentResume>()));
+        return mock.Object;
+    }
 
     private static IParametreSystemeRepository ParametresMock()
     {

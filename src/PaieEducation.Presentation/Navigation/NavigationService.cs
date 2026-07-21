@@ -10,16 +10,17 @@ public sealed class NavigationService : INavigationService
     public NavigationService(IServiceProvider services)
         => _services = services ?? throw new ArgumentNullException(nameof(services));
 
-    public event Action<object>? ViewModelChanged;
+    public event Action<TabRequest>? TabRequested;
 
-    public void NavigateTo<TViewModel>() where TViewModel : class
-        => NavigateTo<TViewModel>(_ => { });
+    public void OpenTab<TViewModel>(string titre) where TViewModel : class
+        => OpenTab<TViewModel>(titre, _ => { });
 
-    public void NavigateTo<TViewModel>(Action<TViewModel> configurer) where TViewModel : class
+    public void OpenTab<TViewModel>(string titre, Action<TViewModel> configurer) where TViewModel : class
     {
+        ArgumentNullException.ThrowIfNull(titre);
         ArgumentNullException.ThrowIfNull(configurer);
         var viewModel = _services.GetRequiredService<TViewModel>();
         configurer(viewModel);
-        ViewModelChanged?.Invoke(viewModel);
+        TabRequested?.Invoke(new TabRequest(titre, viewModel));
     }
 }

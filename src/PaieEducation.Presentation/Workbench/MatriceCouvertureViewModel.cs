@@ -16,7 +16,7 @@ namespace PaieEducation.Presentation.Workbench;
 /// (<see cref="EtatCouverture"/>), pas de 4e état « non applicable » (aucun
 /// concept de portée en base pour le distinguer honnêtement d'un vrai trou).
 /// Clic sur une cellule → <see cref="FicheRubriqueViewModel"/> préchargée
-/// (drill-down, via la nouvelle surcharge <see cref="INavigationService.NavigateTo{T}(Action{T})"/>).
+/// dans un nouvel onglet (drill-down, via <see cref="INavigationService.OpenTab{T}(string, Action{T})"/>).
 /// </summary>
 public sealed partial class MatriceCouvertureViewModel : ObservableObject
 {
@@ -82,7 +82,7 @@ public sealed partial class MatriceCouvertureViewModel : ObservableObject
     private void NaviguerVersFiche(string rubriqueId)
     {
         var datePaieCourante = DatePaie;
-        _navigation.NavigateTo<FicheRubriqueViewModel>(fiche =>
+        _navigation.OpenTab<FicheRubriqueViewModel>($"Fiche rubrique — {rubriqueId}", fiche =>
         {
             fiche.RubriqueId = rubriqueId;
             fiche.DatePaie = datePaieCourante;

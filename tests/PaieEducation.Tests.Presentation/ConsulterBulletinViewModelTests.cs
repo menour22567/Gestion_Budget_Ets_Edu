@@ -1,5 +1,6 @@
 using Moq;
 using PaieEducation.Application.Payroll.UseCases;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Domain.Calcul.Audit;
 using PaieEducation.Domain.Calcul.Cotisations;
 using PaieEducation.Domain.Calcul.Irg;
@@ -55,10 +56,14 @@ public class ConsulterBulletinViewModelTests
         rappelsRepo = new Mock<IRappelRepository>();
         dialogs = new Mock<IDialogService>();
 
+        var agentsRead = new Mock<IAgentReadRepository>();
+        agentsRead.Setup(a => a.ListerAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<AgentResume>>(Array.Empty<AgentResume>()));
+
         var consulterBulletin = new ConsulterBulletin(bulletins.Object);
         var listerRappels = new ListerRappels(rappelsRepo.Object);
         return new ConsulterBulletinViewModel(
-            consulterBulletin, listerRappels, new Mock<IExporterBulletin>().Object, dialogs.Object);
+            consulterBulletin, listerRappels, new Mock<IExporterBulletin>().Object, agentsRead.Object, dialogs.Object);
     }
 
     [Fact]

@@ -142,7 +142,7 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
                 return;
             }
             IdentiteResultat = $"Rubrique enregistrée (Id : {result.Value})";
-            _navigation.NavigateTo<FicheRubriqueViewModel>();
+            _navigation.OpenTab<FicheRubriqueViewModel>("Fiche rubrique");
         }
         finally
         {

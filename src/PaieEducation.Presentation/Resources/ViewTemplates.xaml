@@ -3,12 +3,25 @@
                     xmlns:agents="clr-namespace:PaieEducation.Presentation.Agents"
                     xmlns:payroll="clr-namespace:PaieEducation.Presentation.Payroll"
                     xmlns:referentiels="clr-namespace:PaieEducation.Presentation.Referentiels"
+                    xmlns:shell="clr-namespace:PaieEducation.Presentation.Shell"
                     xmlns:workbench="clr-namespace:PaieEducation.Presentation.Workbench">
 
-    <!-- Navigation ViewModel-first (Phase 6, tâche 1) : le type du ViewModel
-         courant (Shell.CurrentViewModel) détermine automatiquement la Vue
-         affichée par le ContentControl du Shell — aucune logique de
-         navigation en code-behind. -->
+    <!-- Navigation ViewModel-first (Phase 6, tâche 1 ; onglets multi-documents) :
+         le type du ViewModel hébergé par chaque onglet (Shell.TabViewModel.Contenu)
+         détermine automatiquement la Vue affichée dans cet onglet — aucune
+         logique de navigation en code-behind. -->
+
+    <DataTemplate DataType="{x:Type shell:AccueilViewModel}">
+        <shell:AccueilView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type agents:ListeAgentsViewModel}">
+        <agents:ListeAgentsView />
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type agents:FicheAgentViewModel}">
+        <agents:FicheAgentView />
+    </DataTemplate>
 
     <DataTemplate DataType="{x:Type agents:CreerAgentViewModel}">
         <agents:CreerAgentView />

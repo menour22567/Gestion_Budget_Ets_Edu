@@ -1,0 +1,48 @@
+<UserControl x:Class="PaieEducation.Presentation.Agents.ListeAgentsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="720">
+    <DockPanel Margin="24">
+        <TextBlock Text="Liste des agents" FontSize="20" FontWeight="Bold" Margin="0,0,0,16" DockPanel.Dock="Top"/>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" DockPanel.Dock="Top">
+            <TextBlock Text="Rechercher (matricule / nom / prénom)" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBox Text="{Binding Filtre, UpdateSourceTrigger=PropertyChanged}" Width="280" VerticalAlignment="Center"/>
+            <Button Content="Actualiser" Command="{Binding ChargerCommand}" Width="100" Margin="8,0,0,0"/>
+        </StackPanel>
+
+        <TextBlock Text="Chargement en cours…" Foreground="Gray" Margin="0,0,0,8" DockPanel.Dock="Top">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EnCours}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <DataGrid ItemsSource="{Binding Agents}" AutoGenerateColumns="False" IsReadOnly="True"
+                  CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Matricule" Binding="{Binding Matricule}" Width="150"/>
+                <DataGridTextColumn Header="Nom" Binding="{Binding Nom}" Width="180"/>
+                <DataGridTextColumn Header="Prénom" Binding="{Binding Prenom}" Width="180"/>
+                <DataGridTemplateColumn Header="Actions" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Consulter" HorizontalAlignment="Left" Padding="12,2" Margin="2"
+                                    Command="{Binding DataContext.ConsulterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding Id}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

@@ -36,6 +36,10 @@ public class GrilleIndiciaireViewModelTests
             .ReturnsAsync(Result.Success<IReadOnlyList<ReferentielItem>>([Categorie]));
         referentiels.Setup(r => r.ListerEchelonsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success<IReadOnlyList<ReferentielItem>>([Echelon]));
+        referentiels.Setup(r => r.ListerFonctionsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<ReferentielItem>>([]));
+        referentiels.Setup(r => r.ListerEtablissementsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<IReadOnlyList<ReferentielItem>>([]));
 
         return new GrilleIndiciaireViewModel(
             new DefinirValeurPoint(grille.Object, clock.Object),

@@ -1,0 +1,220 @@
+<UserControl x:Class="PaieEducation.Presentation.Agents.FicheAgentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="820">
+    <UserControl.Resources>
+        <Style x:Key="Etiquette" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Width" Value="150"/>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel Margin="24">
+        <TextBlock Text="Fiche agent" FontSize="20" FontWeight="Bold" Margin="0,0,0,16" DockPanel.Dock="Top"/>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" DockPanel.Dock="Top">
+            <StackPanel Margin="0,0,8,0">
+                <TextBlock Text="Identifiant agent"/>
+                <TextBox Text="{Binding AgentId, UpdateSourceTrigger=PropertyChanged}" Width="320"/>
+            </StackPanel>
+            <Button Content="Consulter" Command="{Binding ChargerCommand}" Width="100" Height="24" VerticalAlignment="Bottom"/>
+        </StackPanel>
+
+        <TextBlock Text="Chargement en cours…" Foreground="Gray" Margin="0,0,0,8" DockPanel.Dock="Top">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding EnCours}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <TabControl>
+            <TabControl.Style>
+                <Style TargetType="TabControl">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasDetail}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.Style>
+
+            <!-- ================= Identité ================= -->
+            <TabItem Header="Identité">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="{Binding Detail.NomComplet}" FontSize="16" FontWeight="Bold" Margin="0,0,0,2"/>
+                        <TextBlock Text="{Binding Detail.Matricule}" Foreground="Gray" Margin="0,0,0,12"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Statut" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.Statut}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Date de naissance" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.DateNaissance}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Sexe" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.Sexe}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Situation familiale" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.SituationFamiliale}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="Date de recrutement" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.DateRecrutement}"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,0,0,12"/>
+                        <TextBlock Text="Modifier l'identité" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <StackPanel MaxWidth="360" HorizontalAlignment="Left">
+                            <TextBlock Text="Nom"/>
+                            <TextBox Text="{Binding ModifierNom, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Prénom"/>
+                            <TextBox Text="{Binding ModifierPrenom, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Date de naissance (AAAA-MM-JJ)"/>
+                            <TextBox Text="{Binding ModifierDateNaissance, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Sexe"/>
+                            <ComboBox ItemsSource="{Binding SexesDisponibles}" SelectedItem="{Binding ModifierSexe}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Situation familiale"/>
+                            <ComboBox ItemsSource="{Binding SituationsDisponibles}" SelectedItem="{Binding ModifierSituationFamiliale}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Statut"/>
+                            <ComboBox ItemsSource="{Binding StatutsDisponibles}" SelectedItem="{Binding ModifierStatut}" Margin="0,0,0,8"/>
+                            <Button Content="Enregistrer les modifications" Command="{Binding ModifierIdentiteCommand}"
+                                    HorizontalAlignment="Left" Margin="0,4,0,4"/>
+                            <TextBlock Text="{Binding IdentiteResultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= Carrière ================= -->
+            <TabItem Header="Carrière">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Carrière en vigueur (la plus récente)" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Grade" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.GradeLibelle}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Corps" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.CorpsLibelle}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Catégorie" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.CategorieNiveau}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Échelon" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.EchelonNumero}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Type de contrat" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.TypeContrat}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Fonction" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.FonctionLibelle}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Établissement" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.EtablissementNom}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="En poste depuis" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.CarriereDepuis}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="Motif" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding Detail.CarriereMotif}"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,0,0,12"/>
+                        <TextBlock Text="Nouvel événement de carrière" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <TextBlock Text="Avancement d'échelon, promotion de grade/catégorie, mutation ou changement de fonction/contrat."
+                                   Foreground="Gray" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Width="220" Margin="0,0,16,0">
+                                <TextBlock Text="Grade"/>
+                                <ComboBox ItemsSource="{Binding GradesDisponibles}" SelectedItem="{Binding NouvelleCarriereGrade}"
+                                          DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                                <TextBlock Text="Catégorie"/>
+                                <ComboBox ItemsSource="{Binding CategoriesDisponibles}" SelectedItem="{Binding NouvelleCarriereCategorie}"
+                                          DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                                <TextBlock Text="Échelon"/>
+                                <ComboBox ItemsSource="{Binding EchelonsDisponibles}" SelectedItem="{Binding NouvelleCarriereEchelon}"
+                                          DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                                <TextBlock Text="Type de contrat"/>
+                                <ComboBox ItemsSource="{Binding TypesContratDisponibles}" SelectedItem="{Binding NouvelleCarriereTypeContrat}" Margin="0,0,0,8"/>
+                            </StackPanel>
+                            <StackPanel Width="260">
+                                <TextBlock Text="Fonction (optionnel)"/>
+                                <ComboBox ItemsSource="{Binding FonctionsDisponibles}" SelectedItem="{Binding NouvelleCarriereFonction}"
+                                          DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                                <TextBlock Text="Établissement (optionnel)"/>
+                                <ComboBox ItemsSource="{Binding EtablissementsDisponibles}" SelectedItem="{Binding NouvelleCarriereEtablissement}"
+                                          DisplayMemberPath="Libelle" Margin="0,0,0,8"/>
+                                <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                                <TextBox Text="{Binding NouvelleCarriereDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Motif (ex. Avancement d'échelon)"/>
+                                <TextBox Text="{Binding NouvelleCarriereMotif, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                                <TextBlock Text="N° de décision (optionnel)"/>
+                                <TextBox Text="{Binding NouvelleCarriereNumeroDecision, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Content="Enregistrer l'événement de carrière" Command="{Binding EnregistrerCarriereCommand}"
+                                HorizontalAlignment="Left" Margin="0,4,0,4"/>
+                        <TextBlock Text="{Binding CarriereResultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ================= Attributs ================= -->
+            <TabItem Header="Attributs">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12" MaxWidth="420" HorizontalAlignment="Left">
+                        <TextBlock Text="Valeurs actuelles (aujourd'hui)" FontWeight="Bold" Margin="0,0,0,4"/>
+                        <TextBlock Text="Ces attributs pilotent directement le calcul du bulletin (note PAPP, éligibilité ISSRP)."
+                                   Foreground="Gray" FontSize="11" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Note (PAPP)" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding AttributNoteActuelle}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="Origine statutaire" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding AttributOrigineActuelle}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="Ancienneté privée (ans)" Style="{StaticResource Etiquette}"/>
+                            <TextBlock Text="{Binding AttributAnciennetePriveeActuelle}"/>
+                        </StackPanel>
+
+                        <Separator Margin="0,0,0,12"/>
+                        <TextBlock Text="Définir un attribut" FontWeight="Bold" Margin="0,0,0,8"/>
+                        <TextBlock Text="Attribut"/>
+                        <ComboBox ItemsSource="{Binding AttributsConnus}" SelectedItem="{Binding AttributCle}" Margin="0,0,0,8"/>
+                        <TextBlock Text="Valeur"/>
+                        <TextBox Text="{Binding AttributValeur, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                        <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                        <TextBox Text="{Binding AttributDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                        <TextBlock Text="Source (optionnel)"/>
+                        <TextBox Text="{Binding AttributSource, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                        <Button Content="Enregistrer l'attribut" Command="{Binding DefinirAttributCommand}"
+                                HorizontalAlignment="Left" Margin="0,4,0,4"/>
+                        <TextBlock Text="{Binding AttributResultat}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</UserControl>

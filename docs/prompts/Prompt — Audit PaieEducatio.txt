@@ -1,0 +1,55 @@
+# Prompt — Audit delta PaieEducation ERP (anomalies + fonctionnalités manquantes)
+
+## Contexte
+Le projet dispose déjà d'un audit exhaustif et daté (`docs/PLAN_ACTION.md`, 19/07/2026),
+qui identifie **17 chantiers priorisés (P0→P17)** avec état vérifié ligne à ligne dans le
+code, dépendances, efforts estimés et blocages (Q11/Q12/Q13). Deux audits antérieurs
+existent aussi (`docs/audit/AUDIT_2026-07-17_*.md`). **Ne pas reproduire cet audit** :
+le vérifier, le mettre à jour, l'exécuter.
+
+## Objectif
+En un seul passage autonome :
+1. Vérifier que l'état réel du code correspond toujours à `PLAN_ACTION.md` (le code a pu
+   évoluer depuis) — signaler tout écart.
+2. Identifier uniquement les anomalies (fonctionnelles / techniques / ergonomiques) ou
+   fonctionnalités manquantes **non déjà couvertes** par un item P0-P17.
+3. Produire un rapport **delta**, pas un nouvel audit intégral.
+
+## Périmètre
+- Code : `src/`, `tests/`, `tools/`, migrations SQLite.
+- Docs de référence (par ordre de priorité) : `docs/PLAN_ACTION.md`, `docs/audit/*`,
+  `docs/adr/*`, `docs/CONVENTIONS.md`, `docs/DICTIONNAIRE_DONNEES.md`.
+- Hors périmètre : toute fonctionnalité métier non tracée dans `Reglementation/` ou un
+  ADR existant (interdit par ADR-0009 — abstention réglementaire : jamais d'hypothèse).
+
+## Méthode (ordre impératif)
+1. `git status` + `git log --oneline -20` — comparer à la baseline décrite dans
+   `PLAN_ACTION.md` §0.
+2. `dotnet test PaieEducation.slnx -c Debug --no-restore` — comparer le score
+   verts/rouges à celui documenté.
+3. Pour chaque item **P0 à P17** : vérifier son état réel (grep ciblé + lecture des
+   fichiers cités dans le plan) et classer : ✅ conforme / ⚠️ dérive / ❌ non commencé.
+4. Rechercher uniquement les écarts **non listés** : `TODO`/`FIXME`/
+   `NotImplementedException`, incohérences ADR ↔ code, régressions.
+5. Ne signaler une fonctionnalité « manquante » que si elle est tracée dans un texte
+   réglementaire (`Reglementation/`) ou un document de conception existant — jamais une
+   supposition.
+
+## Garde-fous (hérités des conventions du projet)
+- **STOP & ASK** : toute ambiguïté métier = question explicite, jamais une hypothèse.
+- **Zéro hardcoding** : aucune proposition ne doit coder une valeur réglementaire en dur.
+- **Preuve par le code** : chaque constat cite `fichier:ligne`.
+- Ne pas dupliquer un item P0-P17 déjà écrit — le référencer, signaler seulement l'écart.
+
+## Livrable
+Fichier unique `docs/audit/AUDIT_<date>_DELTA.md` contenant :
+1. Tableau des items P0-P17 : statut vérifié vs. statut documenté (uniquement les écarts).
+2. Anomalies nouvelles (gravité 🔴/🟠/🟡 + preuve fichier:ligne).
+3. Fonctionnalités manquantes nouvelles, avec référence réglementaire ou ADR.
+4. Recommandation : items à ajouter à `PLAN_ACTION.md` avec priorité proposée, ou mention
+   explicite « aucun écart, le plan reste valide ».
+
+## Critère d'acceptation
+Le rapport ne contient que du delta prouvé — zéro répétition du contenu déjà présent dans
+`PLAN_ACTION.md`. En l'absence d'écart, le livrable le dit en une phrase plutôt que de
+gonfler artificiellement le contenu.

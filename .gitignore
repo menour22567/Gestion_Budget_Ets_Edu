@@ -69,6 +69,13 @@ $RECYCLE.BIN/
 /Logs/
 /Temp/
 
+# Logs runtime (captures stdout/stderr, traces) — pas la base runtime
+*.log
+*.trc
+
+# Bac de récupération local (déplacement avant suppression définitive)
+.git-trash-*/
+
 # Outils locaux dev (AI assistant, etc.)
 /.kilo/
 /.agents/

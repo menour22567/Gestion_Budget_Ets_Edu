@@ -54,7 +54,7 @@ Cible : **net à payer = 57 739 DA** (référence verrouillée depuis le test `B
 
 | Rubrique | Taux | Assiette | Montant attendu (DA) | Justification |
 |---|---|---|---|---|
-| `SS` (Sécurité sociale part ouvrière) | 9 % | `TBASE` = 26 010 (assiette cotisable) | **6 779** | Q-01 (9 % paramétré) |
+| `SS` (Sécurité sociale part ouvrière) | 9 % | `AssietteCotisable` = Σ des gains marqués `EstCotisable = 1` = **75 325** (en pilote, **tous** les gains sont cotisables — cf. Q-02) | **6 779** | Q-01 (9 % paramétré) + Q-02 (drapeau `EstCotisable` par rubrique). Le moteur (`CalculationPipeline.cs:102-103`) calcule `assietteCotisable = lignes.Where(Gain, Cotisable).Sum(Montant)`. Le seed (`referentiel_reglementaire_v1.json`) référence déjà `assietteRef: "ASSIETTE_COTISABLE"`. **Pas TBASE** : 9 % × 26 010 = 2 341 (incohérent avec le bulletin complet observé à 6 779). |
 | **Total retenues** | | | **6 779** | |
 
 ### 3.3 IRG
@@ -84,7 +84,7 @@ Cible : **net à payer = 57 739 DA** (référence verrouillée depuis le test `B
 | S3 | Grade **conditionnel** (SDL-G007, condition `ORIGINE_STATUTAIRE = ENSEIGNANT`) → ISSRP_45 éligible | Q-03 | `BulletinEndToEndTests.Enseignant_grade_conditionnel_origine_ENSEIGNANT_a_45_pourcent` ✅ |
 | S4 | **IRG 2022 lissage général** dans la bande 30 000–35 000 DA | LF 2022 + pseudo-code `CALCUL IRG ALGERIE.txt` | `IrgCalculatorTests.Lissage_general_dans_la_bande_30000_35000` ✅ (unitaire) |
 | S5 | **IRG 2022 lissage spécial** prioritaire pour profil handicapé (plafond 42 500) | LF 2022 | `IrgCalculatorTests.Lissage_special_prioritaire_pour_profil_handicape` ✅ (unitaire) |
-| S6 | **Cotisations isolées** (SS seule, hors pipeline complet) | Q-01 + Q-03b | `Lot22ClotureTests.Cotisation_SS_9pct_de_TBASE_avec_assiette_cotisable_isolee` 🆕 (P22) |
+| S6 | **Cotisations isolées** (SS seule, hors pipeline complet, **assertion stricte = 6 779 = 9 % × AssietteCotisable**) | Q-01 + Q-02 + Q-03b | `Lot22ClotureTests.S6_Cotisation_SS_9pct_AssietteCotisable_isolee_6779` ✅ (P22, renforcé P23) |
 | S7 | **IRG 2022 lissage** dans le pipeline complet (intégration bout-en-bout) | LF 2022 | `Lot22ClotureTests.IRG_2022_lissage_general_dans_bande_30k_35k_via_pipeline_complet` 🆕 (P22) |
 | S8 | **Non-régression explicite ExplicationModele** : QUALIF porte TRT + bareme résolu, IRG porte les 4 étapes (brut → abattement → lissage → final) | Phase 4 Explainability Engine | `Lot22ClotureTests.NonRegression_ExplicationModele_conserve_formule_et_variables` 🆕 (P22) |
 | S9 | **Non-régression explicite JournalAudit** : 8 étapes (TRAITEMENT→QUALIF→DOC_PEDAG→EXP_PEDAG→PAPP→ISSRP_45→SS→IRG), dans l'OrdreCalcul de chaque rubrique | Phase 4 Audit Engine | `Lot22ClotureTests.NonRegression_JournalAudit_conserve_8_etapes_ordonnees` 🆕 (P22) |
@@ -103,12 +103,12 @@ Chaque ligne du tableau §3 doit être prouvée par au moins un test. La couvert
 | EXP_PEDAG | ✅ | ✅ `BulletinEndToEndTests:85` | ✅ ajouté S8 |
 | PAPP | ✅ | ✅ `BulletinEndToEndTests:86` | ✅ ajouté S8 |
 | ISSRP_45 | ✅ | ✅ `BulletinEndToEndTests:87, 132, 149` | ✅ ajouté S8 |
-| SS (cotisation) | ✅ `ContributionCalculatorTests` | ⚠ partiel (`BulletinEndToEndTests:93` mais dans le bulletin complet) | ✅ ajouté S6 |
+| SS (cotisation) | ✅ `ContributionCalculatorTests` | ⚠ partiel (`BulletinEndToEndTests:93` mais dans le bulletin complet) | ✅ S6 assert valeur stricte 6 779 (P23) |
 | IRG | ✅ `IrgCalculatorTests` (8 cas) | ⚠ partiel (1 cas dans `BulletinEndToEndTests:96-117`) | ✅ ajouté S7 |
 
 ---
 
-## 6. Critère d'acceptation du Lot 2.2 (P22)
+## 6. Critère d'acceptation du Lot 2.2 (P22) et P23 (correction assiette SS)
 
 - [x] Matrice scénario × rubrique × assertion documentée (le présent fichier).
 - [x] Chaque ligne du bulletin pilote prouvée par au moins un test.
@@ -116,6 +116,7 @@ Chaque ligne du tableau §3 doit être prouvée par au moins un test. La couvert
 - [x] Cotisations **isolées** testées (pas seulement dans le bulletin complet).
 - [x] IRG 2022 lissages testés dans le pipeline complet (pas seulement en unitaire).
 - [x] Commit estampillé « Lot 2.2 ».
+- [x] **P23 — Assiette SS = `AssietteCotisable` (= Σ gains `EstCotisable=1`), pas `TBASE`.** Le bulletin complet observé à 6 779 DA tombe sur 9 % × 75 325 (TotalGains soumis à cotisations en pilote), pas sur 9 % × 26 010 (TBASE). Doc §3.2 aligné, test S6 renforcé en assert strict (6 779), commentaire de la règle dans le code de test.
 
 ---
 

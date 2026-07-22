@@ -68,8 +68,23 @@ public class Lot22ClotureTests
     // ====================================================================
 
     [Fact]
-    public async Task S6_Cotisation_SS_9pct_de_TBASE_avec_assiette_cotisable_isolee()
+    public async Task S6_Cotisation_SS_9pct_AssietteCotisable_isolee_6779()
     {
+        // Règle P23 : l'assiette de la cotisation SS est l'AssietteCotisable
+        // (Σ des gains marqués EstCotisable=1), pas TBASE.
+        //
+        //   - 9 % × TBASE (= 26 010) = 2 341  ← MAUVAISE valeur (ne
+        //     correspond pas au bulletin complet observé).
+        //   - 9 % × AssietteCotisable = 9 % × 75 325 = 6 779  ← BONNE
+        //     valeur (égale au bulletin complet, qui en pilote a tous
+        //     ses gains cotisables — Q-02).
+        //
+        // Sources : Q-01 (taux 9 %), Q-02 (drapeau EstCotisable par
+        // rubrique), CalculationPipeline.cs:102-103 (calcul de
+        // AssietteCotisable = lignes.Where(Gain, Cotisable).Sum()),
+        // referentiel_reglementaire_v1.json ligne SS (assietteRef =
+        // "ASSIETTE_COTISABLE"). Voir docs/analysis/Lot_2_2_HYPOTHESES.md
+        // §3.2 et §6.
         using var scope = SchemaTestSupport.CreateMigrated();
         await SeedTout(scope.Conn);
 
@@ -80,16 +95,21 @@ public class Lot22ClotureTests
         var bulletin = new CalculationPipeline(new ArrondiService(), SeuilExoneration, PlafondLissageGeneral).Calculer(input.Value).Value;
         var ligneSs = bulletin.Lignes.Single(l => l.RubriqueId == "SS");
 
-        // 9 % × TBASE = 0.09 × 26 010 = 2 340.9 → arrondi dinar plus proche = 2 341
-        // (NB : le test bout-en-bout utilise l'arrondi « dinar plus proche »
-        // et tombe sur 6 779, mais ce test S6 utilise l'arrondi par défaut —
-        // ici on vérifie l'isolation, pas l'égalité stricte avec le bulletin
-        // complet ; on documente la valeur observée.)
-        Assert.True(ligneSs.Montant.Amount > 0, "La cotisation SS doit produire un montant positif.");
-        Assert.Contains("SS", bulletin.Audit.Etapes.Select(e => e.RubriqueId));
+        // L'AssietteCotisable = 75 325 (TotalGains en pilote, tous
+        // cotisables) ; 9 % × 75 325 = 6 779,295 → arrondi dinar le
+        // plus proche = 6 779 (le pipeline utilise l'arrondi par
+        // défaut, identique à l'arrondi « dinar le plus proche » pour
+        // les valeurs du pilote).
+        Assert.Equal(6779m, ligneSs.Montant.Amount);
 
-        // L'explication porte la formule lue en base.
-        Assert.Equal("SS", ligneSs.RubriqueId);
+        // L'AssietteCotisable calculée par le pipeline vaut 75 325 —
+        // c'est la valeur que le moteur a retenue pour SS.
+        Assert.Equal(75325m, bulletin.AssietteCotisable.Amount);
+
+        // Audit : SS apparaît bien comme étape (avec son rang).
+        Assert.Contains("SS", bulletin.Audit.Etapes.Select(e => e.RubriqueId));
+        Assert.Equal(ligneSs.Montant.Amount,
+            bulletin.Audit.Etapes.Single(e => e.RubriqueId == "SS").Montant);
     }
 
     // ====================================================================

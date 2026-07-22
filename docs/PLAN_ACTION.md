@@ -40,6 +40,13 @@
 | **J3-plan** | **Plan de correction J3A §5 et extensions de schéma V008 (J3E) approuvés** : colonne `PeriodiciteVersement`, table `RubriqueBaremes`, critères d'éligibilité étendus, correctifs seed P0. |
 | **Q3b-rev** | **Révise la modélisation Q3b.** Les retenues optionnelles existent sous **deux formes** : (a) **montant fixe** au choix de l'agent (œuvres sociales) ; (b) **taux versionné appliqué à une assiette** — ex. mutuelle **MUNATEC** (secteur éducation nationale) = **1 % du salaire soumis aux cotisations**, taux modifiable dans le temps. Modélisation sans migration : Nature `RETENUE`, `BaseCalcul = ASSIETTE_COTISABLE`, taux dans `RubriqueParametres` versionné, `EstAffectableManuellement = 1` (D1), occurrence unique par organisme (un organisme = une rubrique). Toujours distinctes des cotisations obligatoires et hors déduction d'assiette IRG sauf paramétrage contraire (RM-068 révisée). |
 
+### Précisions post-livraison 22/07/2026 (P22, P23)
+
+| Réf | Précision validée |
+|-----|-------------------|
+| **P22** (clôture Lot 2.2) | La matrice scénario × rubrique × assertion du bulletin pilote est désormais verrouillée dans `docs/analysis/Lot_2_2_HYPOTHESES.md` (9 scénarios S1–S9, couverture ligne par ligne, 6 tests d'intégration dédiés `Lot22ClotureTests` verts). Livré commit `1c3b34e`. |
+| **P23** (correction assiette SS) | L'assiette de la cotisation SS (obligatoire salariale, 9 %, Q3b) est `AssietteCotisable` = Σ des gains marqués `EstCotisable = 1` (Q-02), **pas** `TBASE`. En pilote tous les gains sont cotisables → `AssietteCotisable = TotalGains = 75 325` → SS = 9 % × 75 325 = **6 779 DA** (et non 9 % × 26 010 = 2 341, qui était l'indication erronée du doc P22 §3.2 originelle). Le moteur (`CalculationPipeline.cs:102-103`) et le seed (`referentiel_reglementaire_v1.json`, `assietteRef: "ASSIETTE_COTISABLE"`) sont cohérents ; seule la documentation P22 a été corrigée et le test S6 renforcé en assert strict. |
+
 ### Décisions J3H — Affectation assistée des rubriques (14/07/2026, J3H lot 1)
 
 | Réf | Décision validée |

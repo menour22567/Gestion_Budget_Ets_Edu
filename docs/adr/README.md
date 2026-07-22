@@ -13,7 +13,7 @@
 | [0007](0007-workbench-reglementaire.md) | Workbench réglementaire : toute rubrique, tout paramètre, toute règle d'éligibilité est saisissable et historisable par l'utilisateur | Accepté |
 | [0008](0008-immutabilite-periodes-cloturees.md) | Immutabilité des périodes clôturées : toute correction rétroactive passe par un rappel, jamais par un recalcul | Accepté |
 | [0009](0009-abstention-reglementaire.md) | Principe d'abstention réglementaire : jamais de droit inventé, extrapolé ou déduit | Accepté |
-| [0010](0010-abstention-phase-paiement.md) | Abstention phase paiement : l'application gère la paie administrative, jamais son exécution bancaire | Proposé |
+| [0010](0010-abstention-phase-paiement.md) | Abstention phase paiement : l'application gère la paie administrative, jamais son exécution bancaire | Accepté |
 | [0011](0011-money-decision-decimal.md) | Maintien de `decimal` + arrondi centralisé (dérogation `CONVENTIONS.md §5`) | Accepté |
 
 > Les ADR 001 à 130 issus de la documentation V4 restent la référence conceptuelle ;

@@ -1,6 +1,8 @@
 ﻿# ADR-0010 — Abstention phase paiement : l'application gère la paie administrative, jamais son exécution bancaire
 
-**Statut :** Proposé — 19/07/2026. Formulé à l'issue de l'audit d'architecture ayant
+**Statut :** Accepté — 22/07/2026 (validé par l'utilisateur lors de l'audit delta 21/07/2026,
+cf. P1 du plan `docs/audit/PLAN_ACTION_2026-07-19.md`). Formulé à l'issue de l'audit
+d'architecture du 19/07/2026 ayant
 révélé des reliquats documentaires (« ordre de virement » dans `Tome F` v4.0 § 5,
 entités `Banque` / `ModePaiement` / `IBAN` dans `Tome B` v4.0, section « Finance »
 dans le Tome B v3.0 archivé, commentaire de code dans

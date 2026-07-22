@@ -41,18 +41,21 @@ Réutilisables identifiés lors de la revérification (ils réduisent l'effort e
 | P15 | 3.8 (C8) | Extension aux autres corps (cadre + 1er corps hors enseignants) | 15 — dernière | XL | P13 (pilote validé), P14, P2 | Q11 indirect |
 | P16 | É2 (ADR-0010 §6) | Décision + éventuelle migration V015 `PeriodiciteVersement` → `PeriodiciteService` | 14 (décision avant V1-D) | S | aucune (décision) ; M si migration retenue | aucun |
 | P17 | D1 | Identité utilisateur (`Actor`) : décision de pérennité du mode autonome | 16 — conditionnel | M–L selon décision | aucune | **Q12** |
+| P18 | G1 (audit delta 21/07) | **Gestion des agents** : liste / fiche / édition identité / événement carrière / attributs — livré en `661472c` (22/07/2026) | **1 — déjà livré** | L | aucune en entrée ; **ouvre F1** (audit `AuditLog` des actions agent) en sortie | aucun |
+| P19 | G2 (audit delta 21/07) | **Refonte Shell onglets** (`TabViewModel` + `AccueilView` + `TabRequest` + hub Workbench) — livré en `661472c` (22/07/2026) | **1 — déjà livré** | M | aucune en entrée ; **pré-requis à P8-8b/8c** (les sous-lots P8 navigables en onglets) en sortie | aucun |
 
 ## 2. Graphe de dépendances global
 
 ```mermaid
 graph LR
-    P0[P0 git] --> P1[P1 ADR arrondi]
+    P0[P0 git] --> P1[P1 ADR arrondi] & P18[P18 gestion agents] & P19[P19 Shell onglets]
     P1 --> P2[P2 seeds DNF] & P3[P3 cas pilote] & P4[P4 audit filtres]
     P4 --> P5[P5 éditeur barèmes]
     P2 --> P6[P6 éditeur DNF]
     P4 --> P6
     P1 --> P9[P9 rappels UI] & P11[P11 rapport PDF] & P10[P10 FormulaEditor]
     P11 --> P8[P8 écrans simulation]
+    P19 --> P8
     P3 --> P13[P13 qualité/perf]
     P5 --> P13
     P6 --> P13 & P7[P7 matrice pivotée]
@@ -60,6 +63,7 @@ graph LR
     P9 --> P14
     P13 --> P15[P15 extension corps]
     P14 --> P15
+    P18 -.ouvre.-> F1((F1 audit agent))
     Q11((Q11)) -.bloque fixtures.-> P13
     Q13((Q13)) -.bloque.-> P12[P12 documents officiels]
     Q12((Q12)) -.bloque.-> P17[P17 identité]
@@ -339,6 +343,44 @@ graph LR
 - **Effort estimé** : **M** (provider centralisé) à **L** (authentification complète).
 - **Risques** : sur-ingénierie si Q12 confirme l'autonome ; sous-estimation si rôles J3I réactivés.
 
+### [P18 / G1] Gestion des agents — **déjà livré 22/07/2026 (commit `661472c`)**
+
+> *Addendum rétroactif (audit delta 21/07/2026).* Ce chantier n'était pas listé dans l'audit du 19/07 ; il a été développé en parallèle (puis commité en `661472c` lors de l'exécution de P0, 22/07/2026). Il est ajouté formellement au plan pour traçabilité — aucun travail de code restant.
+
+- **État vérifié** : 100% livré & commité, tests verts (état global : 730/730 au moment de l'addendum).
+  - **Domaine** : `src/PaieEducation.Domain/Agents/AgentModifie.cs` (record, événement de modification d'identité), `EvenementCarriere.cs` (record, nouvel événement de carrière pour un agent existant), `Agents/Repositories/IAgentReadRepository.cs` (lecture : `ObtenirAsync`, `ListerSexesAsync`, `ListerSituationsFamilialesAsync`), `IAgentRepository.cs` (écriture : `ModifierAsync`).
+  - **Use cases Application** : `ConsulterFicheAgent` (lecture), `ModifierAgent` (écriture identité, valide `Sexe`/`SituationFamiliale` contre référentiel + `Statut` enuméré), `EnregistrerEvenementCarriere` (avancement grade/catégorie/échelon + type contrat + fonction/établissement optionnels, avec continuité temporelle), `DefinirAttributAgent` (attributs dynamiques par agent) — en plus de `CreerAgent` déjà livré antérieurement.
+  - **Repositories** : `AgentRepository.cs` (étendu, transaction `BeginTransaction`/`ExecuteAsync`/`Commit` réutilisée du patron Phase 5), `AgentReadRepository.cs` (nouveau, projections `AgentResume`/`AgentDetail`).
+  - **UI Presentation** : `ListeAgentsView`/`ViewModel` (liste paginée, navigation drill-down), `FicheAgentView`/`ViewModel` (lecture détaillée + édition), entrées menu Shell `Agents` → `Liste des agents` / `Créer un agent` / `Suggérer des rubriques` (toutes en onglets fermables via P19).
+  - **Tests** : 6 tests d'intégration (`ConsulterFicheAgentTests`, `DefinirAttributAgentTests`, `EnregistrerEvenementCarriereTests`, `ModifierAgentTests`, + extensions `AgentReadRepositoryTests`/`AgentRepositoryTests`) + 4 tests Presentation (`ListeAgentsViewModelTests`, `FicheAgentViewModelTests`, + extensions `CreerAgentViewModelTests`).
+  - **Total** : ≈ 1 300 lignes de prod + 1 100 lignes de tests.
+- **Écart à combler** : aucun code. L'addendum au plan est l'unique dette documentaire.
+- **Dette de cohérence à traiter hors P18** : `ModifierAgent` (`src/PaieEducation.Application/Agents/UseCases/ModifierAgent.cs:54`) appelle `_agents.ModifierAsync(...)` **sans** écrire dans `AuditLog` (`grep "AuditLog" src/PaieEducation.Application/Agents` → 0 résultat). Fuite de traçabilité vis-à-vis d'ADR-0010 §2 (auditabilité des évolutions) — à corriger via **F1** (item à créer, voir §5 nouveau).
+- **Étapes** : aucune — le chantier est clos.
+- **Dépendances** : aucune en entrée. Crée une dépendance **entrante** pour F1 (audit `AuditLog` des actions de gestion agent).
+- **Blocage externe** : aucun.
+- **Critères d'acceptation** : 5 use cases Application testés bout-en-bout (lecture/écriture identité + lecture/écriture carrière + attributs) ; 2 écrans MVVM navigables depuis le Shell (Liste + Fiche) ; aucun `TODO`/`FIXME`/`NotImplementedException` dans le code ajouté ; 730/730 tests verts ; commit `661472c` poussé vers `origin/main` (22/07/2026).
+- **Effort estimé** : **L** (déjà consommé). ≈ 1 300 lignes de prod + 1 100 lignes de tests sur 4 jours (18–21/07/2026).
+- **Risques** : dette de traçabilité (F1) — déjà documentée. Sinon, aucun.
+
+### [P19 / G2] Refonte du Shell en architecture à onglets — **déjà livré 22/07/2026 (commit `661472c`)**
+
+> *Addendum rétroactif (audit delta 21/07/2026).* Idem P18 : développé en parallèle, ajouté formellement au plan pour traçabilité. Aucun travail de code restant.
+
+- **État vérifié** : 100% livré & commité (commit `661472c`, même commit que P18 — les deux chantiers partagent un commit car ils sont structurellement couplés : la navigation à onglets est le pré-requis de l'écran Liste agents multi-instance).
+  - **Nouveaux types** : `Presentation/Shell/TabViewModel.cs` (modèle d'onglet — `Titre`, `Contenu`, `EstFermable`, action `Fermer`), `Presentation/Navigation/TabRequest.cs` (record `Titre`/`ViewModel` consommé par le Shell).
+  - **Nouveaux écrans** : `Presentation/Shell/AccueilView.xaml`/`xaml.cs`/`ViewModel.cs` (écran d'accueil permanent, non fermable, hub de raccourcis vers les fonctions principales).
+  - **Navigation étendue** : `INavigationService.OpenTab<T>(string titre)` (ouvre un onglet fermable) + surcharge `NavigateTo<T>(Action<T> configurator)` (drill-down avec pré-configuration, utilisée par P7 pour la matrice de couverture).
+  - **ShellViewModel réécrit** : collection `ObservableCollection<TabViewModel> Onglets`, propriété `OngletActif`, méthodes `OuvrirOnglet`/`Fermer`, **11 commandes `[RelayCommand]`** (une par entrée de menu : Calculer/Valider/Consulter bulletin, Liste/Créer agent, Grille indiciaire, Suggérer rubriques, Workbench Vue d'ensemble, Matrice, Audit, Fiche rubrique, Éditer rubrique).
+  - **`WorkbenchPlaceholderViewModel` requalifié en hub de navigation actif** : UniformGrid de boutons routant vers Matrice / Fiche / Éditer / Suggérer / Audit (exit le « à venir »). C'est ce qui a remplacé l'item « retrait du placeholder » du P8-8a initial.
+- **Écart à combler** : aucun code. Addendum au plan uniquement.
+- **Étapes** : aucune — le chantier est clos.
+- **Dépendances** : aucune en entrée. **Pré-requis structurel** à P8-8b (écran Génération de rappels) et P8-8c (écrans Cotisations/IRG) : ces sous-lots ne peuvent être livrés qu'en tant qu'onglets fermables du Shell.
+- **Blocage externe** : aucun.
+- **Critères d'acceptation** : tous les écrans existants (Calculer/Valider/Consulter bulletin, Créer agent, Grille indiciaire, Suggérer rubriques, Workbench) navigables via des onglets fermables ; un onglet `Accueil` permanent ouvert au démarrage ; `WorkbenchPlaceholder` est devenu un hub actif, plus un écran « à venir » ; aucune logique métier en code-behind (MVVM strict) ; tests `ShellViewModelTests` (63 lignes) et `NavigationServiceTests` (49 lignes) verts.
+- **Effort estimé** : **M** (déjà consommé). Refonte du Shell, mécanique mais structurante.
+- **Risques** : si l'utilisateur final n'aime pas le paradigme « tout en onglets » (vs navigation traditionnelle maître/détail), retour en arrière coûteux — accepté par construction (la nouvelle UX des Workbench l'illustre déjà).
+
 ---
 
 ## 4. Blocages externes à faire lever (récapitulatif)
@@ -349,10 +391,16 @@ graph LR
 | **Q12** | Le mode autonome sans authentification est-il définitif pour la V1 (acteur déclaratif/configuré dans l'audit), ou une identité vérifiée est-elle requise avant mise en marche — et laquelle ? | P17 |
 | **Q13** | Quels documents officiels en V1, avec quel format réglementaire précis (spécimen exigé par document), et lesquels sont indispensables avant mise en marche ? | P12 |
 
-Décisions utilisateur plus légères, non bloquantes mais à confirmer en passant : hébergeur du remote (P0), passage d'ADR-0010 à « Accepté » (P1), revirement DataGrid plat → matrice pivotée (P7), corps prioritaire (P15), arbitrage V015 (P16).
+Décisions utilisateur plus légères, non bloquantes mais à confirmer en passant : hébergeur du remote (P0, *résolu 22/07* — remote `menour22567` configuré + token), passage d'ADR-0010 à « Accepté » (P1), revirement DataGrid plat → matrice pivotée (P7, *résolu 22/07* — livré), corps prioritaire (P15), arbitrage V015 (P16).
+
+**Addenda rétroactifs (livrés hors audit, formalisés 22/07/2026)** : P18 (gestion agents) et P19 (refonte Shell onglets), tous deux déjà commités en `661472c` et poussés vers `origin/main`. Aucun blocage externe, aucun effort restant. Voir §3 pour le détail.
+
+**Item à créer au plan (F1)** : traçabilité `AuditLog` des actions de gestion agent (Créer/Modifier/ÉvénCarrière/Attribut). Dette ouverte par P18, à intégrer formellement au plan lors du prochain addendum. Effort S, dépend de P0 (committer) + P18 (livré).
 
 ## 5. Ordre d'exécution recommandé
 
 **P0 → P1** (sécuriser puis assainir : remote/merge, puis baseline 593/593 verte et arbre de travail propre) **→ P4, P2, P3** (fondations : traçabilité avant écritures, format DNF avant éditeur, couverture pilote formelle) **→ P5 → P6** (les deux éditeurs, cœur du reliquat fonctionnel) **→ P9, P11, P7** (parallélisables) **→ P8** (l'assistant, une fois rapport exportable et rappels visibles) **→ P13** (checklist + perf ; fixtures dès Q11) **→ P10** (confort éditeur) **→ P16** (décision V015 avant validation finale) **→ P12** (dès Q13) **→ P14 → P17** (selon Q12) **→ P15** (extension, en dernier par construction).
+
+> **Note 22/07/2026 (post-P0).** P0, P18 et P19 sont déjà soldés (commits `8a360e1` (P6), `316403b` (P7), `2c5fed2` (P9), `c6f8712` (seeder), `661472c` (P18 + P19), `148ad7a` (hygiène P0), `08451ca` (CONVENTIONS §7.1), tag `v0-pilote-moteur` posé sur `148ad7a`). L'ordre ci-dessus s'applique à ce qu'il **reste** à faire ; les items déjà livrés sont à considérer comme pré-conditions satisfaites. Les seuls points de vigilance pour la suite : (a) **F1** (audit `AuditLog` des actions agent, dette ouverte par P18) ; (b) l'anomalie A1 (doc `FakeAgentSeeder.cs` 29 vs 30) à corriger au prochain commit ; (c) ADR-0010 toujours « Proposé » alors que P1 demandait « Accepté ».
 
 Ce séquencement suit trois principes : (1) le seul item dont le coût *croît* avec le temps (P0) passe premier ; (2) aucun chantier d'écriture en base n'ouvre avant que la traçabilité (P4) et les formats de données (P2) soient en place ; (3) les items bloqués (Q11/Q12/Q13) sont préparés jusqu'à leur point de blocage exact puis mis en attente, sans jamais bloquer le flux principal.

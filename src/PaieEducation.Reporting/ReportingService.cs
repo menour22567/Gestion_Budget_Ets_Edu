@@ -1,3 +1,4 @@
+using PaieEducation.Application.Workbench.UseCases;
 using PaieEducation.Domain.Calcul.Snapshot;
 using PaieEducation.Reporting.Documents;
 
@@ -109,6 +110,28 @@ public sealed class ReportingService
         var octets = GenererAffichage(affichage, format);
         File.WriteAllBytes(complet, octets);
         return complet;
+    }
+
+    /// <summary>
+    /// Génère les octets d'un rapport d'impact d'évolution réglementaire
+    /// (chantier P11) à partir de son enveloppe. Résout le modèle V1 dans
+    /// le <see cref="DocumentModelRegistry"/> et délègue le rendu au
+    /// modèle. L'Excel n'est pas implémenté en V1 (le registre n'a que
+    /// la version PDF du modèle rapport-impact).
+    /// </summary>
+    public byte[] GenererRapportImpact(RapportImpactDocument document, FormatDocument format)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        return format switch
+        {
+            FormatDocument.Pdf => _models
+                .Resolve<RapportImpactDocument>("rapport-impact", 1)
+                .Render(document),
+            FormatDocument.Excel => throw new NotSupportedException(
+                "L'export Excel n'est pas implémenté pour le rapport d'impact en V1 (P11). "
+              + "Seul le PDF est disponible — cf. registre DocumentModelRegistry."),
+            _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
+        };
     }
 
     private static string ResoudreChemin(FormatDocument format, string chemin) =>

@@ -64,7 +64,17 @@ public sealed class AppliquerEvolutionReglementaire
         string? Source,
         string Actor,
         bool BypassDryRun = false,
-        string? RaisonBypass = null);
+        string? RaisonBypass = null,
+        /// <summary>
+        /// Chemin de destination du PDF de rapport d'impact (chantier P11).
+        /// Optionnel : si null, aucun export n'est déclenché et
+        /// <c>CheminRapportPdf</c> reste null dans l'audit. Si fourni, le
+        /// rapport est exporté via <see cref="IExporterRapportImpact"/>
+        /// AVANT le commit ; en cas d'échec d'export, le commit est
+        /// refusé (cohérence : on ne commit jamais sans son rapport
+        /// d'archivage).
+        /// </summary>
+        string? CheminRapport = null);
 
     private sealed record AuditPayload(
         string Description,
@@ -75,19 +85,27 @@ public sealed class AppliquerEvolutionReglementaire
         decimal? NouvelleValeur,
         RapportImpact? RapportImpact,
         bool BypassDryRun,
-        string? RaisonBypass);
+        string? RaisonBypass,
+        string? CheminRapportPdf);
 
     private readonly IGrilleIndiciaireRepository _grille;
     private readonly IAuditLogRepository _auditLog;
     private readonly IClock _clock;
     private readonly IUnitOfWork _uow;
+    private readonly IExporterRapportImpact _exporteurRapport;
 
-    public AppliquerEvolutionReglementaire(IGrilleIndiciaireRepository grille, IAuditLogRepository auditLog, IClock clock, IUnitOfWork uow)
+    public AppliquerEvolutionReglementaire(
+        IGrilleIndiciaireRepository grille,
+        IAuditLogRepository auditLog,
+        IClock clock,
+        IUnitOfWork uow,
+        IExporterRapportImpact exporteurRapport)
     {
         _grille = grille ?? throw new ArgumentNullException(nameof(grille));
         _auditLog = auditLog ?? throw new ArgumentNullException(nameof(auditLog));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _uow = uow ?? throw new ArgumentNullException(nameof(uow));
+        _exporteurRapport = exporteurRapport ?? throw new ArgumentNullException(nameof(exporteurRapport));
     }
 
     public async Task<Result<string>> ExecuterAsync(Demande demande, CancellationToken ct = default)
@@ -114,6 +132,31 @@ public sealed class AppliquerEvolutionReglementaire
                 "Le dry-run est obligatoire (RapportImpact requis) — ou passer BypassDryRun avec une raison documentée."));
         }
 
+        // P11 : export du rapport d'impact AVANT le commit si un chemin est
+        // fourni. En cas d'échec d'export, on refuse le commit (cohérence
+        // avec l'esprit de D8 — toute évolution validée doit être accompagnée
+        // de son rapport d'archivage). Bypass admin : si BypassDryRun + aucun
+        // rapport, l'export est sauté (on n'a rien à exporter).
+        string? cheminRapportPdf = null;
+        if (!string.IsNullOrWhiteSpace(demande.CheminRapport))
+        {
+            var enveloppe = new RapportImpactDocument(
+                demande.RapportImpact!,
+                demande.Description,
+                _clock.UtcNow.UtcDateTime,
+                Array.Empty<string>());
+
+            var export = await _exporteurRapport.ExecuterAsync(
+                new IExporterRapportImpact.Demande(enveloppe, demande.CheminRapport),
+                ct);
+
+            if (export.IsFailure)
+            {
+                return Result.Failure<string>(export.Error);
+            }
+            cheminRapportPdf = export.Value;
+        }
+
         await _uow.BeginAsync(ct);
 
         var ecriture = demande.Strategie == StrategieVersionning.ClotureEtNouvelleVersion
@@ -129,7 +172,8 @@ public sealed class AppliquerEvolutionReglementaire
 
         var payload = JsonSerializer.Serialize(new AuditPayload(
             demande.Description, demande.Strategie.ToString(), demande.DateEffet, demande.Version, demande.Source,
-            demande.NouvelleValeur, demande.RapportImpact, demande.BypassDryRun, demande.RaisonBypass));
+            demande.NouvelleValeur, demande.RapportImpact, demande.BypassDryRun, demande.RaisonBypass,
+            cheminRapportPdf));
 
         var action = demande.BypassDryRun ? AuditActions.AppliquerEvolutionBypass : AuditActions.AppliquerEvolution;
         var audit = await _auditLog.EnregistrerAsync(

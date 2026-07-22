@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PaieEducation.Application.Workbench.UseCases;
 using PaieEducation.Reporting.Documents;
 using PaieEducation.Reporting.UseCases;
 
@@ -16,10 +17,14 @@ public static class ReportingServiceCollectionExtensions
     {
         services.AddSingleton<BulletinPdfRenderer>();
         services.AddSingleton<BulletinExcelExporter>();
+        services.AddSingleton<RapportImpactPdfRenderer>();
 
         // Modèles bulletin V1 et V2 — coexistent dans le registre.
         services.AddSingleton<BulletinDocumentModelV1>();
         services.AddSingleton<BulletinDocumentModelV2>();
+
+        // Modèle rapport d'impact (P11).
+        services.AddSingleton<RapportImpactDocumentModelV1>();
 
         // Registre de modèles : factory qui enregistre les modèles au moment
         // de la première résolution. Les modèles eux-mêmes sont des singletons.
@@ -28,11 +33,13 @@ public static class ReportingServiceCollectionExtensions
             var registry = new DocumentModelRegistry();
             registry.Register(sp.GetRequiredService<BulletinDocumentModelV1>());
             registry.Register(sp.GetRequiredService<BulletinDocumentModelV2>());
+            registry.Register(sp.GetRequiredService<RapportImpactDocumentModelV1>());
             return registry;
         });
 
         services.AddSingleton<ReportingService>();
         services.AddTransient<IExporterBulletin, ExporterBulletin>();
+        services.AddTransient<IExporterRapportImpact, ExporterRapportImpact>();
         return services;
     }
 }

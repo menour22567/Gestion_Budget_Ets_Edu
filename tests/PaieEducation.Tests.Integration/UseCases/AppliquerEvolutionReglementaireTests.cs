@@ -18,6 +18,20 @@ public class AppliquerEvolutionReglementaireTests
         public DateOnly Today => DateOnly.FromDateTime(now.UtcDateTime);
     }
 
+    /// <summary>
+    /// Stub no-op de <see cref="IExporterRapportImpact"/> pour les tests
+    /// existants de P1/D8 qui n'exigent pas l'export PDF (chantier P11). Les
+    /// tests dédiés à P11 utilisent une instance réelle via DI (cf.
+    /// <c>AppliquerEvolutionReglementaireP11Tests</c>).
+    /// </summary>
+    private sealed class NullExporterRapportImpact : IExporterRapportImpact
+    {
+        public Task<PaieEducation.Shared.Results.Result<string>> ExecuterAsync(
+            IExporterRapportImpact.Demande demande,
+            System.Threading.CancellationToken ct = default)
+            => Task.FromResult(PaieEducation.Shared.Results.Result.Success("NOOP.pdf"));
+    }
+
     private static readonly HorlogeFixe Horloge = new(new DateTimeOffset(2026, 7, 17, 10, 0, 0, TimeSpan.Zero));
 
     private static readonly RapportImpact Rapport = new(
@@ -31,7 +45,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Décret 26-XX — revalorisation du point indiciaire",
             RapportImpact: Rapport,
@@ -65,7 +79,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Reconduction du taux 2025 sur 2026",
             RapportImpact: Rapport,
@@ -91,7 +105,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Test", RapportImpact: Rapport, Strategie: StrategieVersionning.ClotureEtNouvelleVersion,
             NouvelleValeur: null, DateEffet: "2026-01-01", Version: "2026", Source: null, Actor: "admin");
@@ -111,7 +125,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Date déjà utilisée", RapportImpact: Rapport,
             Strategie: StrategieVersionning.ClotureEtNouvelleVersion, NouvelleValeur: 46m,
@@ -131,7 +145,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Sans dry-run", RapportImpact: null, Strategie: StrategieVersionning.Duplication,
             NouvelleValeur: null, DateEffet: "2026-01-01", Version: "2026", Source: null, Actor: "admin");
@@ -151,7 +165,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Bypass sans raison", RapportImpact: null, Strategie: StrategieVersionning.Duplication,
             NouvelleValeur: null, DateEffet: "2026-01-01", Version: "2026", Source: null, Actor: "admin",
@@ -171,7 +185,7 @@ public class AppliquerEvolutionReglementaireTests
         var grille = new GrilleIndiciaireRepository(scope.Conn);
         await grille.DefinirValeurPointAsync(45m, "2007-01-01", "2007", null, DateTimeOffset.UtcNow);
 
-        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork());
+        var useCase = new AppliquerEvolutionReglementaire(grille, new AuditLogRepository(scope.Conn), Horloge, new TestUnitOfWork(), new NullExporterRapportImpact());
         var demande = new AppliquerEvolutionReglementaire.Demande(
             Description: "Urgence — panne du moteur de simulation", RapportImpact: null,
             Strategie: StrategieVersionning.Duplication, NouvelleValeur: null, DateEffet: "2026-01-01",

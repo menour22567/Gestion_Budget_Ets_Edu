@@ -77,6 +77,36 @@ Un type public = un fichier. PascalCase (types/méthodes/propriétés), `_camelC
 - Branche stable : `main`. Fonctionnalités : `feature/...`. Correctifs : `fix/...`.
 - Commits signés du co-auteur outillage. Pas de secrets ni de bases `*.db` versionnés.
 
+### 7.1 Stratégie de branche (validée P0, 22/07/2026)
+
+- **Une branche courte par item du plan (`Px` ou nouveau chantier)**, créée depuis
+  `main` à jour : `git checkout -b feature/<nom-metier-court> main`.
+  Le nom reflète le **métier**, pas l'outil : `feature/workbench-reliquat-p7-p9-agents-seeder`
+  (et **pas** `blackboxai/fake-agents-seeder` ou autre nom généré par AI agent).
+- **Merge dans `main` à chaque item clos** (critères d'acceptation du plan atteints,
+  suite de tests verte, build 0 warning). Merge en **fast-forward** quand l'historique
+  le permet (cas nominal) ; merge commit descriptif sinon, jamais de rebase destructif
+  sur `main` après qu'un commit soit parti.
+- **Branche locale supprimée** après merge réussi (`git branch -d feature/...`) si elle
+  n'a plus d'usage. Les vieilles branches orphelines (ex. `feature/p7-matrice-couverture-pivotee`
+  absorbée par P7) sont à nettoyer régulièrement — ne jamais les laisser dormir.
+- **Tag de référence** sur les jalons projet : `v0-pilote-moteur` (snapshot
+  post-audit 19/07/2026, baseline 730/730 tests verts), futurs `v0.1`, `v1.0` à
+  chaque jalon `Jn` validé.
+- **Push** : `git push origin main feature/<branche-courante> --tags` (branche + tag).
+  Le push n'est pas bloquant pour le merge local (le repo peut être inaccessible
+  temporairement) — l'historique local fait foi en attendant.
+
+### 7.2 Hygiène de l'arbre de travail
+
+- **Aucun fichier non tracké ne doit dormir** plus d'une session de travail. Si du
+  code est terminé, le committer ; si la spec change, le supprimer ou l'archiver dans
+  un dossier explicitement gitignoré (`/Temp/`, `/Backups/`, `.git-trash-<date>/` —
+  ce dernier est dans `.gitignore` et réservé aux déplacements avant suppression
+  définitive).
+- **Logs runtime** (`*.log`, `*.trc`) : gitignorés, jamais commités. Si un `.log`
+  apparaît dans `git status`, c'est un signal que `.gitignore` est incomplet.
+
 ## 8. Décisions d'architecture (ADR)
 
 Toute décision structurante est consignée dans `docs/adr/` (voir l'index). Format court :

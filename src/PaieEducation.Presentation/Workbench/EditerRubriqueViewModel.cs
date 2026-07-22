@@ -3,7 +3,9 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PaieEducation.Application.Referentiels.UseCases;
+using PaieEducation.Application.Workbench.Services;
 using PaieEducation.Application.Workbench.UseCases;
+using PaieEducation.Domain.Agents.Repositories;
 using PaieEducation.Domain.Calcul.Formules;
 using PaieEducation.Domain.Workbench.Constants;
 using PaieEducation.Shared.Results;
@@ -21,9 +23,16 @@ namespace PaieEducation.Presentation.Workbench;
 /// des lectures du moteur, côté UI.
 /// </summary>
 /// <remarks>
-/// Aucune logique de parsing ne fuit en exception : la formule est validée
+/// <para><b>P10 (FormulaEditor avancé, 22/07/2026)</b> : la validation de la
+/// formule passe en <b>live</b> (déclenchée par <c>OnFormuleExpressionChanged</c>)
+/// et un <b>popup d'auto-complétion</b> apparaît sur demande
+/// (<c>DemanderCompletion</c>) avec un catalogue de fonctions, variables,
+/// sources de valeur et rubriques. Un panneau <b>simulation agent témoin</b>
+/// permet de relancer le pipeline avec la formule en cours sur un agent réel
+/// et d'afficher le delta de net (le « vrai filet » de P10).</para>
+/// <para>Aucune logique de parsing ne fuit en exception : la formule est validée
 /// localement (message clair) avant appel au use case ; les échecs applicatifs
-/// sont présentés via <see cref="IDialogService"/>.
+/// sont présentés via <see cref="IDialogService"/>.</para>
 /// </remarks>
 public sealed partial class EditerRubriqueViewModel : ObservableObject
 {
@@ -33,6 +42,9 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     private readonly DefinirValeurBareme _definirBareme;
     private readonly IDialogService _dialogs;
     private readonly INavigationService _navigation;
+    private readonly IFormuleCompletionProvider? _completion;
+    private readonly IAgentReadRepository? _agents;
+    private readonly SimulerBulletinPourFormule? _simulateur;
 
     public ObservableCollection<string> Natures { get; } = ["GAIN", "RETENUE", "COTISATION", "IMPOT"];
     public ObservableCollection<string> BasesCalcul { get; } = ["TRAITEMENT", "TBASE", "TBASE_ECHELON", "INDICE_ECHELON", "FORFAIT", "ASSIETTE_COTISABLE", "ASSIETTE_IMPOSABLE"];
@@ -88,10 +100,30 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     [ObservableProperty] private bool baremeEnCours;
     [ObservableProperty] private string? baremeResultat;
 
+    // -- P10 : auto-complétion + simulation agent témoin --
+    [ObservableProperty] private string completionPrefixe = string.Empty;
+    [ObservableProperty] private bool completionPopupOuvert;
+    public ObservableCollection<CompletionItem> CompletionItems { get; } = new();
+    public ObservableCollection<AgentResume> AgentsTemoins { get; } = new();
+    [ObservableProperty] private AgentResume? agentTemoinSelectionne;
+    [ObservableProperty] private string datePaieSimulation = "2025-06-01";
+    [ObservableProperty] private bool simulationEnCours;
+    [ObservableProperty] private string? resultatSimulation;
+    [ObservableProperty] private decimal? netBaseline;
+    [ObservableProperty] private decimal? netOverride;
+    [ObservableProperty] private decimal? deltaNet;
+
+    /// <summary>
+    /// Constructeur nominal (DI) : reçoit tous les use cases et services
+    /// P10. C'est le seul constructeur exposé en production.
+    /// </summary>
     public EditerRubriqueViewModel(
         DefinirRubrique definirRubrique, DefinirFormuleRubrique definirFormule,
         DefinirParametreRubrique definirParametre, DefinirValeurBareme definirBareme,
-        IDialogService dialogs, INavigationService navigation)
+        IDialogService dialogs, INavigationService navigation,
+        IFormuleCompletionProvider completion,
+        IAgentReadRepository agents,
+        SimulerBulletinPourFormule simulateur)
     {
         _definirRubrique = definirRubrique ?? throw new ArgumentNullException(nameof(definirRubrique));
         _definirFormule = definirFormule ?? throw new ArgumentNullException(nameof(definirFormule));
@@ -99,6 +131,23 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
         _definirBareme = definirBareme ?? throw new ArgumentNullException(nameof(definirBareme));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
+        _completion = completion ?? throw new ArgumentNullException(nameof(completion));
+        _agents = agents ?? throw new ArgumentNullException(nameof(agents));
+        _simulateur = simulateur ?? throw new ArgumentNullException(nameof(simulateur));
+    }
+
+    /// <summary>
+    /// Constructeur historique conservé pour les tests existants (C4.1
+    /// d'origine, avant P10). Les features P10 sont désactivées
+    /// (completion / simulation == null).
+    /// </summary>
+    public EditerRubriqueViewModel(
+        DefinirRubrique definirRubrique, DefinirFormuleRubrique definirFormule,
+        DefinirParametreRubrique definirParametre, DefinirValeurBareme definirBareme,
+        IDialogService dialogs, INavigationService navigation)
+        : this(definirRubrique, definirFormule, definirParametre, definirBareme, dialogs, navigation,
+               completion: null!, agents: null!, simulateur: null!)
+    {
     }
 
     [RelayCommand]
@@ -115,6 +164,138 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
             ? "Formule valide."
             : $"Formule invalide : {parse.Error.Message}";
     }
+
+    /// <summary>
+    /// P10 : validation live de la formule. Déclenchée automatiquement à
+    /// chaque modification de <see cref="FormuleExpression"/> par le source
+    /// generator <c>[ObservableProperty]</c>. Pas de debounce : le
+    /// <see cref="FormulaParser"/> est suffisamment rapide pour ne pas
+    /// dégrader la frappe.
+    /// </summary>
+    partial void OnFormuleExpressionChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            FormuleValidation = string.Empty;
+            return;
+        }
+        var parse = FormulaParser.Parser(value);
+        FormuleValidation = parse.IsSuccess
+            ? "✓ Formule valide"
+            : $"✗ {parse.Error.Message}";
+    }
+
+    // ====================================================================
+    // P10 — auto-complétion
+    // ====================================================================
+
+    [RelayCommand]
+    private async Task DemanderCompletionAsync()
+    {
+        if (_completion is null)
+        {
+            CompletionPopupOuvert = false;
+            return;
+        }
+        var prefixe = CompletionPrefixe?.Trim() ?? string.Empty;
+        if (prefixe.Length == 0)
+        {
+            CompletionItems.Clear();
+            CompletionPopupOuvert = false;
+            return;
+        }
+        var items = await _completion.ProposerAsync(prefixe, DatePaieSimulation);
+        CompletionItems.Clear();
+        foreach (var it in items) CompletionItems.Add(it);
+        CompletionPopupOuvert = CompletionItems.Count > 0;
+    }
+
+    [RelayCommand]
+    private void InsererCompletion(CompletionItem? item)
+    {
+        if (item is null) return;
+        // Insertion simple : on colle le Token après l'expression courante,
+        // séparé par un espace. Suffisant pour la V1 ; une insertion à la
+        // position du caret (parsing de l'expression en cours) sera ajoutée
+        // en V1.1 si le besoin se confirme.
+        FormuleExpression = string.IsNullOrWhiteSpace(FormuleExpression)
+            ? item.Token
+            : FormuleExpression.TrimEnd() + " " + item.Token;
+        CompletionPopupOuvert = false;
+    }
+
+    [RelayCommand]
+    private void FermerCompletion()
+    {
+        CompletionPopupOuvert = false;
+    }
+
+    // ====================================================================
+    // P10 — simulation agent témoin
+    // ====================================================================
+
+    [RelayCommand]
+    private async Task ChargerAgentsTemoinsAsync()
+    {
+        if (_agents is null) return;
+        var res = await _agents.ListerAsync();
+        if (res.IsFailure) return;
+        AgentsTemoins.Clear();
+        foreach (var a in res.Value) AgentsTemoins.Add(a);
+    }
+
+    [RelayCommand]
+    private async Task SimulerAsync()
+    {
+        if (_simulateur is null)
+        {
+            ResultatSimulation = "Simulation non disponible (services P10 non câblés).";
+            return;
+        }
+        if (AgentTemoinSelectionne is null)
+        {
+            ResultatSimulation = "Sélectionnez un agent témoin.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(FormuleRubriqueId))
+        {
+            ResultatSimulation = "Saisissez le code rubrique (champ ci-dessus) pour identifier la rubrique simulée.";
+            return;
+        }
+        SimulationEnCours = true;
+        ResultatSimulation = "Simulation en cours…";
+        try
+        {
+            var res = await _simulateur.ExecuterAsync(new SimulerBulletinPourFormule.Demande(
+                AgentId: AgentTemoinSelectionne.Id,
+                DatePaie: DatePaieSimulation,
+                RubriqueIdOverride: FormuleRubriqueId,
+                ExpressionOverride: FormuleExpression));
+            if (res.IsFailure)
+            {
+                ResultatSimulation = $"✗ Échec : {res.Error.Message}";
+                NetBaseline = NetOverride = DeltaNet = null;
+                return;
+            }
+            var sim = res.Value;
+            NetBaseline = sim.BulletinBaseline.Net.Amount;
+            NetOverride = sim.Bulletin.Net.Amount;
+            DeltaNet = sim.DeltaNet;
+            var signe = sim.DeltaNet >= 0 ? "+" : string.Empty;
+            ResultatSimulation =
+                $"Net baseline {sim.BulletinBaseline.Net.Amount:N0} DA | " +
+                $"Net override {sim.Bulletin.Net.Amount:N0} DA | " +
+                $"Δ {signe}{sim.DeltaNet:N0} DA";
+        }
+        finally
+        {
+            SimulationEnCours = false;
+        }
+    }
+
+    // ====================================================================
+    // Use cases existants (C4.1)
+    // ====================================================================
 
     [RelayCommand]
     private async Task DefinirIdentiteAsync()

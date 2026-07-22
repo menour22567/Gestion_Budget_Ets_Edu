@@ -71,7 +71,22 @@
                     <TextBox Text="{Binding FormuleDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Content="Valider la syntaxe" Command="{Binding ValiderFormuleCommand}" Width="160" Margin="0,0,12,0"/>
-                        <TextBlock Text="{Binding FormuleValidation}" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="FormuleValidationIcon" VerticalAlignment="Center" Margin="0,0,6,0"
+                                   FontWeight="Bold" Text="✓">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="ForestGreen"/>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding FormuleValidationEstValide}" Value="False">
+                                            <Setter Property="Foreground" Value="Firebrick"/>
+                                            <Setter Property="Text" Value="✗"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding FormuleValidation}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
                     <Button Content="Enregistrer la formule" Command="{Binding DefinirFormuleCommand}" Width="200" HorizontalAlignment="Left" Margin="0,8,0,8"/>
                     <TextBlock Text="{Binding FormuleResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>

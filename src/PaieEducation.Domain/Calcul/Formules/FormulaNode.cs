@@ -29,3 +29,51 @@ public sealed record BinaryNode(char Operator, FormulaNode Left, FormulaNode Rig
 /// bruts (codes rubrique/dimension), pas des variables à résoudre.
 /// </summary>
 public sealed record CallNode(string Name, IReadOnlyList<FormulaNode> Args) : FormulaNode;
+
+/// <summary>
+/// Utilitaires de parcours de l'AST. Introduits avec P10 (FormulaEditor avancé)
+/// pour le feedback live (compte de nœuds) et l'auto-complétion (liste des
+/// identificateurs référencés). Pas de logique métier ici — pur helpers.
+/// </summary>
+public static class FormulaNodeWalker
+{
+    /// <summary>Compte le nombre total de nœuds de l'arbre (racine incluse).</summary>
+    public static int Compter(FormulaNode racine) => racine switch
+    {
+        null => 0,
+        NumberNode => 1,
+        IdentifierNode => 1,
+        UnaryNode u => 1 + Compter(u.Operand),
+        BinaryNode b => 1 + Compter(b.Left) + Compter(b.Right),
+        CallNode c => 1 + c.Args.Sum(Compter),
+        _ => 1
+    };
+
+    /// <summary>Collecte les noms des identificateurs (variables) référencés, dans l'ordre de lecture.</summary>
+    public static IReadOnlyList<string> CollecterIdentificateurs(FormulaNode racine)
+    {
+        var result = new List<string>();
+        Visiter(racine, n => { if (n is IdentifierNode id) result.Add(id.Name); });
+        return result;
+    }
+
+    /// <summary>Collecte les noms des fonctions appelées.</summary>
+    public static IReadOnlyList<string> CollecterAppels(FormulaNode racine)
+    {
+        var result = new List<string>();
+        Visiter(racine, n => { if (n is CallNode c) result.Add(c.Name.ToLowerInvariant()); });
+        return result;
+    }
+
+    private static void Visiter(FormulaNode? racine, Action<FormulaNode> action)
+    {
+        if (racine is null) return;
+        action(racine);
+        switch (racine)
+        {
+            case UnaryNode u: Visiter(u.Operand, action); break;
+            case BinaryNode b: Visiter(b.Left, action); Visiter(b.Right, action); break;
+            case CallNode c: foreach (var a in c.Args) Visiter(a, action); break;
+        }
+    }
+}

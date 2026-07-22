@@ -61,6 +61,83 @@ public class EditerRubriqueViewModelTests
         Assert.Contains("invalide", vm.FormuleValidation);
     }
 
+    // ----- P10 (FormulaEditor avancé) — validation live + token counter -----
+
+    [Fact]
+    public void P10_ValidationLive_declenchee_a_la_saisie_sans_appeler_la_commande()
+    {
+        var vm = Build(out _, out _);
+
+        vm.FormuleExpression = "TBASE * 0.45";
+
+        Assert.Contains("valide", vm.FormuleValidation);
+        Assert.Contains("nœud", vm.FormuleValidation);
+        Assert.True(vm.FormuleValidationEstValide);
+        Assert.Equal(3, vm.FormuleValidationNbNoeuds);
+    }
+
+    [Fact]
+    public void P10_ValidationLive_formule_invalide_affiche_erreur_et_position()
+    {
+        var vm = Build(out _, out _);
+
+        vm.FormuleExpression = "TBASE * * 0.45";
+
+        Assert.Contains("invalide", vm.FormuleValidation);
+        Assert.False(vm.FormuleValidationEstValide);
+        Assert.Null(vm.FormuleValidationNbNoeuds);
+        // Le message du parser inclut la position du symbole fautif.
+        Assert.Contains("position", vm.FormuleValidation);
+    }
+
+    [Fact]
+    public void P10_ValidationLive_champ_vide_reinitialise_la_validation()
+    {
+        var vm = Build(out _, out _);
+        vm.FormuleExpression = "TBASE * 0.45";
+        Assert.True(vm.FormuleValidationEstValide);
+
+        vm.FormuleExpression = string.Empty;
+
+        Assert.False(vm.FormuleValidationEstValide);
+        Assert.Empty(vm.FormuleValidation);
+        Assert.Null(vm.FormuleValidationNbNoeuds);
+    }
+
+    [Fact]
+    public void P10_ValidationLive_expression_complexe_compte_les_noeuds_correctement()
+    {
+        var vm = Build(out _, out _);
+
+        // TBASE * 0.45 + round(TRT / INDICE_ECH, 2)
+        //   = Binary(+)                                        [1]
+        //       Binary(*)                                      [2]
+        //         Ident TBASE                                  [3]
+        //         Number 0.45                                  [4]
+        //       Call round                                     [5]
+        //         Binary(/)                                    [6]
+        //           Ident TRT                                  [7]
+        //           Ident INDICE_ECH                           [8]
+        //         Number 2                                     [9]
+        // Total = 9 nœuds.
+        vm.FormuleExpression = "TBASE * 0.45 + round(TRT / INDICE_ECH, 2)";
+
+        Assert.True(vm.FormuleValidationEstValide);
+        Assert.Equal(9, vm.FormuleValidationNbNoeuds);
+        Assert.Contains("9 nœuds", vm.FormuleValidation);
+    }
+
+    [Fact]
+    public void P10_ValiderFormule_avec_champ_vide_affiche_message_attente()
+    {
+        var vm = Build(out _, out _);
+
+        vm.ValiderFormuleCommand.Execute(null);
+
+        Assert.Equal("Saisissez une expression.", vm.FormuleValidation);
+        Assert.False(vm.FormuleValidationEstValide);
+    }
+
     [Fact]
     public async Task DefinirIdentite_avec_ordre_invalide_affiche_erreur_et_ne_appelle_pas_le_repo()
     {

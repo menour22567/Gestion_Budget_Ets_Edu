@@ -3,6 +3,7 @@ using PaieEducation.Application.Agents.UseCases;
 using PaieEducation.Application.Payroll.Services;
 using PaieEducation.Application.Payroll.UseCases;
 using PaieEducation.Application.Referentiels.UseCases;
+using PaieEducation.Application.Workbench.Services;
 using PaieEducation.Application.Workbench.UseCases;
 
 namespace PaieEducation.Application.DependencyInjection;
@@ -46,6 +47,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddTransient<DefinirFormuleRubrique>();
         services.AddTransient<DefinirParametreRubrique>();
         services.AddTransient<DefinirValeurBareme>();
+        services.AddTransient<SimulerBulletinPourFormule>(); // P10 — simulation agent témoin (FormulaEditor avancé)
+        services.AddSingleton<IFormuleCompletionProvider, FormuleCompletionProvider>(); // P10 — auto-complétion
         services.AddTransient<DefinirGroupeEligibilite>();
         services.AddTransient<CloreGroupeEligibilite>();
         services.AddTransient<DefinirRegleEligibilite>();

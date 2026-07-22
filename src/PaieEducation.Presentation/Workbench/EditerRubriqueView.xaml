@@ -62,21 +62,36 @@
 
             <!-- Formule -->
             <TabItem Header="Formule">
-                <StackPanel Margin="12" MaxWidth="560" HorizontalAlignment="Left">
+                <StackPanel Margin="12" MaxWidth="620" HorizontalAlignment="Left">
                     <TextBlock Text="Code rubrique"/>
                     <TextBox Text="{Binding FormuleRubriqueId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                    <TextBlock Text="Expression (ex. TBASE * 0.45)"/>
-                    <TextBox Text="{Binding FormuleExpression, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" Height="60" TextWrapping="Wrap" Margin="0,0,0,8"/>
-                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
-                    <TextBox Text="{Binding FormuleDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="Valider la syntaxe" Command="{Binding ValiderFormuleCommand}" Width="160" Margin="0,0,12,0"/>
+
+                    <TextBlock Text="Expression (ex. TBASE * 0.45) — validation live (P10)"/>
+                    <TextBox x:Name="FormuleTextBox"
+                             Text="{Binding FormuleExpression, UpdateSourceTrigger=PropertyChanged}"
+                             AcceptsReturn="True" Height="60" TextWrapping="Wrap" Margin="0,0,0,4">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="BorderBrush" Value="#888"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding FormuleValidationEstValide}" Value="True">
+                                        <Setter Property="BorderBrush" Value="ForestGreen"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding FormuleValidationEstValide}" Value="False">
+                                        <Setter Property="BorderBrush" Value="Firebrick"/>
+                                        <Setter Property="BorderThickness" Value="2"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                         <TextBlock x:Name="FormuleValidationIcon" VerticalAlignment="Center" Margin="0,0,6,0"
                                    FontWeight="Bold" Text="✓">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="ForestGreen"/>
-                                    <Setter Property="Visibility" Value="Visible"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding FormuleValidationEstValide}" Value="False">
                                             <Setter Property="Foreground" Value="Firebrick"/>
@@ -87,6 +102,74 @@
                             </TextBlock.Style>
                         </TextBlock>
                         <TextBlock Text="{Binding FormuleValidation}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- P10 : auto-complétion -->
+                    <Border BorderThickness="1" BorderBrush="#DDD" Padding="8" Margin="0,0,0,8" Background="#FAFAFA">
+                        <StackPanel>
+                            <TextBlock Text="Auto-complétion (P10)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox Text="{Binding CompletionPrefixe, UpdateSourceTrigger=PropertyChanged}"
+                                         Width="240" Margin="0,0,8,0"
+                                         ToolTip="Tapez quelques lettres puis cliquez Proposer (V1.1 : Ctrl+Espace)."/>
+                                <Button Content="Proposer" Command="{Binding DemanderCompletionCommand}" Width="100" Margin="0,0,8,0"/>
+                                <Button Content="Fermer" Command="{Binding FermerCompletionCommand}" Width="80"/>
+                            </StackPanel>
+                            <Popup IsOpen="{Binding CompletionPopupOuvert}"
+                                   PlacementTarget="{Binding ElementName=FormuleTextBox}"
+                                   Placement="Bottom" StaysOpen="False" Width="520" MaxHeight="260">
+                                <Border BorderBrush="#888" BorderThickness="1" Background="White">
+                                    <ListBox x:Name="CompletionList"
+                                             ItemsSource="{Binding CompletionItems}"
+                                             MaxHeight="260" Width="520"
+                                             MouseDoubleClick="CompletionList_MouseDoubleClick">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Margin="4,2">
+                                                    <TextBlock Text="{Binding Token}" FontWeight="SemiBold" Width="180" FontFamily="Consolas"/>
+                                                    <TextBlock Text="{Binding Categorie}" Foreground="Gray" Width="110" FontSize="10"/>
+                                                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="11"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </Popup>
+                            <TextBlock Text="Double-clic sur un item (ou Entrée) pour l'insérer dans l'expression."
+                                       FontSize="10" Foreground="Gray" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- P10 : simulation agent témoin -->
+                    <Border BorderThickness="1" BorderBrush="#9CF" Padding="8" Margin="0,0,0,8" Background="#F0F8FF">
+                        <StackPanel>
+                            <TextBlock Text="Simulation agent témoin (P10 — le vrai filet)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <StackPanel Margin="0,0,12,0">
+                                    <TextBlock Text="Agent témoin"/>
+                                    <ComboBox ItemsSource="{Binding AgentsTemoins}"
+                                              SelectedItem="{Binding AgentTemoinSelectionne}"
+                                              DisplayMemberPath="Libelle" Width="320"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Date de paie (AAAA-MM-JJ)"/>
+                                    <TextBox Text="{Binding DatePaieSimulation, UpdateSourceTrigger=PropertyChanged}" Width="140"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Charger les agents" Command="{Binding ChargerAgentsTemoinsCommand}" Width="160" Margin="0,0,8,0"/>
+                                <Button Content="Simuler" Command="{Binding SimulerCommand}" Width="120"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding ResultatSimulation}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="Date d'effet (AAAA-MM-JJ)"/>
+                    <TextBox Text="{Binding FormuleDateEffet, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="Valider la syntaxe" Command="{Binding ValiderFormuleCommand}" Width="160" Margin="0,0,12,0"/>
+                        <TextBlock Text="(la validation se fait déjà automatiquement à la frappe — bouton conservé pour accessibilité)"
+                                   VerticalAlignment="Center" FontSize="10" Foreground="Gray" TextWrapping="Wrap" MaxWidth="380"/>
                     </StackPanel>
                     <Button Content="Enregistrer la formule" Command="{Binding DefinirFormuleCommand}" Width="200" HorizontalAlignment="Left" Margin="0,8,0,8"/>
                     <TextBlock Text="{Binding FormuleResultat}" TextWrapping="Wrap" FontWeight="SemiBold"/>

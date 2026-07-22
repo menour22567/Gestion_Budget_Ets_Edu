@@ -73,6 +73,8 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     [ObservableProperty] private string formuleExpression = string.Empty;
     [ObservableProperty] private string formuleDateEffet = string.Empty;
     [ObservableProperty] private string formuleValidation = string.Empty;
+    [ObservableProperty] private bool formuleValidationEstValide;
+    [ObservableProperty] private int? formuleValidationNbNoeuds;
     [ObservableProperty] private bool formuleEnCours;
     [ObservableProperty] private string? formuleResultat;
 
@@ -115,7 +117,11 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
 
     /// <summary>
     /// Constructeur nominal (DI) : reçoit tous les use cases et services
-    /// P10. C'est le seul constructeur exposé en production.
+    /// P10. C'est le seul constructeur exposé en production. Les services
+    /// P10 (completion, agents, simulateur) sont Nullable<T> en interne :
+    /// le constructeur historique (6 args) leur passe <c>null</c>
+    /// intentionnellement pour conserver la compat des tests C4.1
+    /// pré-P10 ; en production (DI), ils sont toujours non nuls.
     /// </summary>
     public EditerRubriqueViewModel(
         DefinirRubrique definirRubrique, DefinirFormuleRubrique definirFormule,
@@ -131,9 +137,9 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
         _definirBareme = definirBareme ?? throw new ArgumentNullException(nameof(definirBareme));
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _navigation = navigation ?? throw new ArgumentNullException(nameof(navigation));
-        _completion = completion ?? throw new ArgumentNullException(nameof(completion));
-        _agents = agents ?? throw new ArgumentNullException(nameof(agents));
-        _simulateur = simulateur ?? throw new ArgumentNullException(nameof(simulateur));
+        _completion = completion; // Nullable : permet le fallback historique.
+        _agents = agents;
+        _simulateur = simulateur;
     }
 
     /// <summary>
@@ -156,13 +162,11 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(FormuleExpression))
         {
             FormuleValidation = "Saisissez une expression.";
+            FormuleValidationEstValide = false;
+            FormuleValidationNbNoeuds = null;
             return;
         }
-
-        var parse = FormulaParser.Parser(FormuleExpression);
-        FormuleValidation = parse.IsSuccess
-            ? "Formule valide."
-            : $"Formule invalide : {parse.Error.Message}";
+        ValiderFormuleInterne(FormuleExpression);
     }
 
     /// <summary>
@@ -170,19 +174,74 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     /// chaque modification de <see cref="FormuleExpression"/> par le source
     /// generator <c>[ObservableProperty]</c>. Pas de debounce : le
     /// <see cref="FormulaParser"/> est suffisamment rapide pour ne pas
-    /// dégrader la frappe.
+    /// dégrader la frappe. Le compteur de nœuds de l'AST est exposé
+    /// séparément pour permettre à l'UI d'afficher un retour plus fin
+    /// (couleur de bordure, libellé "N nœuds").
     /// </summary>
     partial void OnFormuleExpressionChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
             FormuleValidation = string.Empty;
+            FormuleValidationEstValide = false;
+            FormuleValidationNbNoeuds = null;
+            CompletionPrefixe = string.Empty;
+            CompletionItems.Clear();
+            CompletionPopupOuvert = false;
             return;
         }
-        var parse = FormulaParser.Parser(value);
-        FormuleValidation = parse.IsSuccess
-            ? "✓ Formule valide"
-            : $"✗ {parse.Error.Message}";
+        ValiderFormuleInterne(value);
+
+        // P10 — auto-complétion : on extrait le dernier mot en cours de frappe
+        // (séquence [A-Za-z_][A-Za-z0-9_]*) à la fin du texte et on demande
+        // les suggestions au provider. Si le provider n'est pas câblé (mode
+        // test legacy) ou si le prefixe est vide, on ferme le popup.
+        var prefixe = ExtrairePrefixeCourant(value);
+        CompletionPrefixe = prefixe;
+        if (_completion is null || prefixe.Length == 0)
+        {
+            CompletionItems.Clear();
+            CompletionPopupOuvert = false;
+            return;
+        }
+        _ = DemanderCompletionAsync();
+    }
+
+    /// <summary>
+    /// P10 — extrait le dernier mot en cours de frappe à la fin de
+    /// <paramref name="text"/>. Un mot = séquence <c>[A-Za-z_][A-Za-z0-9_]*</c>
+    /// qui n'est pas précédée d'un caractère alphanumérique (donc située après
+    /// un séparateur = espace, opérateur, début de chaîne). Retourne
+    /// <see cref="string.Empty"/> si rien à suggérer.
+    /// </summary>
+    private static string ExtrairePrefixeCourant(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return string.Empty;
+        var fin = text.Length - 1;
+        // recule tant qu'on est sur un caractère de mot
+        var debut = fin;
+        while (debut >= 0 && (char.IsLetterOrDigit(text[debut]) || text[debut] == '_'))
+            debut--;
+        // debut pointe sur le séparateur précédent (ou -1) ; le mot est [debut+1 .. fin]
+        if (fin == debut) return string.Empty;
+        return text.Substring(debut + 1, fin - debut);
+    }
+
+    private void ValiderFormuleInterne(string expression)
+    {
+        var parse = FormulaParser.Parser(expression);
+        if (parse.IsFailure)
+        {
+            FormuleValidation = $"Formule invalide : {parse.Error.Message}";
+            FormuleValidationEstValide = false;
+            FormuleValidationNbNoeuds = null;
+            return;
+        }
+        var nbNoeuds = FormulaNodeWalker.Compter(parse.Value);
+        var pluriel = nbNoeuds > 1 ? "s" : string.Empty;
+        FormuleValidation = $"✓ Formule valide — {nbNoeuds} nœud{pluriel}";
+        FormuleValidationEstValide = true;
+        FormuleValidationNbNoeuds = nbNoeuds;
     }
 
     // ====================================================================
@@ -204,7 +263,7 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
             CompletionPopupOuvert = false;
             return;
         }
-        var items = await _completion.ProposerAsync(prefixe, DatePaieSimulation);
+        var items = await _completion.ProposerAsync(prefixe);
         CompletionItems.Clear();
         foreach (var it in items) CompletionItems.Add(it);
         CompletionPopupOuvert = CompletionItems.Count > 0;
@@ -214,13 +273,29 @@ public sealed partial class EditerRubriqueViewModel : ObservableObject
     private void InsererCompletion(CompletionItem? item)
     {
         if (item is null) return;
-        // Insertion simple : on colle le Token après l'expression courante,
-        // séparé par un espace. Suffisant pour la V1 ; une insertion à la
-        // position du caret (parsing de l'expression en cours) sera ajoutée
-        // en V1.1 si le besoin se confirme.
-        FormuleExpression = string.IsNullOrWhiteSpace(FormuleExpression)
-            ? item.Token
-            : FormuleExpression.TrimEnd() + " " + item.Token;
+        // P10 — insertion "intelligente" : on remplace le préfixe en cours
+        // de frappe (le dernier mot) par le Token choisi. Si l'expression est
+        // vide, on pose simplement le token. Le popup se ferme, et le partial
+        // OnFormuleExpressionChanged rejouera la validation live + re-extraction
+        // du nouveau préfixe (vide, donc popup reste fermé).
+        if (string.IsNullOrEmpty(FormuleExpression))
+        {
+            FormuleExpression = item.Token;
+        }
+        else
+        {
+            var longueurPrefixe = CompletionPrefixe?.Length ?? 0;
+            var idxDebut = FormuleExpression.Length - longueurPrefixe;
+            if (longueurPrefixe > 0 && idxDebut >= 0)
+            {
+                FormuleExpression = FormuleExpression.Substring(0, idxDebut) + item.Token;
+            }
+            else
+            {
+                // fallback : pas de préfixe identifiable, on colle en fin
+                FormuleExpression = FormuleExpression.TrimEnd() + " " + item.Token;
+            }
+        }
         CompletionPopupOuvert = false;
     }
 

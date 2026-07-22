@@ -138,6 +138,59 @@ public class EditerRubriqueViewModelTests
         Assert.False(vm.FormuleValidationEstValide);
     }
 
+    // ----- P10 (FormulaEditor avancé) — auto-complétion -----
+    // NB : on ne peut pas tester la popup visuelle sans WPF, mais on
+    // couvre (a) l'extraction du préfixe via la saisie, (b) la mise à
+    // jour du CompletionPrefixe par le partial OnFormuleExpressionChanged,
+    // (c) le remplacement du préfixe par InsererCompletionCommand.
+
+    [Fact]
+    public void P10_Saisie_d_un_mot_met_a_jour_le_prefixe_de_completion()
+    {
+        var vm = Build(out _, out _);
+
+        vm.FormuleExpression = "TBA";
+
+        // Le partial method extrait le dernier mot en cours de frappe.
+        Assert.Equal("TBA", vm.CompletionPrefixe);
+    }
+
+    [Fact]
+    public void P10_Saisie_apres_un_separateur_reextrait_le_prefixe_sur_le_nouveau_mot()
+    {
+        var vm = Build(out _, out _);
+
+        vm.FormuleExpression = "TBASE * IND";
+
+        Assert.Equal("IND", vm.CompletionPrefixe);
+    }
+
+    [Fact]
+    public void P10_Saisie_d_un_caractere_non_mot_ferme_le_prefixe_de_completion()
+    {
+        var vm = Build(out _, out _);
+
+        vm.FormuleExpression = "TBASE * ";
+
+        // Pas de mot après le dernier séparateur → préfixe vide.
+        Assert.Equal(string.Empty, vm.CompletionPrefixe);
+    }
+
+    [Fact]
+    public void P10_Effacer_l_expression_ferme_le_prefixe_et_le_etat_de_validation()
+    {
+        var vm = Build(out _, out _);
+        vm.FormuleExpression = "TBASE * 0.45";
+        Assert.True(vm.FormuleValidationEstValide);
+
+        vm.FormuleExpression = string.Empty;
+
+        Assert.Equal(string.Empty, vm.CompletionPrefixe);
+        Assert.False(vm.FormuleValidationEstValide);
+        Assert.Null(vm.FormuleValidationNbNoeuds);
+        Assert.Empty(vm.FormuleValidation);
+    }
+
     [Fact]
     public async Task DefinirIdentite_avec_ordre_invalide_affiche_erreur_et_ne_appelle_pas_le_repo()
     {
